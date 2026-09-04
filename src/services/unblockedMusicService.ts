@@ -10,12 +10,11 @@ const proxifyUrl = (url: string, type: 'saavn' | 'youtube') => {
     return url;
   }
   
-  if (window.location.hostname === 'localhost') {
-    if (type === 'saavn') return url.replace('https://www.jiosaavn.com', '/api/saavn');
-    if (type === 'youtube') return url.replace('https://suggestqueries.google.com', '/api/youtube');
-  }
+  // Use relative proxy path for both localhost (Vite) and Vercel deployments
+  if (type === 'saavn') return url.replace('https://www.jiosaavn.com', '/api/saavn');
+  if (type === 'youtube') return url.replace('https://suggestqueries.google.com', '/api/youtube');
   
-  return `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+  return url;
 };
 
 export const decryptSaavnUrl = (url: string) => {

@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/saavn/:match*",
+      "destination": "https://www.jiosaavn.com/:match*"
+    },
+    {
+      "source": "/api/youtube/:match*",
+      "destination": "https://suggestqueries.google.com/:match*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
