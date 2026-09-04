@@ -1,5 +1,3 @@
-import { Capacitor } from '@capacitor/core';
-
 // This file is kept for backward compatibility
 // API keys are now handled securely on the backend via environment variables
 
@@ -9,7 +7,7 @@ export const getGeminiKey = async (): Promise<string | null> => {
   return null;
 };
 
-export const saveGeminiKey = async (key: string): Promise<void> => {
+export const saveGeminiKey = async (): Promise<void> => {
   // Deprecated: Keys should be set via Vercel/environment variables only
   console.warn('Direct key storage is deprecated. Use environment variables instead.');
 };
