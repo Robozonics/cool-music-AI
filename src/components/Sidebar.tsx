@@ -52,7 +52,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
       </nav>
 
       <div className="mt-auto pt-6 border-t border-white/5">
-        <p className="text-xs text-gray-500 font-medium">Made by robozonnics</p>
+        <p className="text-xs text-gray-500 font-medium">A product of robozonics</p>
         <p className="text-xs text-acid-lime/70 font-medium mt-1">Crafted with love by rehan</p>
       </div>
     </div>
