@@ -117,9 +117,5 @@ export const searchYouTube = async (query: string): Promise<Track[]> => {
 };
 
 export const searchUnblocked = async (query: string): Promise<Track[]> => {
-  const [saavn, yt] = await Promise.all([
-    searchSaavn(query),
-    searchYouTube(query)
-  ]);
-  return [...saavn, ...yt];
+  return await searchSaavn(query);
 };
