@@ -11,9 +11,9 @@ interface Section {
 }
 
 const SECTIONS: Section[] = [
-  { title: "Trending Bollywood 2026 🌶️", icon: <TrendingUp className="w-5 h-5 text-acid-lime" />, query: "trending bollywood 2026 hits" },
-  { title: "Top 50 India 🚀", icon: <Music className="w-5 h-5 text-electric-fuchsia" />, query: "top 50 trending songs india" },
-  { title: "Viral Desi Hits ✨", icon: <Sparkles className="w-5 h-5 text-cyber-cyan" />, query: "viral desi punjabi lofi hits" }
+  { title: "Trending Bollywood 2026 🌶️", icon: <TrendingUp className="w-5 h-5 text-acid-lime" />, query: "latest hindi hits" },
+  { title: "Top 50 India 🚀", icon: <Music className="w-5 h-5 text-electric-fuchsia" />, query: "top chart india" },
+  { title: "Viral Desi Hits ✨", icon: <Sparkles className="w-5 h-5 text-cyber-cyan" />, query: "viral punjabi" }
 ];
 
 export const HomeView: React.FC = () => {
