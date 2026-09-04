@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { X, Key, AlertCircle, ExternalLink } from 'lucide-react';
 
 interface ApiKeyModalProps {
@@ -7,8 +7,6 @@ interface ApiKeyModalProps {
 }
 
 export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose }) => {
-  const [isInfoShown] = useState(false);
-
   if (!isOpen) return null;
 
   return (
