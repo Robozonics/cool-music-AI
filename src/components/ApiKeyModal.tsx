@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { X, Key, CheckCircle, ExternalLink } from 'lucide-react';
-import { getGeminiKey, saveGeminiKey } from '../services/keyManager';
+import React, { useState } from 'react';
+import { X, Key, AlertCircle, ExternalLink } from 'lucide-react';
 
 interface ApiKeyModalProps {
   isOpen: boolean;
@@ -8,30 +7,9 @@ interface ApiKeyModalProps {
 }
 
 export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose }) => {
-  const [keyInput, setKeyInput] = useState('');
-  const [isSaved, setIsSaved] = useState(false);
-
-  useEffect(() => {
-    if (isOpen) {
-      getGeminiKey().then(k => {
-        if (k) setKeyInput(k);
-        setIsSaved(!!k);
-      });
-    }
-  }, [isOpen]);
+  const [isInfoShown] = useState(false);
 
   if (!isOpen) return null;
-
-  const handleSave = async () => {
-    if (keyInput.trim()) {
-      await saveGeminiKey(keyInput.trim());
-      setIsSaved(true);
-      setTimeout(() => {
-        onClose();
-        setIsSaved(false);
-      }, 1000);
-    }
-  };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -56,51 +34,34 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose }) => 
         </div>
 
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Gemini API Key
-            </label>
-            <input 
-              type="password"
-              value={keyInput}
-              onChange={(e) => {
-                setKeyInput(e.target.value);
-                setIsSaved(false);
-              }}
-              placeholder="Paste your Gemini API Key here"
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-acid-lime focus:ring-1 focus:ring-acid-lime transition-all"
-            />
+          <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-blue-200">
+              <p className="font-semibold mb-2">🔒 Secure API Handling</p>
+              <p>Your Gemini API key is now managed securely on our backend servers. No manual setup needed on your device!</p>
+            </div>
+          </div>
+
+          <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4">
+            <p className="text-sm text-green-200 font-semibold mb-2">✅ Status: Connected</p>
+            <p className="text-xs text-green-300">Backend API proxy is active and ready to use.</p>
           </div>
 
           <a 
             href="https://aistudio.google.com/" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="flex items-center text-sm text-gray-400 hover:text-acid-lime transition-colors mt-2"
+            className="flex items-center justify-center text-sm text-gray-400 hover:text-acid-lime transition-colors mt-4 py-3 border border-white/10 rounded-xl hover:border-acid-lime/30"
           >
-            Get a 100% Free API Key from Google AI Studio (No Credit Card Required)
-            <ExternalLink className="w-3 h-3 ml-1" />
+            Get a Free Gemini API Key
+            <ExternalLink className="w-4 h-4 ml-2" />
           </a>
 
           <button 
-            onClick={handleSave}
-            disabled={!keyInput.trim()}
-            className={`w-full py-3 rounded-xl font-bold flex items-center justify-center transition-all ${
-              isSaved 
-                ? 'bg-green-500 text-white' 
-                : keyInput.trim() 
-                  ? 'bg-acid-lime text-obsidian hover:bg-[#b3e600]' 
-                  : 'bg-white/10 text-gray-500 cursor-not-allowed'
-            }`}
+            onClick={onClose}
+            className="w-full py-3 rounded-xl font-bold bg-acid-lime text-obsidian hover:bg-[#b3e600] transition-all"
           >
-            {isSaved ? (
-              <>
-                <CheckCircle className="w-5 h-5 mr-2" />
-                Key Saved!
-              </>
-            ) : (
-              'Save Key'
-            )}
+            Got It
           </button>
         </div>
       </div>
