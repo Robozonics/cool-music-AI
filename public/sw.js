@@ -3,28 +3,34 @@ const CACHE_NAME = 'cool-music-ai-v1';
 const OFFLINE_URL = '/index.html';
 const LAST_ONLINE_KEY = '/last-online';
 
+// Keep install precache minimal — don't include source files that don't exist in production.
 const CORE_ASSETS = [
   '/',
   '/index.html',
-  '/favicon.svg',
-  '/src/main.tsx',
-  '/src/index.css'
+  '/favicon.svg'
 ];
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      // Pre-cache core assets
-      return cache.addAll(CORE_ASSETS).then(() => {
-        // Save a last-online timestamp when installing (if online)
-        const now = new Response(new Date().toISOString(), {
-          headers: { 'Content-Type': 'text/plain' }
-        });
-        return cache.put(LAST_ONLINE_KEY, now);
+  const installPromise = caches.open(CACHE_NAME).then((cache) => {
+    // Try to cache core assets, but don't fail the install if some are missing.
+    return Promise.allSettled(
+      CORE_ASSETS.map((url) => cache.add(url).catch((err) => {
+        // Log and continue — missing/404 assets shouldn't block installation
+        console.warn('[sw] failed to cache', url, err && err.message);
+      }))
+    ).then(() => {
+      // Save a last-online timestamp when installing
+      const now = new Response(new Date().toISOString(), {
+        headers: { 'Content-Type': 'text/plain' }
       });
-    })
-  );
+      return cache.put(LAST_ONLINE_KEY, now);
+    });
+  });
+
+  event.waitUntil(installPromise.catch((e) => {
+    console.error('[sw] install error', e && e.message);
+  }));
 });
 
 self.addEventListener('activate', (event) => {
