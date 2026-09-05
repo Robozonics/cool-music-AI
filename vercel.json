@@ -9,6 +9,10 @@
       "destination": "https://suggestqueries.google.com/:match*"
     },
     {
+      "source": "/sw.js",
+      "destination": "/sw.js"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
