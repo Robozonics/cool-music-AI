@@ -80,6 +80,12 @@ export const FullPlayer: React.FC = () => {
           </div>
         </div>
 
+        <div onWheel={(event) => { event.preventDefault(); setPlaybackRate(playbackRate + (event.deltaY < 0 ? 0.05 : -0.05)); }} className="w-full mb-6 rounded-2xl border border-electric-fuchsia/30 bg-black/30 p-4 shadow-[0_0_28px_rgba(255,51,153,0.15)]">
+          <div className="mb-2 flex items-center justify-between text-xs font-black uppercase tracking-[0.18em] text-white/60"><span>Speed control · scroll or drag</span><span className="text-acid-lime">{playbackRate.toFixed(2).replace(/0$/, '')}x</span></div>
+          <input aria-label="Playback speed" type="range" min="0.5" max="3" step="0.05" value={playbackRate} onChange={(event) => setPlaybackRate(Number(event.target.value))} className="w-full accent-acid-lime" />
+          <div className="mt-1 flex justify-between text-[10px] font-bold text-white/35"><span>0.5x</span><span>1x</span><span>2x</span><span>3x</span></div>
+        </div>
+
         {/* Progress Bar */}
         <div className="w-full mb-8">
           <input 

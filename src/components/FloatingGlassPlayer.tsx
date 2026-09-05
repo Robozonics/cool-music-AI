@@ -10,6 +10,7 @@ import {
   Heart,
   Volume2,
   VolumeX,
+  Gauge,
   Mic2,
   ListMusic,
   Laptop2,
@@ -25,6 +26,8 @@ export const FloatingGlassPlayer: React.FC = () => {
   const currentTime = usePlayerStore(state => state.currentTime);
   const duration = usePlayerStore(state => state.duration);
   const volume = usePlayerStore(state => state.volume);
+  const playbackRate = usePlayerStore(state => state.playbackRate);
+  const setPlaybackRate = usePlayerStore(state => state.setPlaybackRate);
   
   const togglePlay = usePlayerStore(state => state.togglePlay);
   const nextTrack = usePlayerStore(state => state.nextTrack);
@@ -263,6 +266,18 @@ export const FloatingGlassPlayer: React.FC = () => {
 
         {/* RIGHT SECTION: Advanced Features & Volume Slider */}
         <div className="flex items-center space-x-4 min-w-[240px] justify-end z-10 w-1/3">
+          <div
+            onWheel={(event) => {
+              event.preventDefault();
+              setPlaybackRate(playbackRate + (event.deltaY < 0 ? 0.05 : -0.05));
+            }}
+            className="group flex min-w-20 flex-col items-center rounded-xl border border-lime-400/30 bg-lime-400/10 px-2 py-1 text-lime-300 transition hover:bg-lime-400/20"
+            title="Scroll to control playback speed"
+          >
+            <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider"><Gauge className="h-3 w-3" /> speed</span>
+            <span className="font-mono text-sm font-black">{playbackRate.toFixed(2).replace(/0$/, '')}x</span>
+          </div>
+
           {/* Karaoke Lyrics Toggle */}
           <motion.button
             whileTap={{ scale: 0.9 }}

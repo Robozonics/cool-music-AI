@@ -94,13 +94,11 @@ export const DesktopPlayer: React.FC = () => {
 
       {/* Right: Extra Controls & Volume */}
       <div className="flex items-center justify-end w-1/3 space-x-4">
-        <button
-          onClick={() => setPlaybackRate(playbackRate === 3 ? 1 : playbackRate + 1)}
-          aria-label={`Playback speed ${playbackRate}x`}
-          className="flex items-center gap-1.5 rounded-full bg-acid-lime/15 px-3 py-1.5 text-acid-lime ring-1 ring-acid-lime/30 transition hover:bg-acid-lime/25"
-        >
-          <Gauge className="w-4 h-4" /><span className="text-xs font-black">{playbackRate}x</span>
-        </button>
+        <label className="flex items-center gap-2 rounded-full bg-acid-lime/10 px-3 py-1.5 text-acid-lime ring-1 ring-acid-lime/30" title="Scroll or drag to change playback speed">
+          <Gauge className="w-4 h-4" />
+          <input aria-label="Playback speed" type="range" min="0.5" max="3" step="0.05" value={playbackRate} onChange={(event) => setPlaybackRate(Number(event.target.value))} className="w-20 accent-acid-lime" />
+          <span className="min-w-9 text-xs font-black">{playbackRate.toFixed(2).replace(/0$/, '')}x</span>
+        </label>
         <button 
           onClick={() => setLyricsOpen(!isLyricsOpen)}
           className={`flex items-center space-x-2 px-4 py-1.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all duration-300 ${isLyricsOpen ? 'bg-acid-lime text-obsidian shadow-[0_0_15px_rgba(204,255,0,0.5)]' : 'bg-white/10 text-white hover:bg-white/20'}`}

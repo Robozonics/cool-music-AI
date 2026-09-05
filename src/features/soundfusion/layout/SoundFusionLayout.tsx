@@ -15,7 +15,7 @@ export const SoundFusionLayout: React.FC<LayoutProps> = ({ children, activeTab, 
   const currentTrack = usePlayerStore(state => state.currentTrack);
   
   return (
-    <div className="hidden md:flex h-screen w-screen overflow-hidden bg-[#000000] text-white flex-col font-sans antialiased relative">
+    <div className="hidden md:flex h-screen w-screen overflow-hidden bg-[#06060A] text-white flex-col font-sans antialiased relative selection:bg-electric-fuchsia/40">
       {/* 
         1. Header Bar (Sticky Top - 64px Height) 
       */}

@@ -217,7 +217,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     setFullPlayerOpen: (open: boolean) => set({ isFullPlayerOpen: open }),
 
     setPlaybackRate: (rate: number) => {
-      const nextRate = [1, 2, 3].includes(rate) ? rate : 1;
+      const nextRate = Math.round(Math.max(0.5, Math.min(3, rate)) * 20) / 20;
       nativeAudio.playbackRate = nextRate;
       const { ytEngine } = get();
       if (ytEngine) ytEngine.setPlaybackRate(nextRate);
