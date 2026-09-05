@@ -7,6 +7,7 @@ import { BottomNav } from './components/BottomNav';
 import type { TabType } from './components/BottomNav';
 import { MiniPlayer } from './components/MiniPlayer';
 import { FullPlayer } from './components/FullPlayer';
+import { DesktopPlayer } from './components/DesktopPlayer';
 import { SyncedLyrics } from './components/SyncedLyrics';
 import YouTubeAudioEngine from './components/YouTubeAudioEngine';
 import { ApiKeyModal } from './components/ApiKeyModal';
@@ -73,10 +74,11 @@ function App() {
 
       {/* --- DESKTOP UI (VIBESTREAM 3.0 / SOUNDFUSION HYBRID) --- */}
       <SoundFusionLayout activeTab={activeTab} setActiveTab={setActiveTab}>
-         <div onClick={() => isAutoplayBlocked && resolveAutoplayBlock()} className="h-full">
+         <div onClick={() => isAutoplayBlocked && resolveAutoplayBlock()} className="h-full pb-28">
             {renderContent()}
          </div>
       </SoundFusionLayout>
+      <DesktopPlayer />
 
       {/* --- MOBILE UI (ORIGINAL VIBESTREAM) --- */}
       <div 

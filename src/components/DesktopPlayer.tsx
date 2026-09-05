@@ -20,7 +20,15 @@ export const DesktopPlayer: React.FC = () => {
   const isLyricsOpen = usePlayerStore(state => state.isLyricsOpen);
   const setLyricsOpen = usePlayerStore(state => state.setLyricsOpen);
 
-  if (!currentTrack) return null;
+  const displayTrack = currentTrack ?? {
+    id: 'idle',
+    title: 'Pick a track to start',
+    artist: 'Your next vibe is waiting',
+    thumbnail: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=160&q=80',
+    duration: 0,
+    streamUrl: '',
+    source: 'saavn' as const,
+  };
 
   const formatTime = (time: number) => {
     if (isNaN(time)) return '0:00';
@@ -34,14 +42,14 @@ export const DesktopPlayer: React.FC = () => {
       {/* Left: Track Info */}
       <div className="flex items-center w-1/3 min-w-[200px]">
         <div className="relative mr-4 shrink-0">
-          <img src={currentTrack.thumbnail} alt={currentTrack.title} className="w-14 h-14 rounded-2xl object-cover ring-1 ring-white/10" />
+          <img src={displayTrack.thumbnail} alt={displayTrack.title} className="w-14 h-14 rounded-2xl object-cover ring-1 ring-white/10" />
           {isPlaying && <div className="absolute -bottom-1 left-1/2 flex -translate-x-1/2 items-end gap-0.5 rounded-full bg-obsidian/90 px-1.5 py-1 now-playing-bars" aria-label="Music is playing">{[8, 14, 10].map((height, index) => <span key={index} className="w-1 rounded-full bg-acid-lime" style={{ height, animationDelay: `${index * 100}ms` }} />)}</div>}
         </div>
         <div className="min-w-0 pr-4">
-          <h4 className="text-white font-bold truncate hover:underline cursor-pointer">{currentTrack.title}</h4>
-          <p className="text-gray-400 text-sm truncate">{currentTrack.artist}</p>
+          <h4 className="text-white font-bold truncate hover:underline cursor-pointer">{displayTrack.title}</h4>
+          <p className="text-gray-400 text-sm truncate">{displayTrack.artist}</p>
         </div>
-        {currentTrack.source === 'saavn' && !currentTrack.isOffline && (
+        {currentTrack?.source === 'saavn' && !currentTrack.isOffline && (
           <button 
             onClick={async () => {
               const success = await (await import('../services/downloadService')).downloadTrack(currentTrack);
