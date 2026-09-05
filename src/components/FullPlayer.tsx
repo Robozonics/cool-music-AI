@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, SkipForward, SkipBack, ChevronDown, Mic2, Download } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, ChevronDown, Mic2, Download, Gauge } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
 
 export const FullPlayer: React.FC = () => {
@@ -7,6 +7,8 @@ export const FullPlayer: React.FC = () => {
   const isPlaying = usePlayerStore(state => state.isPlaying);
   const currentTime = usePlayerStore(state => state.currentTime);
   const duration = usePlayerStore(state => state.duration);
+  const playbackRate = usePlayerStore(state => state.playbackRate);
+  const setPlaybackRate = usePlayerStore(state => state.setPlaybackRate);
   
   const togglePlay = usePlayerStore(state => state.togglePlay);
   const nextTrack = usePlayerStore(state => state.nextTrack);
@@ -41,8 +43,11 @@ export const FullPlayer: React.FC = () => {
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center relative z-10 w-full max-w-sm mx-auto">
-        <div className="w-full aspect-square rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] mb-8 relative group">
+        <div className={`w-full aspect-square rounded-[2rem] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] mb-8 relative group ring-1 ring-white/10 ${isPlaying ? 'animate-[pulse_3s_ease-in-out_infinite]' : ''}`}>
            <img src={currentTrack.thumbnail} alt={currentTrack.title} className="w-full h-full object-cover" />
+           <div className="absolute inset-x-0 bottom-0 flex items-end justify-center gap-1.5 pb-5 bg-gradient-to-t from-black/70 to-transparent h-1/3 now-playing-bars" aria-label={isPlaying ? 'Music is playing' : 'Music is paused'}>
+             {[22, 38, 28, 48, 32, 56, 26, 44, 34].map((height, index) => <span key={index} className="w-1.5 rounded-full bg-acid-lime shadow-[0_0_12px_rgba(204,255,0,0.8)]" style={{ height: `${height}%`, animationDelay: `${index * 80}ms`, animationPlayState: isPlaying ? 'running' : 'paused' }} />)}
+           </div>
         </div>
 
         <div className="w-full flex justify-between items-end mb-6">
@@ -50,7 +55,10 @@ export const FullPlayer: React.FC = () => {
             <h2 className="text-2xl font-black text-white truncate mb-1">{currentTrack.title}</h2>
             <p className="text-gray-400 text-lg truncate">{currentTrack.artist}</p>
           </div>
-          <div className="flex gap-3 shrink-0">
+          <div className="flex gap-2 shrink-0">
+            <button onClick={() => setPlaybackRate(playbackRate === 3 ? 1 : playbackRate + 1)} aria-label={`Playback speed ${playbackRate}x`} className="flex items-center gap-1.5 rounded-full bg-acid-lime/15 px-3 py-2 text-acid-lime ring-1 ring-acid-lime/30 transition hover:bg-acid-lime/25">
+              <Gauge className="w-4 h-4" /><span className="text-xs font-black">{playbackRate}x</span>
+            </button>
             {currentTrack.source === 'saavn' && !currentTrack.isOffline && (
               <button 
                 onClick={async () => {

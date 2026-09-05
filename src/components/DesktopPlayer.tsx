@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, SkipForward, SkipBack, Mic2, Download } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Mic2, Download, Gauge } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
 
 export const DesktopPlayer: React.FC = () => {
@@ -8,6 +8,8 @@ export const DesktopPlayer: React.FC = () => {
   const currentTime = usePlayerStore(state => state.currentTime);
   const duration = usePlayerStore(state => state.duration);
   const volume = usePlayerStore(state => state.volume);
+  const playbackRate = usePlayerStore(state => state.playbackRate);
+  const setPlaybackRate = usePlayerStore(state => state.setPlaybackRate);
   
   const togglePlay = usePlayerStore(state => state.togglePlay);
   const nextTrack = usePlayerStore(state => state.nextTrack);
@@ -31,7 +33,10 @@ export const DesktopPlayer: React.FC = () => {
     <div className="hidden md:flex fixed bottom-0 left-0 right-0 h-24 bg-[#0a0a0c] border-t border-white/5 z-40 px-6 items-center justify-between">
       {/* Left: Track Info */}
       <div className="flex items-center w-1/3 min-w-[200px]">
-        <img src={currentTrack.thumbnail} alt={currentTrack.title} className="w-14 h-14 rounded-lg object-cover mr-4" />
+        <div className="relative mr-4 shrink-0">
+          <img src={currentTrack.thumbnail} alt={currentTrack.title} className="w-14 h-14 rounded-2xl object-cover ring-1 ring-white/10" />
+          {isPlaying && <div className="absolute -bottom-1 left-1/2 flex -translate-x-1/2 items-end gap-0.5 rounded-full bg-obsidian/90 px-1.5 py-1 now-playing-bars" aria-label="Music is playing">{[8, 14, 10].map((height, index) => <span key={index} className="w-1 rounded-full bg-acid-lime" style={{ height, animationDelay: `${index * 100}ms` }} />)}</div>}
+        </div>
         <div className="min-w-0 pr-4">
           <h4 className="text-white font-bold truncate hover:underline cursor-pointer">{currentTrack.title}</h4>
           <p className="text-gray-400 text-sm truncate">{currentTrack.artist}</p>
@@ -81,6 +86,13 @@ export const DesktopPlayer: React.FC = () => {
 
       {/* Right: Extra Controls & Volume */}
       <div className="flex items-center justify-end w-1/3 space-x-4">
+        <button
+          onClick={() => setPlaybackRate(playbackRate === 3 ? 1 : playbackRate + 1)}
+          aria-label={`Playback speed ${playbackRate}x`}
+          className="flex items-center gap-1.5 rounded-full bg-acid-lime/15 px-3 py-1.5 text-acid-lime ring-1 ring-acid-lime/30 transition hover:bg-acid-lime/25"
+        >
+          <Gauge className="w-4 h-4" /><span className="text-xs font-black">{playbackRate}x</span>
+        </button>
         <button 
           onClick={() => setLyricsOpen(!isLyricsOpen)}
           className={`flex items-center space-x-2 px-4 py-1.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all duration-300 ${isLyricsOpen ? 'bg-acid-lime text-obsidian shadow-[0_0_15px_rgba(204,255,0,0.5)]' : 'bg-white/10 text-white hover:bg-white/20'}`}

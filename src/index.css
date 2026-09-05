@@ -28,6 +28,16 @@
   }
 }
 
+@keyframes player-pulse {
+  0%, 100% { transform: scaleY(0.45); opacity: 0.55; }
+  50% { transform: scaleY(1); opacity: 1; }
+}
+
+.now-playing-bars span {
+  animation: player-pulse 0.9s ease-in-out infinite;
+  transform-origin: bottom;
+}
+
 @keyframes marquee {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }

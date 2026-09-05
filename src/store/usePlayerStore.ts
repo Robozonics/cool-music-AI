@@ -11,6 +11,7 @@ interface PlayerState {
   currentTime: number;
   duration: number;
   volume: number;
+  playbackRate: number;
   queue: Track[];
   isFullPlayerOpen: boolean;
   isLyricsOpen: boolean;
@@ -41,6 +42,7 @@ interface PlayerState {
   setLyricsOpen: (open: boolean) => void;
   setFullPlayerOpen: (open: boolean) => void;
   setVolume: (volume: number) => void;
+  setPlaybackRate: (rate: number) => void;
 }
 
 export const usePlayerStore = create<PlayerState>((set, get) => {
@@ -103,6 +105,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     currentTime: 0,
     duration: 0,
     volume: 1,
+    playbackRate: 1,
     queue: [],
     isFullPlayerOpen: false,
     isLyricsOpen: false,
@@ -212,6 +215,14 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     setQueue: (tracks: Track[]) => set({ queue: tracks }),
     setLyricsOpen: (open: boolean) => set({ isLyricsOpen: open }),
     setFullPlayerOpen: (open: boolean) => set({ isFullPlayerOpen: open }),
+
+    setPlaybackRate: (rate: number) => {
+      const nextRate = [1, 2, 3].includes(rate) ? rate : 1;
+      nativeAudio.playbackRate = nextRate;
+      const { ytEngine } = get();
+      if (ytEngine) ytEngine.setPlaybackRate(nextRate);
+      set({ playbackRate: nextRate });
+    },
 
     setVolume: (vol: number) => {
       const newVol = Math.max(0, Math.min(1, vol));
