@@ -44,6 +44,7 @@ const YouTubeAudioEngine = forwardRef<YouTubeEngineRef, {}>((_, ref) => {
             if (event.data === window.YT.PlayerState.PLAYING) {
               store.setIsPlaying(true);
               store.setDuration(playerRef.current.getDuration());
+              playerRef.current.setPlaybackRate(store.playbackRate);
               
               if (currentInterval.current) clearInterval(currentInterval.current);
               currentInterval.current = setInterval(() => {

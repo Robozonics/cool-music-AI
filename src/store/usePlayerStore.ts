@@ -82,7 +82,10 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     get().nextTrack();
   });
 
-  nativeAudio.addEventListener('play', () => set({ isPlaying: true, isAutoplayBlocked: false }));
+  nativeAudio.addEventListener('play', () => {
+    nativeAudio.playbackRate = get().playbackRate;
+    set({ isPlaying: true, isAutoplayBlocked: false });
+  });
   nativeAudio.addEventListener('pause', () => set({ isPlaying: false }));
 
   const attemptPlay = () => {
