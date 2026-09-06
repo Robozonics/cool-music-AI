@@ -154,18 +154,6 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     playTrack: async (track: Track) => {
       const { ytEngine } = get();
       
-      // Ensure we have MusicBrainz cover art if possible
-      if (track.source === 'saavn' || track.source === 'invidious') {
-        import('../services/unblockedMusicService').then(async (module) => {
-          const mbArt = await module.fetchMusicBrainzCoverArt(track.title, track.artist);
-          if (mbArt && get().currentTrack?.id === track.id) {
-            set((state) => ({
-              currentTrack: state.currentTrack ? { ...state.currentTrack, thumbnail: mbArt } : null
-            }));
-          }
-        });
-      }
-
       set({ currentTrack: track, currentTime: 0, duration: track.duration || 0, isAutoplayBlocked: false });
       
       if (track.source === 'invidious' || track.sourceBadge === 'YouTube Music') {

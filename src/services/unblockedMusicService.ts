@@ -141,16 +141,5 @@ export const searchYouTube = async (query: string): Promise<Track[]> => {
 };
 
 export const searchUnblocked = async (query: string): Promise<Track[]> => {
-  try {
-    const [saavnResults, ytResults] = await Promise.all([
-      searchSaavn(query),
-      searchYouTube(query)
-    ]);
-    
-    // Combine results, prioritizing Saavn but including YouTube to ensure all songs are available
-    return [...saavnResults, ...ytResults];
-  } catch (e) {
-    console.error('Error combining search results:', e);
-    return [];
-  }
+  return await searchSaavn(query);
 };
