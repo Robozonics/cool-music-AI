@@ -65,10 +65,10 @@ export const searchSaavn = async (query: string): Promise<Track[]> => {
 
       let thumbnailUrl = 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=500&q=80';
       if (typeof song.image === 'string') {
-        thumbnailUrl = song.image.replace('150x150', '500x500');
+        thumbnailUrl = song.image.replace(/150x150|50x50|250x250|100x100/g, '500x500');
       } else if (Array.isArray(song.image) && song.image.length > 0) {
         const img = song.image[song.image.length - 1];
-        thumbnailUrl = (img.link || img.url || thumbnailUrl).replace('150x150', '500x500');
+        thumbnailUrl = (img.link || img.url || thumbnailUrl).replace(/150x150|50x50|250x250|100x100/g, '500x500');
       }
 
       tracks.push({

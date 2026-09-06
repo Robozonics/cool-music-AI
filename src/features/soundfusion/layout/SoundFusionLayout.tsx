@@ -50,12 +50,12 @@ export const SoundFusionLayout: React.FC<LayoutProps> = ({ children, activeTab, 
   return (
     <div className={`hidden md:flex h-screen w-screen overflow-hidden ${isDark ? 'bg-[#050505] text-white' : 'bg-zinc-100 text-zinc-900'} flex-col font-sans antialiased relative`}>
       {/* Vibe Orbs (Behind everything) - Audio Reactive */}
-      <div className={`absolute -top-32 -left-32 w-[600px] h-[600px] ${currentColors[0]} rounded-full blur-[120px] opacity-20 pointer-events-none mix-blend-screen transition-colors duration-1000 ${isPlaying ? 'animate-pulse' : ''}`} />
-      <div className={`absolute top-1/2 right-1/4 w-[800px] h-[800px] ${currentColors[1]} rounded-full blur-[150px] opacity-10 pointer-events-none mix-blend-screen transition-colors duration-1000 ${isPlaying ? 'animate-pulse' : ''}`} style={{ animationDelay: '2s' }} />
-      <div className={`absolute -bottom-48 -right-32 w-[500px] h-[500px] ${currentColors[2]} rounded-full blur-[100px] opacity-20 pointer-events-none mix-blend-screen transition-colors duration-1000 ${isPlaying ? 'animate-pulse' : ''}`} style={{ animationDelay: '4s' }} />
-      <div className={`absolute -top-32 -left-32 w-[600px] h-[600px] ${currentColors[3]} rounded-full blur-[120px] opacity-20 pointer-events-none mix-blend-screen transition-colors duration-1000 ${isPlaying ? 'animate-pulse' : ''}`} />
-      <div className={`absolute top-1/2 right-1/4 w-[800px] h-[800px] ${currentColors[4]} rounded-full blur-[150px] opacity-10 pointer-events-none mix-blend-screen transition-colors duration-1000 ${isPlaying ? 'animate-pulse' : ''}`} style={{ animationDelay: '2s' }} />
-      <div className={`absolute -bottom-48 -right-32 w-[500px] h-[500px] ${currentColors[5]} rounded-full blur-[100px] opacity-20 pointer-events-none mix-blend-screen transition-colors duration-1000 ${isPlaying ? 'animate-pulse' : ''}`} style={{ animationDelay: '4s' }} />
+      <div className={`absolute -top-32 -left-32 w-[600px] h-[600px] ${currentColors[0]} rounded-full blur-[120px] opacity-20 pointer-events-none mix-blend-screen transition-colors duration-1000 ${isPlaying ? 'animate-bass-thump' : ''}`} />
+      <div className={`absolute top-1/2 right-1/4 w-[800px] h-[800px] ${currentColors[1]} rounded-full blur-[150px] opacity-10 pointer-events-none mix-blend-screen transition-colors duration-1000 ${isPlaying ? 'animate-bass-thump' : ''}`} style={{ animationDelay: '2s' }} />
+      <div className={`absolute bottom-0 left-1/3 w-[500px] h-[500px] ${currentColors[2]} rounded-full blur-[100px] opacity-20 pointer-events-none mix-blend-screen transition-colors duration-1000 ${isPlaying ? 'animate-bass-thump' : ''}`} style={{ animationDelay: '1s' }} />
+      <div className={`absolute -top-32 -left-32 w-[600px] h-[600px] ${currentColors[3]} rounded-full blur-[120px] opacity-20 pointer-events-none mix-blend-screen transition-colors duration-1000 ${isPlaying ? 'animate-bass-thump' : ''}`} />
+      <div className={`absolute top-1/2 right-1/4 w-[800px] h-[800px] ${currentColors[4]} rounded-full blur-[150px] opacity-10 pointer-events-none mix-blend-screen transition-colors duration-1000 ${isPlaying ? 'animate-bass-thump' : ''}`} style={{ animationDelay: '2s' }} />
+      <div className={`absolute -bottom-48 -right-32 w-[500px] h-[500px] ${currentColors[5]} rounded-full blur-[100px] opacity-20 pointer-events-none mix-blend-screen transition-colors duration-1000 ${isPlaying ? 'animate-bass-thump' : ''}`} style={{ animationDelay: '4s' }} />
 
       {/* Animated Background Mesh */}
       <div className={`absolute inset-0 ${isDark ? 'bg-mesh-gradient opacity-20' : 'bg-gradient-to-br from-purple-100 to-lime-100 opacity-50'} mix-blend-screen pointer-events-none transition-all duration-1000`} />

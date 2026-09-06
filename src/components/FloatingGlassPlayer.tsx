@@ -145,7 +145,8 @@ export const FloatingGlassPlayer: React.FC = () => {
             
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
               <button 
-                className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center hover:scale-110 hover:bg-white/30 transition-all text-white shadow-lg"
+                onClick={() => setFullPlayerOpen(true)}
+                className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center hover:scale-110 hover:bg-white/30 transition-all text-white shadow-lg cursor-pointer"
               >
                 <Maximize2 className="w-4 h-4" />
               </button>
