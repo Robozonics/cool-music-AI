@@ -100,7 +100,7 @@ function App() {
           </button>
         </header>
 
-        <main className="flex-1 overflow-hidden relative z-0 pb-40">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden relative z-0 pb-40">
           {renderContent()}
         </main>
 
