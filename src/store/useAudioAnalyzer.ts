@@ -26,7 +26,7 @@ export const useAudioAnalyzer = () => {
 
     const updateVibe = () => {
       if (analyzerRef.current && dataArrayRef.current) {
-        analyzerRef.current.getByteFrequencyData(dataArrayRef.current);
+        analyzerRef.current.getByteFrequencyData(dataArrayRef.current as any);
         
         // Calculate bass (lower frequencies)
         let bassSum = 0;
