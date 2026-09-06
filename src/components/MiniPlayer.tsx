@@ -9,6 +9,8 @@ export const MiniPlayer: React.FC = () => {
   const setFullPlayerOpen = usePlayerStore(state => state.setFullPlayerOpen);
   const setLyricsOpen = usePlayerStore(state => state.setLyricsOpen);
   const isLyricsOpen = usePlayerStore(state => state.isLyricsOpen);
+  const playbackRate = usePlayerStore(state => state.playbackRate);
+  const setPlaybackRate = usePlayerStore(state => state.setPlaybackRate);
 
   if (!currentTrack) return null;
 
@@ -23,6 +25,16 @@ export const MiniPlayer: React.FC = () => {
         </div>
         
         <div className="flex items-center space-x-3 ml-2" onClick={e => e.stopPropagation()}>
+          <button
+            onClick={() => {
+              const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3];
+              const nextIdx = (speeds.indexOf(playbackRate) + 1) % speeds.length;
+              setPlaybackRate(speeds[nextIdx]);
+            }}
+            className="flex items-center justify-center w-8 h-8 rounded-full font-bold text-xs bg-white/10 text-white hover:bg-white/20 transition-all duration-300"
+          >
+            {playbackRate}x
+          </button>
           <button 
             onClick={() => setLyricsOpen(!isLyricsOpen)}
             className={`p-2 rounded-full transition ${isLyricsOpen ? 'text-acid-lime bg-white/10' : 'text-gray-300 hover:text-white hover:bg-white/5'}`}

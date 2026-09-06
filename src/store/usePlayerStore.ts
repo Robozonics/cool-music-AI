@@ -11,6 +11,7 @@ interface PlayerState {
   currentTime: number;
   duration: number;
   volume: number;
+  playbackRate: number;
   queue: Track[];
   isFullPlayerOpen: boolean;
   isLyricsOpen: boolean;
@@ -41,6 +42,7 @@ interface PlayerState {
   setLyricsOpen: (open: boolean) => void;
   setFullPlayerOpen: (open: boolean) => void;
   setVolume: (volume: number) => void;
+  setPlaybackRate: (rate: number) => void;
 }
 
 export const usePlayerStore = create<PlayerState>((set, get) => {
@@ -103,6 +105,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     currentTime: 0,
     duration: 0,
     volume: 1,
+    playbackRate: 1,
     queue: [],
     isFullPlayerOpen: false,
     isLyricsOpen: false,
@@ -135,13 +138,17 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
         nativeAudio.src = '';
         
         // Play via YT Engine
-        if (ytEngine) ytEngine.playVideo(track.streamUrl);
+        if (ytEngine) {
+          ytEngine.playVideo(track.streamUrl);
+          ytEngine.setPlaybackRate(get().playbackRate);
+        }
       } else {
         // Stop YT engine
         if (ytEngine) ytEngine.pause();
         
         // Play native
         nativeAudio.src = track.streamUrl;
+        nativeAudio.playbackRate = get().playbackRate;
         attemptPlay();
       }
     },
@@ -221,6 +228,16 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
       if (ytEngine) ytEngine.setVolume(newVol);
       
       set({ volume: newVol });
+    },
+    
+    setPlaybackRate: (rate: number) => {
+      const newRate = Math.max(0.5, Math.min(3, rate));
+      const { ytEngine } = get();
+      
+      nativeAudio.playbackRate = newRate;
+      if (ytEngine) ytEngine.setPlaybackRate(newRate);
+      
+      set({ playbackRate: newRate });
     }
   };
 });

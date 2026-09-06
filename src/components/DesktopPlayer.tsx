@@ -8,12 +8,14 @@ export const DesktopPlayer: React.FC = () => {
   const currentTime = usePlayerStore(state => state.currentTime);
   const duration = usePlayerStore(state => state.duration);
   const volume = usePlayerStore(state => state.volume);
+  const playbackRate = usePlayerStore(state => state.playbackRate);
   
   const togglePlay = usePlayerStore(state => state.togglePlay);
   const nextTrack = usePlayerStore(state => state.nextTrack);
   const prevTrack = usePlayerStore(state => state.prevTrack);
   const seek = usePlayerStore(state => state.seek);
   const setVolume = usePlayerStore(state => state.setVolume);
+  const setPlaybackRate = usePlayerStore(state => state.setPlaybackRate);
   
   const isLyricsOpen = usePlayerStore(state => state.isLyricsOpen);
   const setLyricsOpen = usePlayerStore(state => state.setLyricsOpen);
@@ -25,6 +27,12 @@ export const DesktopPlayer: React.FC = () => {
     const m = Math.floor(time / 60);
     const s = Math.floor(time % 60).toString().padStart(2, '0');
     return `${m}:${s}`;
+  };
+
+  const cycleSpeed = () => {
+    const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3];
+    const nextIdx = (speeds.indexOf(playbackRate) + 1) % speeds.length;
+    setPlaybackRate(speeds[nextIdx]);
   };
 
   return (
@@ -87,6 +95,12 @@ export const DesktopPlayer: React.FC = () => {
         >
           <Mic2 className="w-4 h-4" />
           <span>Lyrics</span>
+        </button>
+        <button
+          onClick={cycleSpeed}
+          className="flex items-center justify-center w-10 h-8 rounded-lg font-bold text-xs bg-white/10 text-white hover:bg-white/20 transition-all duration-300"
+        >
+          {playbackRate}x
         </button>
         <div className="flex items-center space-x-2 w-24 group">
           <input 

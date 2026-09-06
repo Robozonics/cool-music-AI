@@ -7,6 +7,7 @@ export interface YouTubeEngineRef {
   resume: () => void;
   seek: (seconds: number) => void;
   setVolume: (volume: number) => void;
+  setPlaybackRate: (rate: number) => void;
 }
 
 const YouTubeAudioEngine = forwardRef<YouTubeEngineRef, {}>((_, ref) => {
@@ -107,6 +108,11 @@ const YouTubeAudioEngine = forwardRef<YouTubeEngineRef, {}>((_, ref) => {
     setVolume: (volume: number) => {
       if (playerRef.current && isReady.current) {
         playerRef.current.setVolume(volume * 100);
+      }
+    },
+    setPlaybackRate: (rate: number) => {
+      if (playerRef.current && isReady.current) {
+        playerRef.current.setPlaybackRate(rate);
       }
     }
   }));
