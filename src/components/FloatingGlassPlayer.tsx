@@ -42,6 +42,7 @@ export const FloatingGlassPlayer: React.FC = () => {
   const repeatMode = usePlayerStore(state => state.repeatMode);
   const setRepeatMode = usePlayerStore(state => state.setRepeatMode);
   const setConnectModalOpen = usePlayerStore(state => state.setConnectModalOpen);
+  const setFullPlayerOpen = usePlayerStore(state => state.setFullPlayerOpen);
 
   // Local state for UI only
   const [isShuffle, setIsShuffle] = useState<boolean>(true);
