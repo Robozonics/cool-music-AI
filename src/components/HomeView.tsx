@@ -77,7 +77,22 @@ export const HomeView: React.FC = () => {
         <h2 className="text-sm font-bold tracking-[0.2em] uppercase text-zinc-500 mb-4">Mood Pills</h2>
         <div className="flex flex-wrap gap-3">
           {MOOD_PILLS.map(pill => (
-            <button key={pill.label} className={`px-5 py-2.5 rounded-full text-xs font-display font-black tracking-widest uppercase transition-transform hover:scale-105 active:scale-95 shadow-lg ${pill.color}`}>
+            <button 
+              key={pill.label} 
+              onClick={async () => {
+                setIsLoading(true);
+                try {
+                  const results = await searchUnblocked(pill.query);
+                  setSectionsData(prev => ({
+                    ...prev,
+                    "CURATED FOR YOU": results.slice(0, 10)
+                  }));
+                } finally {
+                  setIsLoading(false);
+                }
+              }}
+              className={`px-5 py-2.5 rounded-full text-xs font-display font-black tracking-widest uppercase transition-transform hover:scale-105 active:scale-95 shadow-lg ${pill.color}`}
+            >
               {pill.label}
             </button>
           ))}

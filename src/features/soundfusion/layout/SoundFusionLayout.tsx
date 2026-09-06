@@ -16,6 +16,7 @@ interface LayoutProps {
 export const SoundFusionLayout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) => {
   const isLyricsOpen = usePlayerStore(state => state.isLyricsOpen);
   const currentTrack = usePlayerStore(state => state.currentTrack);
+  const isPlaying = usePlayerStore(state => state.isPlaying);
   const [isDark, setIsDark] = useState(true);
 
   // Toggle dark/light theme class on document body
@@ -28,16 +29,33 @@ export const SoundFusionLayout: React.FC<LayoutProps> = ({ children, activeTab, 
       document.documentElement.classList.remove('dark');
     }
   }, [isDark]);
+
+  // Dynamic Vibe Generator (Simulates color extraction safely)
+  const getVibrantColors = (id: string | undefined) => {
+    if (!id) return ['bg-blue-600', 'bg-cyan-500', 'bg-indigo-600', 'bg-blue-900', 'bg-cyan-900', 'bg-blue-800'];
+    const hash = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const palettes = [
+      ['bg-rose-600', 'bg-orange-500', 'bg-pink-600', 'bg-rose-900', 'bg-orange-900', 'bg-pink-800'],
+      ['bg-blue-600', 'bg-cyan-500', 'bg-indigo-600', 'bg-blue-900', 'bg-cyan-900', 'bg-indigo-800'],
+      ['bg-emerald-500', 'bg-teal-400', 'bg-lime-500', 'bg-emerald-900', 'bg-teal-900', 'bg-lime-900'],
+      ['bg-purple-600', 'bg-fuchsia-500', 'bg-pink-500', 'bg-purple-900', 'bg-fuchsia-900', 'bg-pink-900'],
+      ['bg-amber-500', 'bg-yellow-400', 'bg-orange-500', 'bg-amber-900', 'bg-yellow-900', 'bg-orange-900'],
+      ['bg-cyan-500', 'bg-blue-500', 'bg-sky-400', 'bg-cyan-900', 'bg-blue-900', 'bg-sky-900'],
+    ];
+    return palettes[hash % palettes.length];
+  };
+
+  const currentColors = getVibrantColors(currentTrack?.id);
   
   return (
     <div className={`hidden md:flex h-screen w-screen overflow-hidden ${isDark ? 'bg-[#00040a] text-white' : 'bg-zinc-100 text-zinc-900'} flex-col font-sans antialiased relative`}>
-      {/* Vibe Orbs (Behind everything) - Navy Blue/Cyan Vibe */}
-      <div className="absolute -top-32 -left-32 w-[600px] h-[600px] bg-blue-600 rounded-full blur-[120px] opacity-20 pointer-events-none mix-blend-screen animate-pulse" />
-      <div className="absolute top-1/2 right-1/4 w-[800px] h-[800px] bg-cyan-500 rounded-full blur-[150px] opacity-10 pointer-events-none mix-blend-screen animate-pulse" style={{ animationDelay: '2s' }} />
-      <div className="absolute -bottom-48 -right-32 w-[500px] h-[500px] bg-indigo-600 rounded-full blur-[100px] opacity-20 pointer-events-none mix-blend-screen animate-pulse" style={{ animationDelay: '4s' }} />
-      <div className="absolute -top-32 -left-32 w-[600px] h-[600px] bg-blue-900 rounded-full blur-[120px] opacity-20 pointer-events-none mix-blend-screen animate-pulse" />
-      <div className="absolute top-1/2 right-1/4 w-[800px] h-[800px] bg-cyan-900 rounded-full blur-[150px] opacity-10 pointer-events-none mix-blend-screen animate-pulse" style={{ animationDelay: '2s' }} />
-      <div className="absolute -bottom-48 -right-32 w-[500px] h-[500px] bg-blue-800 rounded-full blur-[100px] opacity-20 pointer-events-none mix-blend-screen animate-pulse" style={{ animationDelay: '4s' }} />
+      {/* Vibe Orbs (Behind everything) - Audio Reactive */}
+      <div className={`absolute -top-32 -left-32 w-[600px] h-[600px] ${currentColors[0]} rounded-full blur-[120px] opacity-20 pointer-events-none mix-blend-screen transition-colors duration-1000 ${isPlaying ? 'animate-pulse' : ''}`} />
+      <div className={`absolute top-1/2 right-1/4 w-[800px] h-[800px] ${currentColors[1]} rounded-full blur-[150px] opacity-10 pointer-events-none mix-blend-screen transition-colors duration-1000 ${isPlaying ? 'animate-pulse' : ''}`} style={{ animationDelay: '2s' }} />
+      <div className={`absolute -bottom-48 -right-32 w-[500px] h-[500px] ${currentColors[2]} rounded-full blur-[100px] opacity-20 pointer-events-none mix-blend-screen transition-colors duration-1000 ${isPlaying ? 'animate-pulse' : ''}`} style={{ animationDelay: '4s' }} />
+      <div className={`absolute -top-32 -left-32 w-[600px] h-[600px] ${currentColors[3]} rounded-full blur-[120px] opacity-20 pointer-events-none mix-blend-screen transition-colors duration-1000 ${isPlaying ? 'animate-pulse' : ''}`} />
+      <div className={`absolute top-1/2 right-1/4 w-[800px] h-[800px] ${currentColors[4]} rounded-full blur-[150px] opacity-10 pointer-events-none mix-blend-screen transition-colors duration-1000 ${isPlaying ? 'animate-pulse' : ''}`} style={{ animationDelay: '2s' }} />
+      <div className={`absolute -bottom-48 -right-32 w-[500px] h-[500px] ${currentColors[5]} rounded-full blur-[100px] opacity-20 pointer-events-none mix-blend-screen transition-colors duration-1000 ${isPlaying ? 'animate-pulse' : ''}`} style={{ animationDelay: '4s' }} />
 
       {/* Animated Background Mesh */}
       <div className={`absolute inset-0 ${isDark ? 'bg-mesh-gradient opacity-20' : 'bg-gradient-to-br from-purple-100 to-lime-100 opacity-50'} mix-blend-screen pointer-events-none transition-all duration-1000`} />

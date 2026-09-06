@@ -16,8 +16,11 @@ interface PlayerState {
   isFullPlayerOpen: boolean;
   isLyricsOpen: boolean;
   isShareSnippetOpen: boolean;
+  isConnectModalOpen: boolean;
   searchQuery: string;
   isSpeedWheelOpen: boolean;
+  likedTracks: string[];
+  repeatMode: 'off' | 'all' | 'one';
   
   // Autoplay Handling
   isAutoplayBlocked: boolean;
@@ -44,11 +47,14 @@ interface PlayerState {
   setQueue: (tracks: Track[]) => void;
   setLyricsOpen: (open: boolean) => void;
   setShareSnippetOpen: (open: boolean) => void;
+  setConnectModalOpen: (open: boolean) => void;
   setSearchQuery: (query: string) => void;
   setFullPlayerOpen: (open: boolean) => void;
   setSpeedWheelOpen: (open: boolean) => void;
   setVolume: (volume: number) => void;
   setPlaybackRate: (rate: number) => void;
+  toggleLikeTrack: (trackId: string) => void;
+  setRepeatMode: (mode: 'off' | 'all' | 'one') => void;
 }
 
 export const usePlayerStore = create<PlayerState>((set, get) => {
@@ -119,8 +125,11 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     isFullPlayerOpen: false,
     isLyricsOpen: false,
     isShareSnippetOpen: false,
+    isConnectModalOpen: false,
     searchQuery: '',
     isSpeedWheelOpen: false,
+    likedTracks: [],
+    repeatMode: 'off',
     ytEngine: null,
     isAutoplayBlocked: false,
     isApiKeyModalOpen: false,
@@ -231,9 +240,17 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     setQueue: (tracks: Track[]) => set({ queue: tracks }),
     setLyricsOpen: (open: boolean) => set({ isLyricsOpen: open }),
     setShareSnippetOpen: (open: boolean) => set({ isShareSnippetOpen: open }),
+    setConnectModalOpen: (open: boolean) => set({ isConnectModalOpen: open }),
     setSearchQuery: (query: string) => set({ searchQuery: query }),
     setFullPlayerOpen: (open: boolean) => set({ isFullPlayerOpen: open }),
     setSpeedWheelOpen: (open: boolean) => set({ isSpeedWheelOpen: open }),
+
+    toggleLikeTrack: (trackId: string) => set((state) => ({
+      likedTracks: state.likedTracks.includes(trackId)
+        ? state.likedTracks.filter(id => id !== trackId)
+        : [...state.likedTracks, trackId]
+    })),
+    setRepeatMode: (mode: 'off' | 'all' | 'one') => set({ repeatMode: mode }),
 
     setVolume: (vol: number) => {
       const newVol = Math.max(0, Math.min(1, vol));

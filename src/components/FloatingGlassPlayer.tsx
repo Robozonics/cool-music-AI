@@ -36,17 +36,20 @@ export const FloatingGlassPlayer: React.FC = () => {
   
   const isLyricsOpen = usePlayerStore(state => state.isLyricsOpen);
   const setLyricsOpen = usePlayerStore(state => state.setLyricsOpen);
+  
+  const likedTracks = usePlayerStore(state => state.likedTracks);
+  const toggleLikeTrack = usePlayerStore(state => state.toggleLikeTrack);
+  const repeatMode = usePlayerStore(state => state.repeatMode);
+  const setRepeatMode = usePlayerStore(state => state.setRepeatMode);
+  const setConnectModalOpen = usePlayerStore(state => state.setConnectModalOpen);
 
   // Local state for UI only
-  const [isLiked, setIsLiked] = useState<boolean>(false);
   const [isShuffle, setIsShuffle] = useState<boolean>(true);
-  const [isRepeat, setIsRepeat] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(false);
 
   // Feature Toggles & Modals
   const [showQueue, setShowQueue] = useState<boolean>(false);
   const [showEqualizer, setShowEqualizer] = useState<boolean>(false);
-  const [showConnect, setShowConnect] = useState<boolean>(false);
   const [eqPreset] = useState<string>('Bass Boost');
 
   const formatTime = (seconds: number): string => {
@@ -150,12 +153,12 @@ export const FloatingGlassPlayer: React.FC = () => {
 
           <motion.button
             whileTap={{ scale: 0.8 }}
-            onClick={() => setIsLiked(!isLiked)}
+            onClick={() => toggleLikeTrack(currentTrack.id)}
             className="text-zinc-400 hover:text-pink-500 transition-colors ml-2 shrink-0"
           >
             <Heart
               className={`w-5 h-5 ${
-                isLiked ? 'text-pink-500 fill-pink-500 drop-shadow-[0_0_8px_rgba(236,72,153,0.8)]' : ''
+                likedTracks.includes(currentTrack.id) ? 'text-pink-500 fill-pink-500 drop-shadow-[0_0_8px_rgba(236,72,153,0.8)]' : ''
               }`}
             />
           </motion.button>
@@ -212,13 +215,20 @@ export const FloatingGlassPlayer: React.FC = () => {
 
             <motion.button
               whileTap={{ scale: 0.9 }}
-              onClick={() => setIsRepeat(!isRepeat)}
+              onClick={() => {
+                if (repeatMode === 'off') setRepeatMode('all');
+                else if (repeatMode === 'all') setRepeatMode('one');
+                else setRepeatMode('off');
+              }}
               className={`relative transition-colors ${
-                isRepeat ? 'text-lime-400' : 'text-zinc-400 hover:text-white'
+                repeatMode !== 'off' ? 'text-lime-400' : 'text-zinc-400 hover:text-white'
               }`}
             >
               <Repeat className="w-4 h-4" />
-              {isRepeat && (
+              {repeatMode === 'one' && (
+                <span className="absolute -top-2 -right-2 text-[8px] font-bold bg-lime-400 text-black w-3 h-3 rounded-full flex items-center justify-center">1</span>
+              )}
+              {repeatMode !== 'off' && (
                 <motion.div
                   layoutId="activeDot2"
                   className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-lime-400 rounded-full shadow-[0_0_6px_#a3e635]"
@@ -303,12 +313,8 @@ export const FloatingGlassPlayer: React.FC = () => {
           {/* Spotify Connect Toggle */}
           <motion.button
             whileTap={{ scale: 0.9 }}
-            onClick={() => setShowConnect(!showConnect)}
-            className={`p-2 rounded-xl transition-all ${
-              showConnect
-                ? 'bg-lime-500/20 text-lime-400 border border-lime-500/30'
-                : 'text-zinc-400 hover:text-white'
-            }`}
+            onClick={() => setConnectModalOpen(true)}
+            className={`p-2 rounded-xl transition-all text-zinc-400 hover:text-white`}
           >
             <Laptop2 className="w-4 h-4" />
           </motion.button>

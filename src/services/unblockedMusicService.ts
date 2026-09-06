@@ -116,19 +116,19 @@ export const searchYouTube = async (query: string): Promise<Track[]> => {
   }
 };
 
-export const searchMusicBrainzArt = async (title: string, artist: string): Promise<string | null> => {
+export const searchITunesArt = async (title: string, artist: string): Promise<string | null> => {
   try {
     const query = `${title} ${artist}`.replace(/[^\w\s]/gi, '').trim();
-    const res = await fetch(`https://musicbrainz.org/ws/2/release?query=${encodeURIComponent(query)}&fmt=json&limit=1`);
+    // Using a proxy or direct fetch. iTunes API allows CORS natively for search.
+    const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&limit=1`);
     if (!res.ok) return null;
     const data = await res.json();
-    const releaseId = data.releases?.[0]?.id;
-    if (releaseId) {
-       // Return the direct cover art archive URL
-       return `https://coverartarchive.org/release/${releaseId}/front-250`;
+    if (data.results && data.results.length > 0) {
+      // Get the highest resolution possible
+      return data.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
     }
   } catch (err) {
-    console.error('MusicBrainz Error:', err);
+    console.error('iTunes API Error:', err);
   }
   return null;
 };
@@ -142,11 +142,11 @@ export const searchUnblocked = async (query: string): Promise<Track[]> => {
   const remainingTracks = saavnResults.slice(5);
   
   const augmentedTop = await Promise.all(topTracks.map(async (track) => {
-    // Only fetch MusicBrainz art if Saavn gave us a low-res or generic image
-    if (track.thumbnail.includes('150x150') || track.thumbnail.includes('unsplash')) {
-      const mbArt = await searchMusicBrainzArt(track.title, track.artist);
-      if (mbArt) {
-        return { ...track, thumbnail: mbArt, sourceBadge: 'Studio 320k + MB Art' };
+    // Only fetch iTunes art if Saavn gave us a low-res or generic image
+    if (track.thumbnail.includes('150x150') || track.thumbnail.includes('unsplash') || track.thumbnail.includes('default')) {
+      const itunesArt = await searchITunesArt(track.title, track.artist);
+      if (itunesArt) {
+        return { ...track, thumbnail: itunesArt, sourceBadge: 'Studio 320k + iTunes Art' };
       }
     }
     return track;
