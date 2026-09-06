@@ -18,7 +18,7 @@ interface Section {
 }
 
 const SECTIONS: Section[] = [
-  { title: "CURATED FOR YOU", query: "trending top hits 2026" },
+  { title: "CURATED FOR YOU", query: "trending top hits" },
   { title: "VIBE MATCH", query: "viral tiktok songs" }
 ];
 
