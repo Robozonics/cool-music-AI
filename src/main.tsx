@@ -12,6 +12,7 @@ createRoot(document.getElementById('root')!).render(
 // Register service worker (via vite-plugin-pwa when installed).
 // If the PWA plugin is not installed yet this import will fail during runtime/build —
 // run `npm install` after pulling this change.
+declare const require: any;
 try {
   // This import is virtual and provided by vite-plugin-pwa at build time.
   // When the plugin is not yet installed, this will throw; that's okay —
