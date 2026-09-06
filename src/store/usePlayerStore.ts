@@ -3,7 +3,9 @@ import type { Track } from '../types/music';
 import type { YouTubeEngineRef } from '../components/YouTubeAudioEngine';
 
 // Global native audio instance for Direct CDNs
-const nativeAudio = new Audio();
+export const nativeAudio = new Audio();
+// Cross-origin for audio context
+nativeAudio.crossOrigin = "anonymous";
 
 interface PlayerState {
   currentTrack: Track | null;
@@ -149,8 +151,21 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     setCurrentTime: (time: number) => set({ currentTime: time }),
     setDuration: (duration: number) => set({ duration }),
 
-    playTrack: (track: Track) => {
+    playTrack: async (track: Track) => {
       const { ytEngine } = get();
+      
+      // Ensure we have MusicBrainz cover art if possible
+      if (track.source === 'saavn' || track.source === 'invidious') {
+        import('../services/unblockedMusicService').then(async (module) => {
+          const mbArt = await module.fetchMusicBrainzCoverArt(track.title, track.artist);
+          if (mbArt && get().currentTrack?.id === track.id) {
+            set((state) => ({
+              currentTrack: state.currentTrack ? { ...state.currentTrack, thumbnail: mbArt } : null
+            }));
+          }
+        });
+      }
+
       set({ currentTrack: track, currentTime: 0, duration: track.duration || 0, isAutoplayBlocked: false });
       
       if (track.source === 'invidious' || track.sourceBadge === 'YouTube Music') {

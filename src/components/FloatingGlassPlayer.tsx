@@ -125,24 +125,25 @@ export const FloatingGlassPlayer: React.FC = () => {
         {/* LEFT SECTION: Track Details & Album Art */}
         <div className="flex items-center space-x-4 min-w-[240px] z-10 w-1/3">
           <div className="relative group overflow-hidden rounded-xl h-16 w-16 shrink-0 shadow-2xl">
-            <motion.div
-              animate={{ 
-                rotate: isPlaying ? [0, -1, 1, -1, 1, 0] : 0,
-                scale: isPlaying ? [1, 1.02, 1, 1.02, 1] : 1
-              }}
-              transition={{ 
-                duration: 0.5, 
-                repeat: isPlaying ? Infinity : 0,
-                ease: "easeInOut"
-              }}
-              className="w-full h-full"
-            >
-              <img 
-                src={currentTrack.thumbnail} 
-                alt={currentTrack.title}
-                className="object-cover w-full h-full"
-              />
-            </motion.div>
+            <div className="w-full h-full" style={{ transform: `scale(calc(1 + var(--vibe-intensity, 0) * 0.15))`, transition: 'transform 0.1s ease-out' }}>
+              <motion.div
+                animate={{ 
+                  rotate: isPlaying ? [0, -1, 1, -1, 1, 0] : 0,
+                }}
+                transition={{ 
+                  duration: 0.5, 
+                  repeat: isPlaying ? Infinity : 0,
+                  ease: "easeInOut"
+                }}
+                className="w-full h-full"
+              >
+                <img 
+                  src={currentTrack.thumbnail} 
+                  alt={currentTrack.title}
+                  className="object-cover w-full h-full"
+                />
+              </motion.div>
+            </div>
             
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
               <button 

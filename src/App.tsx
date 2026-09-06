@@ -16,9 +16,11 @@ import { ConnectDeviceModal } from './components/ConnectDeviceModal';
 import { usePlayerStore } from './store/usePlayerStore';
 import { WifiOff, AlertTriangle, Settings } from 'lucide-react';
 
+import { useAudioAnalyzer } from './store/useAudioAnalyzer';
 import { SoundFusionLayout } from './features/soundfusion/layout/SoundFusionLayout';
 
 function App() {
+  useAudioAnalyzer();
   const setYtEngine = usePlayerStore(state => state.setYtEngine);
   const isAutoplayBlocked = usePlayerStore(state => state.isAutoplayBlocked);
   const resolveAutoplayBlock = usePlayerStore(state => state.resolveAutoplayBlock);
@@ -98,7 +100,7 @@ function App() {
           </button>
         </header>
 
-        <main className="flex-1 overflow-hidden relative z-0 pb-24">
+        <main className="flex-1 overflow-hidden relative z-0 pb-40">
           {renderContent()}
         </main>
 

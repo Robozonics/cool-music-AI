@@ -17,6 +17,30 @@ const proxifyUrl = (url: string, type: 'saavn' | 'youtube') => {
   return url;
 };
 
+export const fetchMusicBrainzCoverArt = async (title: string, artist: string): Promise<string | null> => {
+  try {
+    const query = encodeURIComponent(`recording:"${title}" AND artist:"${artist}"`);
+    const mbUrl = `https://musicbrainz.org/ws/2/recording?query=${query}&fmt=json&limit=5`;
+    const res = await fetch(mbUrl, { headers: { 'User-Agent': 'VibeStream/1.0 (test@test.com)' } });
+    if (!res.ok) return null;
+    
+    const data = await res.json();
+    if (!data.recordings || data.recordings.length === 0) return null;
+    
+    // Find the first recording that has a release
+    for (const recording of data.recordings) {
+      if (recording.releases && recording.releases.length > 0) {
+        const releaseId = recording.releases[0].id;
+        // Check if cover art exists (HEAD request might fail due to CORS, but let's just return the URL)
+        return `https://coverartarchive.org/release/${releaseId}/front`;
+      }
+    }
+  } catch (e) {
+    console.error('Error fetching MusicBrainz cover art:', e);
+  }
+  return null;
+};
+
 export const decryptSaavnUrl = (url: string) => {
   try {
     const key = CryptoJS.enc.Utf8.parse(SAAVN_KEY);
@@ -117,5 +141,16 @@ export const searchYouTube = async (query: string): Promise<Track[]> => {
 };
 
 export const searchUnblocked = async (query: string): Promise<Track[]> => {
-  return await searchSaavn(query);
+  try {
+    const [saavnResults, ytResults] = await Promise.all([
+      searchSaavn(query),
+      searchYouTube(query)
+    ]);
+    
+    // Combine results, prioritizing Saavn but including YouTube to ensure all songs are available
+    return [...saavnResults, ...ytResults];
+  } catch (e) {
+    console.error('Error combining search results:', e);
+    return [];
+  }
 };

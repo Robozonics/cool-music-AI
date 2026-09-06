@@ -43,6 +43,8 @@
   background: linear-gradient(-45deg, rgba(88,28,135,0.15), rgba(163,230,53,0.15), rgba(49,46,129,0.15), rgba(0,0,0,0.8));
   background-size: 400% 400%;
   animation: mesh-morph 15s ease infinite;
+  transform: scale(calc(1 + var(--vibe-intensity, 0) * 0.05));
+  transition: transform 0.1s ease-out;
 }
 
 html, body {
