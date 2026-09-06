@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Download, Copy, Instagram, Play } from 'lucide-react';
+import { X, Download, Copy, Camera } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
 
 export const ShareSnippetModal: React.FC = () => {
@@ -98,7 +98,7 @@ export const ShareSnippetModal: React.FC = () => {
                     <span className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-white text-[10px] font-bold tracking-widest uppercase border border-white/20">
                       MUSIFY
                     </span>
-                    <Instagram className="w-5 h-5 text-white/50" />
+                    <Camera className="w-5 h-5 text-white/50" />
                   </div>
                   
                   <div className="flex flex-col items-center">

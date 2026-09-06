@@ -3,7 +3,8 @@ import type { TabType } from '../../../components/BottomNav';
 import { FloatingGlassPlayer } from '../../../components/FloatingGlassPlayer';
 import { SyncedLyrics } from '../../../components/SyncedLyrics';
 import { usePlayerStore } from '../../../store/usePlayerStore';
-import { Camera, Sun, Moon } from 'lucide-react';
+import { Camera, Sun, Moon, AudioWaveform } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 
 interface LayoutProps {
