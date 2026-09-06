@@ -116,41 +116,6 @@ export const searchYouTube = async (query: string): Promise<Track[]> => {
   }
 };
 
-export const searchITunesArt = async (title: string, artist: string): Promise<string | null> => {
-  try {
-    const query = `${title} ${artist}`.replace(/[^\w\s]/gi, '').trim();
-    // Using a proxy or direct fetch. iTunes API allows CORS natively for search.
-    const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&limit=1`);
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (data.results && data.results.length > 0) {
-      // Get the highest resolution possible
-      return data.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
-    }
-  } catch (err) {
-    console.error('iTunes API Error:', err);
-  }
-  return null;
-};
-
 export const searchUnblocked = async (query: string): Promise<Track[]> => {
-  const saavnResults = await searchSaavn(query);
-  
-  // Combine engines (Saavn + YouTube)
-  // We'll primarily use Saavn for audio, but let's augment the top 5 tracks with highly accurate MusicBrainz images
-  const topTracks = saavnResults.slice(0, 5);
-  const remainingTracks = saavnResults.slice(5);
-  
-  const augmentedTop = await Promise.all(topTracks.map(async (track) => {
-    // Only fetch iTunes art if Saavn gave us a low-res or generic image
-    if (track.thumbnail.includes('150x150') || track.thumbnail.includes('unsplash') || track.thumbnail.includes('default')) {
-      const itunesArt = await searchITunesArt(track.title, track.artist);
-      if (itunesArt) {
-        return { ...track, thumbnail: itunesArt, sourceBadge: 'Studio 320k + iTunes Art' };
-      }
-    }
-    return track;
-  }));
-
-  return [...augmentedTop, ...remainingTracks];
+  return await searchSaavn(query);
 };

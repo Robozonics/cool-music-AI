@@ -123,22 +123,34 @@ export const FloatingGlassPlayer: React.FC = () => {
 
         {/* LEFT SECTION: Track Details & Album Art */}
         <div className="flex items-center space-x-4 min-w-[240px] z-10 w-1/3">
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            className="relative group cursor-pointer shrink-0"
-          >
-            {/* Rotating Vinyl effect on Play */}
-            <img
-              src={currentTrack.thumbnail}
-              alt={currentTrack.title}
-              className={`w-14 h-14 rounded-full object-cover border border-white/20 shadow-[0_0_15px_rgba(204,255,0,0.3)] transition-transform duration-700 ${
-                isPlaying ? 'animate-[spin_10s_linear_infinite]' : ''
-              }`}
-            />
-            <div className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <Maximize2 className="w-4 h-4 text-white" />
+          <div className="relative group overflow-hidden rounded-xl h-16 w-16 shrink-0 shadow-2xl">
+            <motion.div
+              animate={{ 
+                rotate: isPlaying ? [0, -1, 1, -1, 1, 0] : 0,
+                scale: isPlaying ? [1, 1.02, 1, 1.02, 1] : 1
+              }}
+              transition={{ 
+                duration: 0.5, 
+                repeat: isPlaying ? Infinity : 0,
+                ease: "easeInOut"
+              }}
+              className="w-full h-full"
+            >
+              <img 
+                src={currentTrack.thumbnail} 
+                alt={currentTrack.title}
+                className="object-cover w-full h-full"
+              />
+            </motion.div>
+            
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <button 
+                className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center hover:scale-110 hover:bg-white/30 transition-all text-white shadow-lg"
+              >
+                <Maximize2 className="w-4 h-4" />
+              </button>
             </div>
-          </motion.div>
+          </div>
 
           <div className="flex flex-col min-w-0 pr-2">
             <div className="flex items-center space-x-2">

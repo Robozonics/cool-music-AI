@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Play, Loader2 } from 'lucide-react';
+import { Play, Loader2, Heart } from 'lucide-react';
 import { searchUnblocked } from '../services/unblockedMusicService';
 import type { Track } from '../types/music';
 import { usePlayerStore } from '../store/usePlayerStore';
@@ -28,6 +28,7 @@ export const HomeView: React.FC = () => {
   
   const playTrack = usePlayerStore(state => state.playTrack);
   const setQueue = usePlayerStore(state => state.setQueue);
+  const likedTracks = usePlayerStore(state => state.likedTracks);
 
   useEffect(() => {
     const fetchHomeData = async () => {
@@ -98,6 +99,24 @@ export const HomeView: React.FC = () => {
           ))}
         </div>
       </div>
+      
+      {/* Liked Songs Row */}
+      {likedTracks.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-display font-black text-white tracking-tight">YOUR LIKED SONGS</h2>
+            <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">{likedTracks.length} TRACKS</span>
+          </div>
+          <div className="flex gap-4 overflow-x-auto pb-6 snap-x hide-scrollbar -mx-6 px-6">
+            <div className="min-w-[280px] p-4 rounded-2xl bg-gradient-to-br from-pink-500/20 to-rose-500/10 border border-pink-500/20 backdrop-blur-md flex flex-col justify-center items-center text-center shadow-[0_0_30px_rgba(236,72,153,0.15)]">
+               <Heart className="w-8 h-8 text-pink-500 mb-2 fill-pink-500" />
+               <p className="text-white font-bold text-sm">You have {likedTracks.length} liked tracks.</p>
+               <p className="text-zinc-400 text-xs mt-1">Go to Vault to manage them.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {SECTIONS.map((section) => {
         const data = sectionsData[section.title];
         if (!data || !data.length) return null;

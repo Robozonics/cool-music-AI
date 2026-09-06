@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Smartphone, Monitor, Tv, Laptop, Cast, Bluetooth, Wifi } from 'lucide-react';
+import { X, Smartphone, Monitor, Tv, Cast, Bluetooth, Wifi } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
 
 export const ConnectDeviceModal: React.FC = () => {
@@ -63,7 +63,25 @@ export const ConnectDeviceModal: React.FC = () => {
                 <Bluetooth className="w-3 h-3" /> Bluetooth
               </div>
               
-              <DeviceItem icon={<Laptop className="w-5 h-5" />} name="AirPods Max" status="Not Connected" />
+              <button 
+                onClick={async () => {
+                  try {
+                    // Trigger actual native browser Bluetooth dialog
+                    await (navigator as any).bluetooth.requestDevice({ acceptAllDevices: true });
+                  } catch (e) {
+                    console.error("Bluetooth pairing cancelled or failed", e);
+                  }
+                }}
+                className="w-full flex items-center gap-4 p-3 rounded-xl hover:bg-white/5 transition-colors text-left group"
+              >
+                <div className="text-zinc-400 group-hover:text-lime-400 transition-colors">
+                  <Bluetooth className="w-5 h-5" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-white font-medium text-sm">Pair New Bluetooth Device</div>
+                  <div className="text-zinc-500 text-xs">Click to open native pairing</div>
+                </div>
+              </button>
             </div>
 
             {/* Footer */}

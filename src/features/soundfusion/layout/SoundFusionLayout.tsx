@@ -48,7 +48,7 @@ export const SoundFusionLayout: React.FC<LayoutProps> = ({ children, activeTab, 
   const currentColors = getVibrantColors(currentTrack?.id);
   
   return (
-    <div className={`hidden md:flex h-screen w-screen overflow-hidden ${isDark ? 'bg-[#00040a] text-white' : 'bg-zinc-100 text-zinc-900'} flex-col font-sans antialiased relative`}>
+    <div className={`hidden md:flex h-screen w-screen overflow-hidden ${isDark ? 'bg-[#050505] text-white' : 'bg-zinc-100 text-zinc-900'} flex-col font-sans antialiased relative`}>
       {/* Vibe Orbs (Behind everything) - Audio Reactive */}
       <div className={`absolute -top-32 -left-32 w-[600px] h-[600px] ${currentColors[0]} rounded-full blur-[120px] opacity-20 pointer-events-none mix-blend-screen transition-colors duration-1000 ${isPlaying ? 'animate-pulse' : ''}`} />
       <div className={`absolute top-1/2 right-1/4 w-[800px] h-[800px] ${currentColors[1]} rounded-full blur-[150px] opacity-10 pointer-events-none mix-blend-screen transition-colors duration-1000 ${isPlaying ? 'animate-pulse' : ''}`} style={{ animationDelay: '2s' }} />
