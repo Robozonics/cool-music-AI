@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Play, Loader2, Sparkles, TrendingUp, Music } from 'lucide-react';
+import { Play, Loader2 } from 'lucide-react';
 import { searchUnblocked } from '../services/unblockedMusicService';
 import type { Track } from '../types/music';
 import { usePlayerStore } from '../store/usePlayerStore';

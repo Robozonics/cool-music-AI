@@ -32,7 +32,6 @@ export const FloatingGlassPlayer: React.FC = () => {
   const prevTrack = usePlayerStore(state => state.prevTrack);
   const seek = usePlayerStore(state => state.seek);
   const setVolume = usePlayerStore(state => state.setVolume);
-  const setSpeedWheelOpen = usePlayerStore(state => state.setSpeedWheelOpen);
   const setPlaybackRate = usePlayerStore(state => state.setPlaybackRate);
   
   const isLyricsOpen = usePlayerStore(state => state.isLyricsOpen);
