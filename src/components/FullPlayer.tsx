@@ -13,7 +13,7 @@ export const FullPlayer: React.FC = () => {
   const nextTrack = usePlayerStore(state => state.nextTrack);
   const prevTrack = usePlayerStore(state => state.prevTrack);
   const seek = usePlayerStore(state => state.seek);
-  const setPlaybackRate = usePlayerStore(state => state.setPlaybackRate);
+  const setSpeedWheelOpen = usePlayerStore(state => state.setSpeedWheelOpen);
   
   const isFullPlayerOpen = usePlayerStore(state => state.isFullPlayerOpen);
   const setFullPlayerOpen = usePlayerStore(state => state.setFullPlayerOpen);
@@ -27,12 +27,6 @@ export const FullPlayer: React.FC = () => {
     const m = Math.floor(time / 60);
     const s = Math.floor(time % 60).toString().padStart(2, '0');
     return `${m}:${s}`;
-  };
-
-  const cycleSpeed = () => {
-    const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3];
-    const nextIdx = (speeds.indexOf(playbackRate) + 1) % speeds.length;
-    setPlaybackRate(speeds[nextIdx]);
   };
 
   return (
@@ -71,7 +65,7 @@ export const FullPlayer: React.FC = () => {
               </button>
             )}
             <button
-              onClick={cycleSpeed}
+              onClick={() => setSpeedWheelOpen(true)}
               className="flex items-center justify-center px-4 py-2.5 rounded-full font-bold text-sm bg-white/10 text-white hover:bg-white/20 transition-all duration-300"
             >
               {playbackRate}x

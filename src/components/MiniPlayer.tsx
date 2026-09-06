@@ -10,7 +10,7 @@ export const MiniPlayer: React.FC = () => {
   const setLyricsOpen = usePlayerStore(state => state.setLyricsOpen);
   const isLyricsOpen = usePlayerStore(state => state.isLyricsOpen);
   const playbackRate = usePlayerStore(state => state.playbackRate);
-  const setPlaybackRate = usePlayerStore(state => state.setPlaybackRate);
+  const setSpeedWheelOpen = usePlayerStore(state => state.setSpeedWheelOpen);
 
   if (!currentTrack) return null;
 
@@ -26,11 +26,7 @@ export const MiniPlayer: React.FC = () => {
         
         <div className="flex items-center space-x-3 ml-2" onClick={e => e.stopPropagation()}>
           <button
-            onClick={() => {
-              const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3];
-              const nextIdx = (speeds.indexOf(playbackRate) + 1) % speeds.length;
-              setPlaybackRate(speeds[nextIdx]);
-            }}
+            onClick={() => setSpeedWheelOpen(true)}
             className="flex items-center justify-center w-8 h-8 rounded-full font-bold text-xs bg-white/10 text-white hover:bg-white/20 transition-all duration-300"
           >
             {playbackRate}x

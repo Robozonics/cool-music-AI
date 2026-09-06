@@ -10,6 +10,7 @@ import { FullPlayer } from './components/FullPlayer';
 import { SyncedLyrics } from './components/SyncedLyrics';
 import YouTubeAudioEngine from './components/YouTubeAudioEngine';
 import { ApiKeyModal } from './components/ApiKeyModal';
+import { SpeedWheel } from './components/SpeedWheel';
 import { usePlayerStore } from './store/usePlayerStore';
 import { WifiOff, AlertTriangle, Settings } from 'lucide-react';
 
@@ -109,6 +110,7 @@ function App() {
          <SyncedLyrics />
       </div>
       <ApiKeyModal isOpen={isApiKeyModalOpen} onClose={() => setApiKeyModalOpen(false)} />
+      <SpeedWheel />
       <YouTubeAudioEngine ref={(engine) => setYtEngine(engine)} />
     </>
   );

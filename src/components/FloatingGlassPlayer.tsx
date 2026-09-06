@@ -32,7 +32,7 @@ export const FloatingGlassPlayer: React.FC = () => {
   const prevTrack = usePlayerStore(state => state.prevTrack);
   const seek = usePlayerStore(state => state.seek);
   const setVolume = usePlayerStore(state => state.setVolume);
-  const setPlaybackRate = usePlayerStore(state => state.setPlaybackRate);
+  const setSpeedWheelOpen = usePlayerStore(state => state.setSpeedWheelOpen);
   
   const isLyricsOpen = usePlayerStore(state => state.isLyricsOpen);
   const setLyricsOpen = usePlayerStore(state => state.setLyricsOpen);
@@ -54,12 +54,6 @@ export const FloatingGlassPlayer: React.FC = () => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-  };
-
-  const cycleSpeed = () => {
-    const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3];
-    const nextIdx = (speeds.indexOf(playbackRate) + 1) % speeds.length;
-    setPlaybackRate(speeds[nextIdx]);
   };
 
   if (!currentTrack) return null;
@@ -274,7 +268,7 @@ export const FloatingGlassPlayer: React.FC = () => {
           {/* Playback Rate Toggle */}
           <motion.button
             whileTap={{ scale: 0.9 }}
-            onClick={cycleSpeed}
+            onClick={() => setSpeedWheelOpen(true)}
             className="flex items-center justify-center min-w-[40px] h-8 rounded-xl font-bold text-xs transition-all text-zinc-400 hover:text-white"
           >
             {playbackRate}x
