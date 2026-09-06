@@ -116,6 +116,41 @@ export const searchYouTube = async (query: string): Promise<Track[]> => {
   }
 };
 
+export const searchMusicBrainzArt = async (title: string, artist: string): Promise<string | null> => {
+  try {
+    const query = `${title} ${artist}`.replace(/[^\w\s]/gi, '').trim();
+    const res = await fetch(`https://musicbrainz.org/ws/2/release?query=${encodeURIComponent(query)}&fmt=json&limit=1`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const releaseId = data.releases?.[0]?.id;
+    if (releaseId) {
+       // Return the direct cover art archive URL
+       return `https://coverartarchive.org/release/${releaseId}/front-250`;
+    }
+  } catch (err) {
+    console.error('MusicBrainz Error:', err);
+  }
+  return null;
+};
+
 export const searchUnblocked = async (query: string): Promise<Track[]> => {
-  return await searchSaavn(query);
+  const saavnResults = await searchSaavn(query);
+  
+  // Combine engines (Saavn + YouTube)
+  // We'll primarily use Saavn for audio, but let's augment the top 5 tracks with highly accurate MusicBrainz images
+  const topTracks = saavnResults.slice(0, 5);
+  const remainingTracks = saavnResults.slice(5);
+  
+  const augmentedTop = await Promise.all(topTracks.map(async (track) => {
+    // Only fetch MusicBrainz art if Saavn gave us a low-res or generic image
+    if (track.thumbnail.includes('150x150') || track.thumbnail.includes('unsplash')) {
+      const mbArt = await searchMusicBrainzArt(track.title, track.artist);
+      if (mbArt) {
+        return { ...track, thumbnail: mbArt, sourceBadge: 'Studio 320k + MB Art' };
+      }
+    }
+    return track;
+  }));
+
+  return [...augmentedTop, ...remainingTracks];
 };

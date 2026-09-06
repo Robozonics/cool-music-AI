@@ -29,11 +29,14 @@ export const SoundFusionLayout: React.FC<LayoutProps> = ({ children, activeTab, 
   }, [isDark]);
   
   return (
-    <div className={`hidden md:flex h-screen w-screen overflow-hidden ${isDark ? 'bg-[#000000] text-white' : 'bg-zinc-100 text-zinc-900'} flex-col font-sans antialiased relative`}>
-      {/* Vibe Orbs (Behind everything) */}
-      <div className="absolute -top-32 -left-32 w-[600px] h-[600px] bg-electric-fuchsia rounded-full blur-[120px] opacity-30 pointer-events-none mix-blend-screen animate-pulse" />
-      <div className="absolute top-1/2 right-1/4 w-[800px] h-[800px] bg-acid-lime rounded-full blur-[150px] opacity-20 pointer-events-none mix-blend-screen animate-pulse" style={{ animationDelay: '2s' }} />
-      <div className="absolute -bottom-48 -right-32 w-[500px] h-[500px] bg-cyber-cyan rounded-full blur-[100px] opacity-20 pointer-events-none mix-blend-screen animate-pulse" style={{ animationDelay: '4s' }} />
+    <div className={`hidden md:flex h-screen w-screen overflow-hidden ${isDark ? 'bg-[#00040a] text-white' : 'bg-zinc-100 text-zinc-900'} flex-col font-sans antialiased relative`}>
+      {/* Vibe Orbs (Behind everything) - Navy Blue/Cyan Vibe */}
+      <div className="absolute -top-32 -left-32 w-[600px] h-[600px] bg-blue-600 rounded-full blur-[120px] opacity-20 pointer-events-none mix-blend-screen animate-pulse" />
+      <div className="absolute top-1/2 right-1/4 w-[800px] h-[800px] bg-cyan-500 rounded-full blur-[150px] opacity-10 pointer-events-none mix-blend-screen animate-pulse" style={{ animationDelay: '2s' }} />
+      <div className="absolute -bottom-48 -right-32 w-[500px] h-[500px] bg-indigo-600 rounded-full blur-[100px] opacity-20 pointer-events-none mix-blend-screen animate-pulse" style={{ animationDelay: '4s' }} />
+      <div className="absolute -top-32 -left-32 w-[600px] h-[600px] bg-blue-900 rounded-full blur-[120px] opacity-20 pointer-events-none mix-blend-screen animate-pulse" />
+      <div className="absolute top-1/2 right-1/4 w-[800px] h-[800px] bg-cyan-900 rounded-full blur-[150px] opacity-10 pointer-events-none mix-blend-screen animate-pulse" style={{ animationDelay: '2s' }} />
+      <div className="absolute -bottom-48 -right-32 w-[500px] h-[500px] bg-blue-800 rounded-full blur-[100px] opacity-20 pointer-events-none mix-blend-screen animate-pulse" style={{ animationDelay: '4s' }} />
 
       {/* Animated Background Mesh */}
       <div className={`absolute inset-0 ${isDark ? 'bg-mesh-gradient opacity-20' : 'bg-gradient-to-br from-purple-100 to-lime-100 opacity-50'} mix-blend-screen pointer-events-none transition-all duration-1000`} />
@@ -41,10 +44,11 @@ export const SoundFusionLayout: React.FC<LayoutProps> = ({ children, activeTab, 
         1. Header Bar (Sticky Top - 64px Height) 
       */}
       <header className={`h-16 w-full shrink-0 flex items-center justify-between px-6 border-b z-50 ${isDark ? 'bg-white/5 border-white/10 backdrop-blur-2xl' : 'bg-white/50 border-black/10 backdrop-blur-2xl'}`}>
-        <div className="flex items-center space-x-4">
-          <div className="flex gap-2 font-display font-bold text-xl tracking-tighter">
-            <span className={isDark ? 'text-white' : 'text-black'}>SOUND</span><span className="text-acid-lime">WAVE</span>
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-lg flex items-center justify-center shadow-[0_0_20px_rgba(59,130,246,0.3)]">
+            <AudioWaveform className="w-5 h-5 text-white" />
           </div>
+          <span className="font-display font-black text-xl tracking-tighter">MUSIFY</span>
         </div>
         
         {/* Dual-Mode Search/Prompt Input */}
@@ -58,10 +62,15 @@ export const SoundFusionLayout: React.FC<LayoutProps> = ({ children, activeTab, 
 
         {/* Global Context Filters & Profile */}
         <div className="flex items-center space-x-4">
-          <button className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest transition-all ${isDark ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-[0_0_15px_rgba(236,72,153,0.5)]' : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'}`}>
+          <motion.button 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => usePlayerStore.getState().setShareSnippetOpen?.(true)}
+            className="px-5 py-2 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-bold text-xs uppercase tracking-widest flex items-center space-x-2 shadow-[0_0_15px_rgba(59,130,246,0.4)]"
+          >
             <Camera className="w-4 h-4" />
-            Share Snippet
-          </button>
+            <span>Share Snippet</span>
+          </motion.button>
           
           <button 
             onClick={() => setIsDark(!isDark)}

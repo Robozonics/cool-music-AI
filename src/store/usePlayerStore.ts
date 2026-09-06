@@ -15,6 +15,8 @@ interface PlayerState {
   queue: Track[];
   isFullPlayerOpen: boolean;
   isLyricsOpen: boolean;
+  isShareSnippetOpen: boolean;
+  searchQuery: string;
   isSpeedWheelOpen: boolean;
   
   // Autoplay Handling
@@ -41,6 +43,8 @@ interface PlayerState {
   prevTrack: () => void;
   setQueue: (tracks: Track[]) => void;
   setLyricsOpen: (open: boolean) => void;
+  setShareSnippetOpen: (open: boolean) => void;
+  setSearchQuery: (query: string) => void;
   setFullPlayerOpen: (open: boolean) => void;
   setSpeedWheelOpen: (open: boolean) => void;
   setVolume: (volume: number) => void;
@@ -114,6 +118,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     queue: [],
     isFullPlayerOpen: false,
     isLyricsOpen: false,
+    isShareSnippetOpen: false,
+    searchQuery: '',
     isSpeedWheelOpen: false,
     ytEngine: null,
     isAutoplayBlocked: false,
@@ -224,6 +230,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
 
     setQueue: (tracks: Track[]) => set({ queue: tracks }),
     setLyricsOpen: (open: boolean) => set({ isLyricsOpen: open }),
+    setShareSnippetOpen: (open: boolean) => set({ isShareSnippetOpen: open }),
+    setSearchQuery: (query: string) => set({ searchQuery: query }),
     setFullPlayerOpen: (open: boolean) => set({ isFullPlayerOpen: open }),
     setSpeedWheelOpen: (open: boolean) => set({ isSpeedWheelOpen: open }),
 

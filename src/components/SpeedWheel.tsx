@@ -154,7 +154,7 @@ export const SpeedWheel: React.FC = () => {
               </div>
             </div>
             
-            <p className="mt-8 text-zinc-500 font-bold text-[10px] tracking-[0.2em] uppercase">
+            <p className="mt-6 mb-14 text-zinc-500 font-bold text-[10px] tracking-[0.2em] uppercase">
               Drag to Adjust Speed
             </p>
 
