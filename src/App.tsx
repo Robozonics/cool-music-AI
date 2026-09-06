@@ -85,7 +85,7 @@ function App() {
 
       {/* --- MOBILE UI (ORIGINAL VIBESTREAM) --- */}
       <div 
-        className="md:hidden h-screen w-full flex flex-col bg-obsidian text-white overflow-hidden relative font-sans transition-all duration-100 ease-out"
+        className="md:hidden h-screen w-full flex flex-col bg-obsidian vibe-pulse text-white overflow-hidden relative font-sans transition-all duration-100 ease-out"
         onClick={() => isAutoplayBlocked && resolveAutoplayBlock()}
       >
         <header className="px-6 py-4 flex justify-between items-center z-10 glass-panel sticky top-0 border-b border-white/5">
