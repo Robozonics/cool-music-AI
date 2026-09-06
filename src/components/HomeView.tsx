@@ -4,16 +4,22 @@ import { searchUnblocked } from '../services/unblockedMusicService';
 import type { Track } from '../types/music';
 import { usePlayerStore } from '../store/usePlayerStore';
 
+const MOOD_PILLS = [
+  { label: '3 AM OVERTHINKING', color: 'bg-lime-400 text-black', query: 'sad lofi study beats' },
+  { label: 'HYPERPOP RUSH', color: 'bg-pink-500 text-white', query: 'hyperpop gym hardstyle' },
+  { label: 'DREAMY DRIFT', color: 'bg-cyan-400 text-black', query: 'dream pop shoegaze' },
+  { label: 'NIGHT DRIVE', color: 'bg-purple-500 text-white', query: 'synthwave night drive' },
+  { label: 'SAD GURL HOURS', color: 'bg-rose-400 text-white', query: 'sad indie pop acoustic' }
+];
+
 interface Section {
   title: string;
-  icon: React.ReactNode;
   query: string;
 }
 
 const SECTIONS: Section[] = [
-  { title: "Trending Bollywood 2026 🌶️", icon: <TrendingUp className="w-5 h-5 text-acid-lime" />, query: "latest hindi hits" },
-  { title: "Top 10 Tamil 🔥", icon: <Music className="w-5 h-5 text-electric-fuchsia" />, query: "top 10 tamil hits" },
-  { title: "Old Hit Hindi Songs 📻", icon: <Sparkles className="w-5 h-5 text-cyber-cyan" />, query: "old hindi romantic hits 90s" }
+  { title: "CURATED FOR YOU", query: "trending top hits 2026" },
+  { title: "VIBE MATCH", query: "viral tiktok songs" }
 ];
 
 export const HomeView: React.FC = () => {
@@ -65,43 +71,54 @@ export const HomeView: React.FC = () => {
   }
 
   return (
-    <div className="pb-32 space-y-16 mt-4">
+    <div className="space-y-12 pb-32">
+      {/* Mood Pills Header */}
+      <div>
+        <h2 className="text-sm font-bold tracking-[0.2em] uppercase text-zinc-500 mb-4">Mood Pills</h2>
+        <div className="flex flex-wrap gap-3">
+          {MOOD_PILLS.map(pill => (
+            <button key={pill.label} className={`px-5 py-2.5 rounded-full text-xs font-display font-black tracking-widest uppercase transition-transform hover:scale-105 active:scale-95 shadow-lg ${pill.color}`}>
+              {pill.label}
+            </button>
+          ))}
+        </div>
+      </div>
       {SECTIONS.map((section) => {
         const data = sectionsData[section.title];
         if (!data || !data.length) return null;
 
         return (
           <div key={section.title}>
-            <div className="flex items-center space-x-4 px-6 mb-8">
-              <div className="p-3 rounded-2xl bg-white/5 border border-white/10 shadow-[0_0_20px_rgba(255,255,255,0.1)]">
-                {section.icon}
-              </div>
-              <h2 className="text-4xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-500 uppercase">{section.title}</h2>
-            </div>
+            <h2 className="text-sm font-bold tracking-[0.2em] uppercase text-zinc-500 mb-6">{section.title}</h2>
             
-            <div className="flex overflow-x-auto hide-scrollbar px-6 pb-8 space-x-6">
-              {data.map((track) => (
-                <div 
-                  key={track.id}
-                  className="flex-none w-48 group cursor-pointer"
-                  onClick={() => handlePlay(track, data)}
-                >
-                  <div className="w-48 h-48 rounded-3xl overflow-hidden mb-4 relative shadow-[0_0_20px_rgba(0,0,0,0.5)] group-hover:shadow-[0_0_30px_rgba(204,255,0,0.3)] transition-all duration-300 group-hover:-translate-y-3 group-hover:scale-105 border border-white/5">
-                    <img 
-                      src={track.thumbnail} 
-                      alt={track.title}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
-                      <div className="w-16 h-16 rounded-full bg-acid-lime text-obsidian flex items-center justify-center transform scale-50 opacity-0 group-hover:scale-100 group-hover:opacity-100 transition-all duration-300 shadow-[0_0_30px_rgba(204,255,0,0.8)]">
-                        <Play className="w-8 h-8 fill-current ml-1" />
+            <div className="flex flex-col space-y-2">
+              {data.map((track, i) => {
+                const num = (i + 1).toString().padStart(2, '0');
+                return (
+                  <div 
+                    key={track.id}
+                    className="group relative flex items-center p-4 rounded-2xl hover:bg-white/5 transition-all cursor-pointer overflow-hidden border border-transparent hover:border-white/10"
+                    onClick={() => handlePlay(track, data)}
+                  >
+                    {/* Massive faded number in background */}
+                    <div className="absolute -right-4 -top-8 text-[120px] font-display font-black text-white/5 pointer-events-none select-none transition-all duration-500 group-hover:text-white/10 group-hover:-translate-x-4">
+                      {num}
+                    </div>
+                    
+                    <div className="relative w-16 h-16 rounded-xl overflow-hidden shadow-lg mr-6 flex-shrink-0">
+                      <img src={track.thumbnail} alt={track.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-sm">
+                        <Play className="w-6 h-6 text-acid-lime fill-current" />
                       </div>
                     </div>
+                    
+                    <div className="relative z-10 flex flex-col justify-center overflow-hidden pr-20">
+                      <h3 className="font-display font-bold text-lg text-white truncate transition-colors group-hover:text-acid-lime">{track.title}</h3>
+                      <p className="text-zinc-400 font-sans text-sm truncate">{track.artist}</p>
+                    </div>
                   </div>
-                  <h3 className="font-black text-lg text-white truncate group-hover:text-acid-lime transition-colors">{track.title}</h3>
-                  <p className="text-gray-400 text-sm font-medium truncate">{track.artist}</p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         );

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Satoshi:wght@300;400;500;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -40,13 +40,13 @@
 }
 
 .bg-mesh-gradient {
-  background: linear-gradient(-45deg, rgba(255,51,102,0.15), rgba(255,153,51,0.15), rgba(0,255,204,0.15), rgba(102,51,255,0.15));
+  background: linear-gradient(-45deg, rgba(88,28,135,0.15), rgba(163,230,53,0.15), rgba(49,46,129,0.15), rgba(0,0,0,0.8));
   background-size: 400% 400%;
   animation: mesh-morph 15s ease infinite;
 }
 
-body {
-  @apply bg-[#06060A] text-white overflow-hidden font-sans;
+html, body {
+  @apply bg-[#06060A] text-white overflow-hidden font-sans m-0 p-0 w-full h-full;
 }
 
 ::-webkit-scrollbar {
