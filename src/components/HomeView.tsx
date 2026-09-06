@@ -97,11 +97,11 @@ export const HomeView: React.FC = () => {
                 return (
                   <div 
                     key={track.id}
-                    className="group relative flex items-center p-4 rounded-2xl hover:bg-white/5 transition-all cursor-pointer overflow-hidden border border-transparent hover:border-white/10"
+                    className="group relative flex items-center p-5 rounded-3xl bg-white/5 hover:bg-white/10 transition-all cursor-pointer overflow-hidden border border-white/10 hover:border-acid-lime/50 shadow-[0_10px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_15px_40px_rgba(163,230,53,0.15)]"
                     onClick={() => handlePlay(track, data)}
                   >
                     {/* Massive faded number in background */}
-                    <div className="absolute -right-4 -top-8 text-[120px] font-display font-black text-white/5 pointer-events-none select-none transition-all duration-500 group-hover:text-white/10 group-hover:-translate-x-4">
+                    <div className="absolute -right-8 -top-12 text-[160px] font-display font-black text-white/5 pointer-events-none select-none transition-all duration-700 group-hover:text-acid-lime/10 group-hover:-translate-x-8 group-hover:scale-110">
                       {num}
                     </div>
                     

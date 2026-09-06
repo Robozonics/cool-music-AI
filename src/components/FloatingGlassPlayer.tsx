@@ -265,31 +265,14 @@ export const FloatingGlassPlayer: React.FC = () => {
 
         {/* RIGHT SECTION: Advanced Features & Volume Slider */}
         <div className="flex items-center space-x-4 min-w-[240px] justify-end z-10 w-1/3">
-          {/* Gen-Z Playback Modifiers */}
-          <div className="flex items-center space-x-2 mr-2">
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={() => setPlaybackRate(playbackRate === 1.25 ? 1 : 1.25)}
-              className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${
-                playbackRate === 1.25 
-                ? 'bg-lime-400 text-black border-lime-400 shadow-[0_0_15px_rgba(163,230,53,0.6)]' 
-                : 'bg-white/5 text-zinc-400 border-white/10 hover:text-white hover:bg-white/10'
-              }`}
-            >
-              1.25x (Sped Up)
-            </motion.button>
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={() => setPlaybackRate(playbackRate === 0.8 ? 1 : 0.8)}
-              className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${
-                playbackRate === 0.8 
-                ? 'bg-purple-500 text-white border-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.6)]' 
-                : 'bg-white/5 text-zinc-400 border-white/10 hover:text-white hover:bg-white/10'
-              }`}
-            >
-              Slowed + Reverb
-            </motion.button>
-          </div>
+          {/* Playback Rate Toggle */}
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={() => setSpeedWheelOpen(true)}
+            className="flex items-center justify-center min-w-[40px] h-8 rounded-xl font-bold text-xs transition-all text-zinc-400 hover:text-white bg-white/5 border border-white/10"
+          >
+            {playbackRate}x
+          </motion.button>
           
           {/* Karaoke Lyrics Toggle */}
           <motion.button

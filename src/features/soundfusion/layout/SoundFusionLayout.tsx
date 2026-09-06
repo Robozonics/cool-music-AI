@@ -30,6 +30,11 @@ export const SoundFusionLayout: React.FC<LayoutProps> = ({ children, activeTab, 
   
   return (
     <div className={`hidden md:flex h-screen w-screen overflow-hidden ${isDark ? 'bg-[#000000] text-white' : 'bg-zinc-100 text-zinc-900'} flex-col font-sans antialiased relative`}>
+      {/* Vibe Orbs (Behind everything) */}
+      <div className="absolute -top-32 -left-32 w-[600px] h-[600px] bg-electric-fuchsia rounded-full blur-[120px] opacity-30 pointer-events-none mix-blend-screen animate-pulse" />
+      <div className="absolute top-1/2 right-1/4 w-[800px] h-[800px] bg-acid-lime rounded-full blur-[150px] opacity-20 pointer-events-none mix-blend-screen animate-pulse" style={{ animationDelay: '2s' }} />
+      <div className="absolute -bottom-48 -right-32 w-[500px] h-[500px] bg-cyber-cyan rounded-full blur-[100px] opacity-20 pointer-events-none mix-blend-screen animate-pulse" style={{ animationDelay: '4s' }} />
+
       {/* Animated Background Mesh */}
       <div className={`absolute inset-0 ${isDark ? 'bg-mesh-gradient opacity-20' : 'bg-gradient-to-br from-purple-100 to-lime-100 opacity-50'} mix-blend-screen pointer-events-none transition-all duration-1000`} />
       {/* 

@@ -154,9 +154,23 @@ export const SpeedWheel: React.FC = () => {
               </div>
             </div>
             
-            <p className="mt-10 text-zinc-500 font-bold text-[10px] tracking-[0.2em] uppercase">
+            <p className="mt-8 text-zinc-500 font-bold text-[10px] tracking-[0.2em] uppercase">
               Drag to Adjust Speed
             </p>
+
+            {/* Quick Modifiers */}
+            <div className="absolute bottom-6 flex space-x-3">
+              <button 
+                onClick={() => setPlaybackRate(0.8)}
+                className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
+                  playbackRate === 0.8
+                  ? 'bg-purple-500 text-white shadow-[0_0_20px_rgba(168,85,247,0.8)]'
+                  : 'bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 border border-white/10'
+                }`}
+              >
+                Slowed + Reverb
+              </button>
+            </div>
           </motion.div>
         </motion.div>
       )}
