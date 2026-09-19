@@ -39,7 +39,17 @@ export const FullPlayer: React.FC = () => {
           <ChevronDown className="w-8 h-8 text-white" />
         </button>
         <span className="text-xs font-bold tracking-widest uppercase text-gray-400">Now Playing</span>
-        <div className="w-12"></div> {/* spacer */}
+        <button 
+          onClick={usePlayerStore(state => state.toggleVideoMode)}
+          className={`px-4 py-2 rounded-full font-bold text-xs uppercase tracking-widest transition-all ${
+            currentTrack.source === 'invidious' || currentTrack.sourceBadge === 'YouTube Music'
+              ? 'bg-acid-lime text-black hover:scale-105 shadow-[0_0_15px_rgba(163,230,53,0.4)]'
+              : 'bg-white/10 text-white/50 cursor-not-allowed'
+          }`}
+          title={currentTrack.source === 'invidious' || currentTrack.sourceBadge === 'YouTube Music' ? 'Switch to Video Mode' : 'Video not available for this track'}
+        >
+          Video
+        </button>
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center relative z-10 w-full max-w-sm mx-auto">

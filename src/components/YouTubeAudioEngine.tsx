@@ -1,5 +1,6 @@
 import { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 import { usePlayerStore } from '../store/usePlayerStore';
+import { ChevronDown } from 'lucide-react';
 
 export interface YouTubeEngineRef {
   playVideo: (queryOrId: string) => void;
@@ -119,9 +120,20 @@ const YouTubeAudioEngine = forwardRef<YouTubeEngineRef, {}>((_, ref) => {
     }
   }));
 
+  const isVideoMode = usePlayerStore(state => state.isVideoMode);
+  const toggleVideoMode = usePlayerStore(state => state.toggleVideoMode);
+  
   return (
-    <div className="hidden" aria-hidden="true">
-      <div ref={containerRef}></div>
+    <div className={isVideoMode ? 'video-mode' : 'audio-mode'} aria-hidden={!isVideoMode}>
+      {isVideoMode && (
+        <button 
+          onClick={toggleVideoMode} 
+          className="absolute top-8 left-6 z-[110] p-3 rounded-full bg-black/40 text-white/80 hover:text-white hover:bg-black/60 transition-colors backdrop-blur-md"
+        >
+          <ChevronDown className="w-8 h-8" />
+        </button>
+      )}
+      <div ref={containerRef} className="w-full h-full"></div>
     </div>
   );
 });

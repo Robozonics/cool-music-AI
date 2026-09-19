@@ -72,3 +72,29 @@ html, body {
 .animate-bass-thump {
   animation: bass-thump 1s ease-in-out infinite;
 }
+
+.audio-mode {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.video-mode {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 100;
+  background: black;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.video-mode iframe {
+  width: 100% !important;
+  height: 100% !important;
+}

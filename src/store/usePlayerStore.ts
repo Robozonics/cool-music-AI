@@ -30,6 +30,7 @@ interface PlayerState {
   repeatMode: 'off' | 'all' | 'one';
   isCrossfadeEnabled: boolean;
   isCrossfading: boolean; // actively crossfading right now
+  isVideoMode: boolean;
 
   // Autoplay Handling
   isAutoplayBlocked: boolean;
@@ -247,6 +248,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     repeatMode: 'off',
     isCrossfadeEnabled: false,
     isCrossfading: false,
+    isVideoMode: false,
+    toggleVideoMode: () => set((state) => ({ isVideoMode: !state.isVideoMode })),
     ytEngine: null,
     isAutoplayBlocked: false,
     isApiKeyModalOpen: false,
