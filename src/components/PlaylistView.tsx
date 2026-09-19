@@ -90,13 +90,13 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
         </button>
         
         <div className="flex flex-col md:flex-row gap-6 items-end mt-4">
-          <div className="w-32 h-32 md:w-48 md:h-48 shrink-0 rounded-2xl overflow-hidden shadow-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+          <div className="relative w-32 h-32 md:w-48 md:h-48 shrink-0 rounded-2xl overflow-hidden shadow-2xl bg-white/5 border border-white/10 flex items-center justify-center">
             {playlist.tracks[0] ? (
               <img src={playlist.tracks[0].thumbnail} alt="Cover" className="w-full h-full object-cover blur-sm scale-110" />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600" />
             )}
-            <div className="absolute inset-0 bg-black/20 flex flex-wrap" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr' }}>
+            <div className="absolute inset-0 bg-black/20" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr' }}>
               {playlist.tracks.slice(0, 4).map((t, i) => (
                 <img key={i} src={t.thumbnail} className="w-full h-full object-cover" alt="" />
               ))}
