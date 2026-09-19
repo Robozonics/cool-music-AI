@@ -1,82 +1,176 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+declare global {
+  interface Window {
+    YT: any;
+    onYouTubeIframeAPIReady: () => void;
+  }
+}
 
 export const VisualCanvasEngine = () => {
   const isVideoMode = usePlayerStore(state => state.isVideoMode);
   const toggleVideoMode = usePlayerStore(state => state.toggleVideoMode);
   const currentTrack = usePlayerStore(state => state.currentTrack);
-  const [pulse, setPulse] = useState(0);
+  const isPlaying = usePlayerStore(state => state.isPlaying);
+  
+  const playerRef = useRef<any>(null);
+  const [isReady, setIsReady] = useState(false);
+  const [videoId, setVideoId] = useState<string | null>(null);
 
-  // Sync with the global --vibe-intensity variable for an audio-reactive effect
+  // 1. Load YT API
   useEffect(() => {
-    if (!isVideoMode) return;
-    let raf: number;
-    const loop = () => {
-      const vibe = getComputedStyle(document.documentElement).getPropertyValue('--vibe-intensity');
-      setPulse(parseFloat(vibe || '0'));
-      raf = requestAnimationFrame(loop);
+    if (!window.YT) {
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      const firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+      window.onYouTubeIframeAPIReady = () => setIsReady(true);
+    } else {
+      setIsReady(true);
+    }
+  }, []);
+
+  // 2. Fetch Video ID when track changes
+  useEffect(() => {
+    if (!currentTrack) return;
+    let isActive = true;
+    const fetchVideo = async () => {
+      try {
+        const query = `${currentTrack.title} ${currentTrack.artist} official music video`;
+        const res = await fetch(`/api/yt-search?q=${encodeURIComponent(query)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (isActive && data.videoId) setVideoId(data.videoId);
+        }
+      } catch (e) {
+        console.error('Failed to fetch video ID', e);
+      }
     };
-    loop();
-    return () => cancelAnimationFrame(raf);
-  }, [isVideoMode]);
+    fetchVideo();
+    return () => { isActive = false; };
+  }, [currentTrack]);
+
+  // 3. Initialize & Update Player
+  useEffect(() => {
+    if (!isReady || !videoId) return;
+    
+    if (!playerRef.current) {
+      playerRef.current = new window.YT.Player('yt-visual-player', {
+        videoId,
+        playerVars: {
+          autoplay: isPlaying ? 1 : 0,
+          controls: 0,
+          disablekb: 1,
+          fs: 0,
+          modestbranding: 1,
+          rel: 0,
+          showinfo: 0,
+          iv_load_policy: 3,
+          mute: 1,
+          playsinline: 1
+        },
+        events: {
+          onReady: (e: any) => {
+            e.target.mute();
+            if (isPlaying) e.target.playVideo();
+            e.target.seekTo(usePlayerStore.getState().currentTime, true);
+          },
+          onStateChange: (e: any) => {
+            if (e.data === window.YT.PlayerState.PLAYING) {
+               // Fine-tune sync if off by more than 1 second
+               const ytTime = e.target.getCurrentTime();
+               const audioTime = usePlayerStore.getState().currentTime;
+               if (Math.abs(ytTime - audioTime) > 1.5) {
+                 e.target.seekTo(audioTime, true);
+               }
+            }
+          }
+        }
+      });
+    } else {
+      playerRef.current.loadVideoById(videoId);
+      playerRef.current.mute();
+      if (isPlaying) {
+        playerRef.current.playVideo();
+      }
+    }
+  }, [isReady, videoId]);
+
+  // 4. Sync Play/Pause & Seek
+  useEffect(() => {
+    if (!playerRef.current || !playerRef.current.playVideo) return;
+    if (isPlaying) {
+      playerRef.current.playVideo();
+      // resync on play
+      const ytTime = playerRef.current.getCurrentTime();
+      const audioTime = usePlayerStore.getState().currentTime;
+      if (Math.abs(ytTime - audioTime) > 1.0) {
+        playerRef.current.seekTo(audioTime, true);
+      }
+    } else {
+      playerRef.current.pauseVideo();
+    }
+  }, [isPlaying]);
+
+  // 5. Sync Scrubber Seeks
+  useEffect(() => {
+    const unsub = usePlayerStore.subscribe((state) => {
+      if (!playerRef.current || !playerRef.current.getCurrentTime) return;
+      const ytTime = playerRef.current.getCurrentTime();
+      if (Math.abs(ytTime - state.currentTime) > 2.5) {
+        playerRef.current.seekTo(state.currentTime, true);
+      }
+    });
+    return unsub;
+  }, []);
 
   return (
-    <AnimatePresence>
-      {isVideoMode && (
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 1.05 }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-          className="fixed inset-0 z-[100] bg-black flex items-center justify-center overflow-hidden"
-        >
-          {/* Close Button */}
-          <button 
-            onClick={toggleVideoMode} 
-            className="absolute top-8 left-6 z-[110] p-3 rounded-full bg-black/40 text-white/80 hover:text-white hover:bg-black/60 transition-colors backdrop-blur-md"
+    <>
+      {/* 
+        The YouTube iframe container must ALWAYS be mounted so it doesn't lose state/buffer.
+        We scale it up significantly (130vw/vh) to push the YouTube logo (bottom right) completely off-screen.
+      */}
+      <div 
+        className={`fixed inset-0 z-[90] bg-black overflow-hidden pointer-events-none transition-opacity duration-500 ${isVideoMode ? 'opacity-100' : 'opacity-0'}`}
+        style={{ visibility: isVideoMode ? 'visible' : 'hidden' }}
+      >
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140vw] h-[140vh] md:w-[120vw] md:h-[120vh]">
+          <div id="yt-visual-player" className="w-full h-full" />
+        </div>
+        {/* Cinematic Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/30 z-[95]" />
+      </div>
+
+      <AnimatePresence>
+        {isVideoMode && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="fixed inset-0 z-[100] pointer-events-none"
           >
-            <ChevronDown className="w-8 h-8" />
-          </button>
-          
-          {/* Track Info Overlay */}
-          {currentTrack && (
-            <div className="absolute bottom-32 left-8 z-[110] pointer-events-none">
-              <h2 className="text-4xl font-black tracking-tight text-white drop-shadow-lg mb-1">{currentTrack.title}</h2>
-              <p className="text-xl font-medium text-white/80 drop-shadow-md">{currentTrack.artist}</p>
-            </div>
-          )}
-          
-          {/* Cinematic Vignette */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 z-[105] pointer-events-none" />
-          
-          {/* Audio-Reactive Fluid Visualizer */}
-          <div 
-            className="absolute inset-0 w-full h-full opacity-80" 
-            style={{
-              background: `radial-gradient(circle at 50% 50%, rgba(163,230,53, ${0.2 + pulse * 0.3}), transparent 70%),
-                           radial-gradient(circle at 80% 20%, rgba(255,0,128, ${0.3 + pulse * 0.2}), transparent 50%),
-                           radial-gradient(circle at 20% 80%, rgba(0,255,255, ${0.2 + pulse * 0.4}), transparent 50%)`,
-              backgroundColor: '#0a0a0c',
-              transform: `scale(${1 + pulse * 0.05})`,
-              transition: 'transform 0.1s ease-out'
-            }}
-          >
-             {currentTrack && (
-                <div 
-                  className="absolute inset-0 bg-cover bg-center opacity-30 mix-blend-overlay"
-                  style={{ 
-                    backgroundImage: `url(${currentTrack.thumbnail})`,
-                    transform: `scale(${1.1 + pulse * 0.1})`,
-                    transition: 'transform 0.1s ease-out',
-                    filter: 'blur(20px)'
-                  }} 
-                />
-             )}
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+            {/* Close Button (Enable pointer events just for this) */}
+            <button 
+              onClick={toggleVideoMode} 
+              className="absolute top-8 left-6 z-[110] p-3 rounded-full bg-black/40 text-white/80 hover:text-white hover:bg-black/60 transition-colors backdrop-blur-md pointer-events-auto"
+            >
+              <ChevronDown className="w-8 h-8" />
+            </button>
+            
+            {/* Track Info Overlay */}
+            {currentTrack && (
+              <div className="absolute bottom-32 left-8 z-[110]">
+                <h2 className="text-4xl font-black tracking-tight text-white drop-shadow-lg mb-1">{currentTrack.title}</h2>
+                <p className="text-xl font-medium text-white/80 drop-shadow-md">{currentTrack.artist}</p>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 };
