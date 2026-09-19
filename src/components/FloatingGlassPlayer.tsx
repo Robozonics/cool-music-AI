@@ -15,6 +15,8 @@ import {
   Laptop2,
   Sliders,
   Maximize2,
+  Loader2,
+  Blend,
 } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
 
@@ -22,11 +24,14 @@ export const FloatingGlassPlayer: React.FC = () => {
   // Use Player Store for real state
   const currentTrack = usePlayerStore(state => state.currentTrack);
   const isPlaying = usePlayerStore(state => state.isPlaying);
+  const isBuffering = usePlayerStore(state => state.isBuffering);
   const currentTime = usePlayerStore(state => state.currentTime);
   const duration = usePlayerStore(state => state.duration);
   const volume = usePlayerStore(state => state.volume);
   const playbackRate = usePlayerStore(state => state.playbackRate);
-  
+  const isCrossfadeEnabled = usePlayerStore(state => state.isCrossfadeEnabled);
+  const toggleCrossfade = usePlayerStore(state => state.toggleCrossfade);
+
   const togglePlay = usePlayerStore(state => state.togglePlay);
   const nextTrack = usePlayerStore(state => state.nextTrack);
   const prevTrack = usePlayerStore(state => state.prevTrack);
@@ -213,7 +218,10 @@ export const FloatingGlassPlayer: React.FC = () => {
               onClick={togglePlay}
               className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-500 via-pink-500 to-lime-400 flex items-center justify-center text-black shadow-[0_0_20px_rgba(163,230,53,0.4)] transition-all shrink-0"
             >
-              {isPlaying ? (
+              {/* BUG FIX 3b: show spinner when buffering, not wrong play/pause state */}
+              {isBuffering ? (
+                <Loader2 className="w-5 h-5 animate-spin text-black" />
+              ) : isPlaying ? (
                 <Pause className="w-5 h-5 fill-black" />
               ) : (
                 <Play className="w-5 h-5 fill-black translate-x-0.5" />
@@ -332,6 +340,20 @@ export const FloatingGlassPlayer: React.FC = () => {
             className={`p-2 rounded-xl transition-all text-zinc-400 hover:text-white`}
           >
             <Laptop2 className="w-4 h-4" />
+          </motion.button>
+
+          {/* Crossfade Toggle — Feature 3b */}
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={toggleCrossfade}
+            title={isCrossfadeEnabled ? 'Crossfade ON (3s)' : 'Crossfade OFF'}
+            className={`p-2 rounded-xl transition-all ${
+              isCrossfadeEnabled
+                ? 'bg-lime-400/20 text-lime-400 border border-lime-400/40 shadow-[0_0_10px_rgba(163,230,53,0.2)]'
+                : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            <Blend className="w-4 h-4" />
           </motion.button>
 
           {/* Equalizer Popover Trigger */}

@@ -13,6 +13,7 @@ import { ApiKeyModal } from './components/ApiKeyModal';
 import { SpeedWheel } from './components/SpeedWheel';
 import { ShareSnippetModal } from './components/ShareSnippetModal';
 import { ConnectDeviceModal } from './components/ConnectDeviceModal';
+import { SamplesFeed } from './components/SamplesFeed';
 import { usePlayerStore } from './store/usePlayerStore';
 import { WifiOff, AlertTriangle, Settings } from 'lucide-react';
 
@@ -51,6 +52,8 @@ function App() {
         return <MoodView />;
       case 'search':
         return <SearchView />;
+      case 'samples':
+        return <SamplesFeed />;
       case 'vault':
         return <OfflineVault />;
       default:

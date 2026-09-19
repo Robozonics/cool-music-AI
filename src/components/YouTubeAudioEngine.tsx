@@ -54,7 +54,8 @@ const YouTubeAudioEngine = forwardRef<YouTubeEngineRef, {}>((_, ref) => {
               store.setIsPlaying(false);
               if (currentInterval.current) clearInterval(currentInterval.current);
               if (event.data === window.YT.PlayerState.ENDED) {
-                store.nextTrack();
+                // BUG FIX 1b: route through handleTrackEnd so repeatMode === 'one' loops correctly
+                store.handleTrackEnd();
               }
             }
           },

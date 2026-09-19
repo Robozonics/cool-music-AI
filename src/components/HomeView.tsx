@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Play, Loader2, Heart } from 'lucide-react';
+import { Play, Loader2, Heart, Sparkles } from 'lucide-react';
 import { searchUnblocked } from '../services/unblockedMusicService';
 import type { Track } from '../types/music';
 import { usePlayerStore } from '../store/usePlayerStore';
+import { DaylistWidget } from './DaylistWidget';
+import { AIPlaylistModal } from './AIPlaylistModal';
 
 const MOOD_PILLS = [
   { label: '3 AM OVERTHINKING', color: 'bg-lime-400 text-black', query: 'sad lofi study beats' },
@@ -25,6 +27,7 @@ const SECTIONS: Section[] = [
 export const HomeView: React.FC = () => {
   const [sectionsData, setSectionsData] = useState<Record<string, Track[]>>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [isAIPlaylistOpen, setIsAIPlaylistOpen] = useState(false);
   
   const playTrack = usePlayerStore(state => state.playTrack);
   const setQueue = usePlayerStore(state => state.setQueue);
@@ -73,7 +76,31 @@ export const HomeView: React.FC = () => {
 
   return (
     <div className="space-y-12 pb-32">
-      {/* Mood Pills Header */}
+      {/* AI Playlist Modal */}
+      <AIPlaylistModal isOpen={isAIPlaylistOpen} onClose={() => setIsAIPlaylistOpen(false)} />
+
+      {/* Daylist Widget — Time-Contextual (Feature 4) */}
+      <DaylistWidget />
+
+      {/* AI Playlist Generator CTA Card */}
+      <div
+        onClick={() => setIsAIPlaylistOpen(true)}
+        className="relative cursor-pointer group overflow-hidden rounded-3xl p-5 bg-gradient-to-r from-purple-600/20 via-pink-600/15 to-violet-600/10 border border-purple-500/25 hover:border-purple-500/50 transition-all shadow-[0_8px_40px_rgba(139,92,246,0.2)] hover:shadow-[0_8px_50px_rgba(139,92,246,0.35)]"
+      >
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-600/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+        <div className="relative z-10 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-[0_0_20px_rgba(139,92,246,0.5)] shrink-0">
+            <Sparkles className="w-6 h-6 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-black text-white text-base">AI Playlist Generator</h3>
+            <p className="text-zinc-400 text-xs mt-0.5">Enter a seed track → get a perfectly sequenced 30-song journey</p>
+          </div>
+          <div className="shrink-0 px-3 py-1.5 rounded-full bg-purple-500/20 border border-purple-500/40 text-purple-300 text-xs font-bold">
+            Try it
+          </div>
+        </div>
+      </div>
       <div>
         <h2 className="text-sm font-bold tracking-[0.2em] uppercase text-zinc-500 mb-4">Mood Pills</h2>
         <div className="flex flex-wrap gap-3">
