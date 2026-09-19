@@ -37,22 +37,29 @@ export const FullPlayer: React.FC = () => {
       {/* Background glow based on thumbnail (simplified for now) */}
       <div className="absolute inset-0 opacity-20 blur-3xl pointer-events-none" style={{ backgroundImage: `url(${currentTrack.thumbnail})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
 
-      <div className="flex justify-between items-center relative z-10 mb-8">
-        <button onClick={() => setFullPlayerOpen(false)} className="p-2 rounded-full hover:bg-white/10 transition">
+      <div className="flex justify-center items-center relative z-10 mb-8 h-12">
+        <button 
+          onClick={() => setFullPlayerOpen(false)} 
+          className="p-2 rounded-full hover:bg-white/10 transition absolute left-0"
+        >
           <ChevronDown className="w-8 h-8 text-white" />
         </button>
+        
         <span className="text-xs font-bold tracking-widest uppercase text-gray-400">Now Playing</span>
-        <button 
-          onClick={toggleVideoMode}
-          className={`px-4 py-2 rounded-full font-bold text-xs uppercase tracking-widest transition-all ${
-            isVideoMode
-              ? 'bg-acid-lime text-black shadow-[0_0_15px_rgba(163,230,53,0.4)]'
-              : 'bg-white/10 text-white hover:bg-white/20 hover:scale-105'
-          }`}
-          title="Watch Music Video"
-        >
-          Video
-        </button>
+        
+        <div className="absolute right-0 flex items-center">
+          <button 
+            onClick={toggleVideoMode}
+            className={`px-4 py-2 rounded-full font-bold text-xs uppercase tracking-widest transition-all ${
+              isVideoMode
+                ? 'bg-acid-lime text-black shadow-[0_0_15px_rgba(163,230,53,0.4)]'
+                : 'bg-white/10 text-white hover:bg-white/20 hover:scale-105'
+            }`}
+            title="Watch Music Video"
+          >
+            Video
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center relative z-10 w-full max-w-sm mx-auto">

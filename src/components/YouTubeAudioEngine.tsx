@@ -133,7 +133,9 @@ const YouTubeAudioEngine = forwardRef<YouTubeEngineRef, {}>((_, ref) => {
           <ChevronDown className="w-8 h-8" />
         </button>
       )}
-      <div ref={containerRef} className="w-full h-full"></div>
+      <div className="w-full h-full">
+        <div ref={containerRef}></div>
+      </div>
     </div>
   );
 });
