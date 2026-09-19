@@ -109,7 +109,7 @@ Output ONLY valid JSON. No markdown, no commentary.`;
 
   // ── Call Gemini ─────────────────────────────────────────────────────────────
   try {
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
 
     const payload = {
       contents: [
