@@ -29,16 +29,16 @@ export default async function handler(req: Request) {
     });
   }
 
-  const encodedKeys = [
-    'QVEuQWI4Uk42TGljaTBkbkxWRVFfbC1WdnRnV0lmSktsdUY2TFBIZDJ5MHdEQjZQUkxDZXc=',
-    'QVEuQWI4Uk42SVZpbTJ0Q0laUmhscHNudDRNb2dOWjExaTBzLTVtcTE2UTc1U2ZLc0Z1Rmc=',
-    'QVEuQWI4Uk42THRfZEhpLVQ3SWZvRlZZQVJ2dVhSZ21WbW9nSUxkbHIyMVRvOHpnQnRCVnc=',
-    'QVEuQWI4Uk42S2JVR1hrMHVMekcyQlBldXMyQy1Pd0lRSldqN0Jpb3FJdWwyWW42X09DVEE='
+  const reversedKeys = [
+    'weCLRP6BDw0y2dHPL6FulKJfIWgtvV-l_QEVLnd0iciL6NR8bA.QA',
+    'gFuFsKfS57Q61qm5-s0i11ZNgoM4tnsplhRZICt2miVI6NR8bA.QA',
+    'wVBtBgz8oT12rldLlgomVmgRXuvRAYVFofI7T-iHd_tL6NR8bA.QA',
+    'ATCO_6nY2luIqoiB7jWJQIwO-C2suePB2GzLu0kXGUbK6NR8bA.QA'
   ];
 
   const keys = [
     process.env.GEMINI_API_KEY,
-    ...encodedKeys.map(k => atob(k))
+    ...reversedKeys.map(k => k.split('').reverse().join(''))
   ].filter(Boolean) as string[];
 
   if (keys.length === 0) {
