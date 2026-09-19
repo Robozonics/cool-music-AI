@@ -162,7 +162,11 @@ Output ONLY valid JSON. No markdown, no commentary.`;
         }
         
         console.error('Gemini API error:', response.statusText);
-        return new Response(JSON.stringify({ error: `Gemini API error: ${response.statusText}` }), {
+        const errorMsg = response.status === 429 
+          ? 'Google AI is currently rate-limited (15 requests/min). Please wait a minute and try again.' 
+          : `Gemini API error: ${response.statusText}`;
+          
+        return new Response(JSON.stringify({ error: errorMsg }), {
           status: response.status,
           headers: { 'Content-Type': 'application/json' }
         });

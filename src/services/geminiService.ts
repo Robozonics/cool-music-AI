@@ -103,8 +103,8 @@ export const generateAIPlaylist = async (
 
   onProgress?.(25, `Generated ${recommendations.length} tracks. Resolving streams…`);
 
-  // Resolve tracks in batches of 5 to avoid rate limits and track progress
-  const batchSize = 5;
+  // Resolve tracks in batches of 3 to avoid rate limits and track progress
+  const batchSize = 3;
   const resolved: Track[] = [];
   const total = recommendations.length;
 
@@ -130,8 +130,8 @@ export const generateAIPlaylist = async (
     const pct = 25 + Math.round(((i + batchSize) / total) * 70);
     onProgress?.(Math.min(pct, 95), `Resolved ${resolved.length} of ${total} tracks…`);
     
-    // Sleep to prevent main thread blocking / network pane freezing
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // Sleep to prevent main thread blocking and Saavn API 429 Rate Limits
+    await new Promise(resolve => setTimeout(resolve, 800));
   }
 
   onProgress?.(100, `Playlist ready! ${resolved.length} tracks loaded.`);
