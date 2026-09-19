@@ -249,7 +249,36 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     isCrossfadeEnabled: false,
     isCrossfading: false,
     isVideoMode: false,
-    toggleVideoMode: () => set((state) => ({ isVideoMode: !state.isVideoMode })),
+    toggleVideoMode: () => {
+      const state = get();
+      const isEnabling = !state.isVideoMode;
+      
+      if (isEnabling && state.currentTrack) {
+        const isYT = state.currentTrack.source === 'invidious' || state.currentTrack.sourceBadge === 'YouTube Music';
+        if (!isYT && state.ytEngine) {
+          // Seamless handoff from Native Audio to YouTube Engine!
+          nativeAudio.pause();
+          
+          // Mute native audio just in case
+          nativeAudio.volume = 0;
+          
+          // Route through YouTube
+          state.currentTrack.source = 'invidious'; // Force source change
+          state.ytEngine.playVideo(`${state.currentTrack.title} ${state.currentTrack.artist} official video`);
+          
+          // We wait a tiny bit for the video to load, then seek
+          setTimeout(() => {
+            if (state.ytEngine) {
+              state.ytEngine.seek(state.currentTime);
+              state.ytEngine.setVolume(state.volume);
+              if (state.isPlaying) state.ytEngine.resume();
+            }
+          }, 1500);
+        }
+      }
+      
+      set({ isVideoMode: isEnabling });
+    },
     ytEngine: null,
     isAutoplayBlocked: false,
     isApiKeyModalOpen: false,

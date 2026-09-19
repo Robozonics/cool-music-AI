@@ -42,11 +42,11 @@ export const FullPlayer: React.FC = () => {
         <button 
           onClick={usePlayerStore(state => state.toggleVideoMode)}
           className={`px-4 py-2 rounded-full font-bold text-xs uppercase tracking-widest transition-all ${
-            currentTrack.source === 'invidious' || currentTrack.sourceBadge === 'YouTube Music'
-              ? 'bg-acid-lime text-black hover:scale-105 shadow-[0_0_15px_rgba(163,230,53,0.4)]'
-              : 'bg-white/10 text-white/50 cursor-not-allowed'
+            usePlayerStore(state => state.isVideoMode)
+              ? 'bg-acid-lime text-black shadow-[0_0_15px_rgba(163,230,53,0.4)]'
+              : 'bg-white/10 text-white hover:bg-white/20 hover:scale-105'
           }`}
-          title={currentTrack.source === 'invidious' || currentTrack.sourceBadge === 'YouTube Music' ? 'Switch to Video Mode' : 'Video not available for this track'}
+          title="Watch Music Video"
         >
           Video
         </button>
