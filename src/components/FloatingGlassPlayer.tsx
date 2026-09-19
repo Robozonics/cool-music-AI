@@ -16,8 +16,8 @@ import {
   Sliders,
   Maximize2,
   Loader2,
-  Blend,
   Video,
+  X,
 } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
 
@@ -51,6 +51,7 @@ export const FloatingGlassPlayer: React.FC = () => {
   const setFullPlayerOpen = usePlayerStore(state => state.setFullPlayerOpen);
   const isVideoMode = usePlayerStore(state => state.isVideoMode);
   const toggleVideoMode = usePlayerStore(state => state.toggleVideoMode);
+  const closePlayer = usePlayerStore(state => state.closePlayer);
 
   // Local state for UI only
   const [isShuffle, setIsShuffle] = useState<boolean>(true);
@@ -419,6 +420,19 @@ export const FloatingGlassPlayer: React.FC = () => {
               </div>
             </div>
           </div>
+          
+          {/* Close Player Button */}
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={(e) => {
+              e.stopPropagation();
+              closePlayer();
+            }}
+            title="Close Player"
+            className="p-2 ml-2 rounded-xl transition-all text-zinc-400 hover:text-red-500 hover:bg-white/5"
+          >
+            <X className="w-5 h-5" />
+          </motion.button>
         </div>
       </motion.div>
     </div>

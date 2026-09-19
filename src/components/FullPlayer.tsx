@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, SkipForward, SkipBack, ChevronDown, Mic2, Download, Plus } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, ChevronDown, Mic2, Download, Plus, X } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
 
 export const FullPlayer: React.FC = () => {
@@ -47,7 +47,7 @@ export const FullPlayer: React.FC = () => {
         
         <span className="text-xs font-bold tracking-widest uppercase text-gray-400">Now Playing</span>
         
-        <div className="absolute right-0 flex items-center">
+        <div className="absolute right-0 flex items-center space-x-2">
           <button 
             onClick={toggleVideoMode}
             className={`px-4 py-2 rounded-full font-bold text-xs uppercase tracking-widest transition-all ${
@@ -58,6 +58,13 @@ export const FullPlayer: React.FC = () => {
             title="Watch Music Video"
           >
             Video
+          </button>
+          <button
+            onClick={() => usePlayerStore.getState().closePlayer()}
+            className="p-2 rounded-full text-gray-400 hover:text-red-500 hover:bg-white/10 transition"
+            title="Close Player"
+          >
+            <X className="w-6 h-6" />
           </button>
         </div>
       </div>

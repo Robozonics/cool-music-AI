@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, Mic2, Video } from 'lucide-react';
+import { Play, Pause, Mic2, Video, X } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
 
 export const MiniPlayer: React.FC = () => {
@@ -13,6 +13,7 @@ export const MiniPlayer: React.FC = () => {
   const setSpeedWheelOpen = usePlayerStore(state => state.setSpeedWheelOpen);
   const isVideoMode = usePlayerStore(state => state.isVideoMode);
   const toggleVideoMode = usePlayerStore(state => state.toggleVideoMode);
+  const closePlayer = usePlayerStore(state => state.closePlayer);
 
   if (!currentTrack) return null;
 
@@ -53,6 +54,17 @@ export const MiniPlayer: React.FC = () => {
             className="p-3 rounded-full bg-white text-obsidian hover:scale-105 transition-transform"
           >
             {isPlaying ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current ml-0.5" />}
+          </button>
+          
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              closePlayer();
+            }}
+            className="p-2 rounded-full text-gray-400 hover:text-red-500 hover:bg-white/5 transition"
+            title="Close Player"
+          >
+            <X className="w-5 h-5" />
           </button>
         </div>
       </div>

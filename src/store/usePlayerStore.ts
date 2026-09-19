@@ -47,6 +47,7 @@ interface PlayerState {
   // Actions
   playTrack: (track: Track) => void;
   togglePlay: () => void;
+  closePlayer: () => void;
   seek: (seconds: number) => void;
   nextTrack: () => void;
   prevTrack: () => void;
@@ -293,6 +294,21 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
       } else {
         attemptPlay();
       }
+    },
+
+    closePlayer: () => {
+      nativeAudio.pause();
+      nativeAudio.src = '';
+      crossfadeAudio.pause();
+      crossfadeAudio.src = '';
+      set({ 
+        currentTrack: null, 
+        isPlaying: false, 
+        currentTime: 0, 
+        isFullPlayerOpen: false,
+        isLyricsOpen: false,
+        isVideoMode: false
+      });
     },
 
     seek: (seconds: number) => {
