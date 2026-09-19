@@ -9,7 +9,7 @@ const reversedKeys = [
 ];
 
 const getKeys = () => [
-  import.meta.env?.VITE_GEMINI_API_KEY,
+  (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env.VITE_GEMINI_API_KEY : undefined,
   ...reversedKeys.map(k => k.split('').reverse().join(''))
 ].filter(Boolean) as string[];
 
