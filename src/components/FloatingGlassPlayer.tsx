@@ -17,6 +17,7 @@ import {
   Maximize2,
   Loader2,
   Blend,
+  Video,
 } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
 
@@ -48,6 +49,8 @@ export const FloatingGlassPlayer: React.FC = () => {
   const setRepeatMode = usePlayerStore(state => state.setRepeatMode);
   const setConnectModalOpen = usePlayerStore(state => state.setConnectModalOpen);
   const setFullPlayerOpen = usePlayerStore(state => state.setFullPlayerOpen);
+  const isVideoMode = usePlayerStore(state => state.isVideoMode);
+  const toggleVideoMode = usePlayerStore(state => state.toggleVideoMode);
 
   // Local state for UI only
   const [isShuffle, setIsShuffle] = useState<boolean>(true);
@@ -305,6 +308,20 @@ export const FloatingGlassPlayer: React.FC = () => {
             className="flex items-center justify-center min-w-[40px] h-8 rounded-xl font-bold text-xs transition-all text-zinc-400 hover:text-white bg-white/5 border border-white/10"
           >
             {playbackRate}x
+          </motion.button>
+          
+          {/* Video Toggle */}
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={toggleVideoMode}
+            title={isVideoMode ? 'Hide Music Video' : 'Watch Music Video'}
+            className={`p-2 rounded-xl transition-all ${
+              isVideoMode
+                ? 'bg-acid-lime/20 text-acid-lime border border-acid-lime/40 shadow-[0_0_10px_rgba(163,230,53,0.2)]'
+                : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            <Video className="w-4 h-4" />
           </motion.button>
           
           {/* Karaoke Lyrics Toggle */}

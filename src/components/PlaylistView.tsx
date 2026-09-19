@@ -13,7 +13,6 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
   const playTrack = usePlayerStore(state => state.playTrack);
   const setQueue = usePlayerStore(state => state.setQueue);
   const currentTrack = usePlayerStore(state => state.currentTrack);
-  const isPlaying = usePlayerStore(state => state.isPlaying);
 
   const playlist = savedPlaylists.find(p => p.id === playlistId);
 

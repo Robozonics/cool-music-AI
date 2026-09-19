@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, Mic2 } from 'lucide-react';
+import { Play, Pause, Mic2, Video } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
 
 export const MiniPlayer: React.FC = () => {
@@ -11,6 +11,8 @@ export const MiniPlayer: React.FC = () => {
   const isLyricsOpen = usePlayerStore(state => state.isLyricsOpen);
   const playbackRate = usePlayerStore(state => state.playbackRate);
   const setSpeedWheelOpen = usePlayerStore(state => state.setSpeedWheelOpen);
+  const isVideoMode = usePlayerStore(state => state.isVideoMode);
+  const toggleVideoMode = usePlayerStore(state => state.toggleVideoMode);
 
   if (!currentTrack) return null;
 
@@ -31,6 +33,14 @@ export const MiniPlayer: React.FC = () => {
           >
             {playbackRate}x
           </button>
+          <button 
+            onClick={toggleVideoMode}
+            className={`p-2 rounded-full transition ${isVideoMode ? 'text-acid-lime bg-white/10 shadow-[0_0_10px_rgba(163,230,53,0.3)]' : 'text-gray-300 hover:text-white hover:bg-white/5'}`}
+            title="Watch Music Video"
+          >
+            <Video className="w-5 h-5" />
+          </button>
+          
           <button 
             onClick={() => setLyricsOpen(!isLyricsOpen)}
             className={`p-2 rounded-full transition ${isLyricsOpen ? 'text-acid-lime bg-white/10' : 'text-gray-300 hover:text-white hover:bg-white/5'}`}
