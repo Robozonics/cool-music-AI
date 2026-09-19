@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Play, Loader2, Heart, Sparkles } from 'lucide-react';
+import { Play, Loader2, Heart, Sparkles, Plus } from 'lucide-react';
 import { searchUnblocked } from '../services/unblockedMusicService';
 import type { Track } from '../types/music';
 import { usePlayerStore } from '../store/usePlayerStore';
@@ -180,9 +180,22 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab }) => {
                       </div>
                     </div>
                     
-                    <div className="relative z-10 flex flex-col justify-center overflow-hidden pr-20">
+                    <div className="relative z-10 flex flex-col justify-center overflow-hidden flex-1">
                       <h3 className="font-display font-bold text-lg text-white truncate transition-colors group-hover:text-acid-lime">{track.title}</h3>
                       <p className="text-zinc-400 font-sans text-sm truncate">{track.artist}</p>
+                    </div>
+
+                    <div className="relative z-10 ml-4 shrink-0">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          usePlayerStore.getState().openAddToPlaylistModal(track);
+                        }}
+                        className="p-3 text-zinc-500 hover:text-acid-lime hover:bg-white/10 rounded-full transition-all"
+                        title="Add to Playlist"
+                      >
+                        <Plus className="w-6 h-6" />
+                      </button>
                     </div>
                   </div>
                 );

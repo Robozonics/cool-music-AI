@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Play, Download, Loader2, Sparkles } from 'lucide-react';
+import { Search, Play, Download, Loader2, Sparkles, Plus } from 'lucide-react';
 import { searchUnblocked } from '../services/unblockedMusicService';
 import { searchBestMusicWithAI } from '../services/geminiService';
 import type { Track } from '../types/music';
@@ -176,15 +176,27 @@ export const SearchView: React.FC = () => {
                   {track.sourceBadge}
                 </span>
                 
-                {track.source === 'saavn' && (
-                  <button 
-                    onClick={() => handleDownload(track)}
-                    className="p-1.5 rounded-full hover:bg-white/10 transition text-gray-400 hover:text-cyber-cyan"
-                    title="Download Offline"
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      usePlayerStore.getState().openAddToPlaylistModal(track);
+                    }}
+                    className="p-1.5 rounded-full hover:bg-white/10 transition text-gray-400 hover:text-acid-lime"
+                    title="Add to Playlist"
                   >
-                    <Download className="w-4 h-4" />
+                    <Plus className="w-4 h-4" />
                   </button>
-                )}
+                  {track.source === 'saavn' && (
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleDownload(track); }}
+                      className="p-1.5 rounded-full hover:bg-white/10 transition text-gray-400 hover:text-cyber-cyan"
+                      title="Download Offline"
+                    >
+                      <Download className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
             

@@ -67,7 +67,14 @@ interface PlayerState {
   // Saved Playlists
   savedPlaylists: SavedPlaylist[];
   savePlaylist: (name: string, tracks: Track[]) => string;
+  addTrackToPlaylist: (playlistId: string, track: Track) => void;
   deletePlaylist: (id: string) => void;
+
+  // Add to Playlist Modal
+  isAddToPlaylistModalOpen: boolean;
+  trackToAddToPlaylist: Track | null;
+  openAddToPlaylistModal: (track: Track) => void;
+  closeAddToPlaylistModal: () => void;
 }
 
 export const usePlayerStore = create<PlayerState>((set, get) => {
@@ -351,6 +358,12 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
       set({ playbackRate: newRate });
     },
 
+    isAddToPlaylistModalOpen: false,
+    trackToAddToPlaylist: null,
+    
+    openAddToPlaylistModal: (track: Track) => set({ isAddToPlaylistModalOpen: true, trackToAddToPlaylist: track }),
+    closeAddToPlaylistModal: () => set({ isAddToPlaylistModalOpen: false, trackToAddToPlaylist: null }),
+
     savePlaylist: (name: string, tracks: Track[]) => {
       const id = Math.random().toString(36).substring(2, 9);
       set(state => ({
@@ -361,6 +374,14 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
       }));
       return id;
     },
+
+    addTrackToPlaylist: (playlistId: string, track: Track) => set(state => ({
+      savedPlaylists: state.savedPlaylists.map(p => 
+        p.id === playlistId 
+          ? { ...p, tracks: [...p.tracks, track] }
+          : p
+      )
+    })),
 
     deletePlaylist: (id: string) => set(state => ({
       savedPlaylists: state.savedPlaylists.filter(p => p.id !== id)

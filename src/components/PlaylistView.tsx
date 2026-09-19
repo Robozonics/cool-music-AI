@@ -1,7 +1,8 @@
 import React from 'react';
 import { usePlayerStore } from '../store/usePlayerStore';
-import { Play, Shuffle, Clock, ChevronLeft } from 'lucide-react';
+import { Play, Shuffle, Clock, ChevronLeft, Download, Plus, CheckCircle2 } from 'lucide-react';
 import type { TabType } from './BottomNav';
+import { downloadTrack } from '../services/downloadService';
 
 interface PlaylistViewProps {
   playlistId: string;
@@ -13,6 +14,8 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
   const playTrack = usePlayerStore(state => state.playTrack);
   const setQueue = usePlayerStore(state => state.setQueue);
   const currentTrack = usePlayerStore(state => state.currentTrack);
+  const [isDownloading, setIsDownloading] = React.useState(false);
+  const [downloadProgress, setDownloadProgress] = React.useState(0);
 
   const playlist = savedPlaylists.find(p => p.id === playlistId);
 
@@ -44,6 +47,36 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
   const formattedDuration = totalDuration > 0 
     ? `${Math.floor(totalDuration / 60)} min`
     : `${playlist.tracks.length * 3} min est`;
+
+  const handleDownloadPlaylist = async () => {
+    if (isDownloading || playlist.tracks.length === 0) return;
+    setIsDownloading(true);
+    setDownloadProgress(0);
+    let successCount = 0;
+    
+    for (let i = 0; i < playlist.tracks.length; i++) {
+      const track = playlist.tracks[i];
+      if (track.source === 'saavn' && !track.isOffline) {
+        const success = await downloadTrack(track);
+        if (success) {
+           usePlayerStore.setState(state => ({
+              savedPlaylists: state.savedPlaylists.map(p => 
+                p.id === playlist.id 
+                  ? { ...p, tracks: p.tracks.map(t => t.id === track.id ? { ...t, isOffline: true } : t) }
+                  : p
+              )
+           }));
+        }
+      }
+      successCount++;
+      setDownloadProgress(Math.floor((successCount / playlist.tracks.length) * 100));
+    }
+    
+    setTimeout(() => {
+      setIsDownloading(false);
+      setDownloadProgress(0);
+    }, 2000);
+  };
 
   return (
     <div className="h-full flex flex-col bg-obsidian">
@@ -83,19 +116,31 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
       </div>
 
       {/* Action Buttons */}
-      <div className="px-6 py-4 flex items-center gap-4 border-b border-white/5">
+      <div className="px-6 py-4 flex items-center gap-6 border-b border-white/5">
         <button 
           onClick={handlePlayAll}
-          className="w-14 h-14 rounded-full bg-acid-lime text-black flex items-center justify-center hover:scale-105 transition-transform shadow-[0_0_20px_rgba(163,230,53,0.3)]"
+          className="w-14 h-14 rounded-full bg-acid-lime text-black flex items-center justify-center hover:scale-105 transition-transform shadow-[0_0_20px_rgba(163,230,53,0.3)] shrink-0"
         >
           <Play className="w-6 h-6 ml-1 fill-black" />
         </button>
         <button 
           onClick={handleShuffle}
-          className="px-6 h-14 rounded-full bg-white/10 text-white font-bold tracking-wide flex items-center gap-2 hover:bg-white/20 transition-colors"
+          className="p-3 rounded-full text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
+          title="Shuffle"
         >
-          <Shuffle className="w-5 h-5" />
-          Shuffle
+          <Shuffle className="w-6 h-6" />
+        </button>
+        <button 
+          onClick={handleDownloadPlaylist}
+          disabled={isDownloading}
+          className={`p-3 rounded-full transition-colors flex items-center gap-2 ${isDownloading ? 'text-acid-lime' : 'text-zinc-400 hover:text-white hover:bg-white/10'}`}
+          title="Download Playlist"
+        >
+          {isDownloading ? (
+             <span className="text-xs font-bold">{downloadProgress}%</span>
+          ) : (
+             <Download className="w-6 h-6" />
+          )}
         </button>
       </div>
 
@@ -132,11 +177,47 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
                 </div>
                 
                 {track.duration && (
-                  <div className="flex items-center gap-1.5 text-xs text-zinc-500 font-mono shrink-0">
+                  <div className="flex items-center gap-1.5 text-xs text-zinc-500 font-mono shrink-0 mr-4">
                     <Clock className="w-3 h-3" />
                     {Math.floor(track.duration / 60)}:{(track.duration % 60).toString().padStart(2, '0')}
                   </div>
                 )}
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      usePlayerStore.getState().openAddToPlaylistModal(track);
+                    }}
+                    className="p-2 rounded-full hover:bg-white/10 transition text-zinc-500 hover:text-acid-lime"
+                    title="Add to Playlist"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                  {track.source === 'saavn' && (
+                    <button 
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        if (!track.isOffline) {
+                           const success = await downloadTrack(track);
+                           if (success) {
+                             usePlayerStore.setState(state => ({
+                                savedPlaylists: state.savedPlaylists.map(p => 
+                                  p.id === playlist.id 
+                                    ? { ...p, tracks: p.tracks.map(t => t.id === track.id ? { ...t, isOffline: true } : t) }
+                                    : p
+                                )
+                             }));
+                           }
+                        }
+                      }}
+                      className={`p-2 rounded-full transition ${track.isOffline ? 'text-acid-lime hover:bg-acid-lime/10' : 'text-zinc-500 hover:text-cyber-cyan hover:bg-white/10'}`}
+                      title="Download Offline"
+                    >
+                      {track.isOffline ? <CheckCircle2 className="w-4 h-4" /> : <Download className="w-4 h-4" />}
+                    </button>
+                  )}
+                </div>
               </div>
             );
           })}

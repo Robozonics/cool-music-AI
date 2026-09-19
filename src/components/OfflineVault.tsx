@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Play, Trash2, HardDrive } from 'lucide-react';
+import { Play, Trash2, HardDrive, Plus } from 'lucide-react';
 import { getOfflineTracks, deleteOfflineTrack } from '../services/downloadService';
 import type { Track } from '../types/music';
 import { usePlayerStore } from '../store/usePlayerStore';
@@ -66,12 +66,24 @@ export const OfflineVault: React.FC = () => {
                 <p className="text-gray-400 text-sm truncate">{track.artist}</p>
               </div>
 
-              <button 
-                onClick={() => handleDelete(track.id)}
-                className="p-3 text-gray-500 hover:text-red-500 transition-colors ml-4"
-              >
-                <Trash2 className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-2 ml-4">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    usePlayerStore.getState().openAddToPlaylistModal(track);
+                  }}
+                  className="p-3 text-gray-500 hover:text-acid-lime transition-colors"
+                  title="Add to Playlist"
+                >
+                  <Plus className="w-5 h-5" />
+                </button>
+                <button 
+                  onClick={() => handleDelete(track.id)}
+                  className="p-3 text-gray-500 hover:text-red-500 transition-colors"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+              </div>
             </div>
           ))}
         </div>

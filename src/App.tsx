@@ -13,6 +13,7 @@ import { ApiKeyModal } from './components/ApiKeyModal';
 import { SpeedWheel } from './components/SpeedWheel';
 import { ShareSnippetModal } from './components/ShareSnippetModal';
 import { VisualCanvasEngine } from './components/VisualCanvasEngine';
+import { AddToPlaylistModal } from './components/AddToPlaylistModal';
 import { ConnectDeviceModal } from './components/ConnectDeviceModal';
 import { SamplesFeed } from './components/SamplesFeed';
 import { usePlayerStore } from './store/usePlayerStore';
@@ -126,6 +127,7 @@ function App() {
       <ShareSnippetModal />
       <ConnectDeviceModal />
       <VisualCanvasEngine />
+      <AddToPlaylistModal />
     </>
   );
 }
