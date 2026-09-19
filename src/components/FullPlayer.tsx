@@ -19,6 +19,9 @@ export const FullPlayer: React.FC = () => {
   const setFullPlayerOpen = usePlayerStore(state => state.setFullPlayerOpen);
   const isLyricsOpen = usePlayerStore(state => state.isLyricsOpen);
   const setLyricsOpen = usePlayerStore(state => state.setLyricsOpen);
+  
+  const isVideoMode = usePlayerStore(state => state.isVideoMode);
+  const toggleVideoMode = usePlayerStore(state => state.toggleVideoMode);
 
   if (!currentTrack || !isFullPlayerOpen) return null;
 
@@ -40,9 +43,9 @@ export const FullPlayer: React.FC = () => {
         </button>
         <span className="text-xs font-bold tracking-widest uppercase text-gray-400">Now Playing</span>
         <button 
-          onClick={usePlayerStore(state => state.toggleVideoMode)}
+          onClick={toggleVideoMode}
           className={`px-4 py-2 rounded-full font-bold text-xs uppercase tracking-widest transition-all ${
-            usePlayerStore(state => state.isVideoMode)
+            isVideoMode
               ? 'bg-acid-lime text-black shadow-[0_0_15px_rgba(163,230,53,0.4)]'
               : 'bg-white/10 text-white hover:bg-white/20 hover:scale-105'
           }`}
