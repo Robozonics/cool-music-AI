@@ -30,12 +30,6 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
     );
   }
 
-  const handlePlayAll = () => {
-    if (playlist.tracks.length === 0) return;
-    setQueue(playlist.tracks);
-    playTrack(playlist.tracks[0]);
-  };
-
   const handleShuffle = () => {
     if (playlist.tracks.length === 0) return;
     const shuffled = [...playlist.tracks].sort(() => Math.random() - 0.5);
@@ -116,30 +110,28 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
       </div>
 
       {/* Action Buttons */}
-      <div className="px-6 py-4 flex items-center gap-6 border-b border-white/5">
-        <button 
-          onClick={handlePlayAll}
-          className="w-14 h-14 rounded-full bg-acid-lime text-black flex items-center justify-center hover:scale-105 transition-transform shadow-[0_0_20px_rgba(163,230,53,0.3)] shrink-0"
-        >
-          <Play className="w-6 h-6 ml-1 fill-black" />
-        </button>
+      <div className="px-6 py-4 flex items-center gap-4 border-b border-white/5">
         <button 
           onClick={handleShuffle}
-          className="p-3 rounded-full text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
-          title="Shuffle"
+          className="flex-1 py-3.5 rounded-full bg-acid-lime text-black font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95 transition-all shadow-[0_0_20px_rgba(163,230,53,0.3)]"
         >
-          <Shuffle className="w-6 h-6" />
+          <Shuffle className="w-4 h-4" />
+          Shuffle & Play
         </button>
         <button 
           onClick={handleDownloadPlaylist}
           disabled={isDownloading}
-          className={`p-3 rounded-full transition-colors flex items-center gap-2 ${isDownloading ? 'text-acid-lime' : 'text-zinc-400 hover:text-white hover:bg-white/10'}`}
-          title="Download Playlist"
+          className={`flex-1 py-3.5 rounded-full font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition-all border ${isDownloading ? 'bg-white/5 border-acid-lime/30 text-acid-lime' : 'bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-white/20 hover:scale-[1.02] active:scale-95'}`}
         >
           {isDownloading ? (
-             <span className="text-xs font-bold">{downloadProgress}%</span>
+             <>
+               <span className="animate-pulse">Downloading {downloadProgress}%</span>
+             </>
           ) : (
-             <Download className="w-6 h-6" />
+             <>
+               <Download className="w-4 h-4" />
+               Download All
+             </>
           )}
         </button>
       </div>
