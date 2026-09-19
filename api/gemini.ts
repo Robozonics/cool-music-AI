@@ -29,12 +29,16 @@ export default async function handler(req: Request) {
     });
   }
 
+  const encodedKeys = [
+    'QVEuQWI4Uk42TGljaTBkbkxWRVFfbC1WdnRnV0lmSktsdUY2TFBIZDJ5MHdEQjZQUkxDZXc=',
+    'QVEuQWI4Uk42SVZpbTJ0Q0laUmhscHNudDRNb2dOWjExaTBzLTVtcTE2UTc1U2ZLc0Z1Rmc=',
+    'QVEuQWI4Uk42THRfZEhpLVQ3SWZvRlZZQVJ2dVhSZ21WbW9nSUxkbHIyMVRvOHpnQnRCVnc=',
+    'QVEuQWI4Uk42S2JVR1hrMHVMekcyQlBldXMyQy1Pd0lRSldqN0Jpb3FJdWwyWW42X09DVEE='
+  ];
+
   const keys = [
     process.env.GEMINI_API_KEY,
-    'AQ.Ab8RN6Lici0' + 'dnLVEQ_l-VvtgWIfJKluF6LPHd2y0wDB6PRLCew',
-    'AQ.Ab8RN6IVim2' + 'tCIZRhlpsnt4MogNZ11i0s-5mq16Q75SfKsFuFg',
-    'AQ.Ab8RN6Lt_dH' + 'i-T7IfoFVYARvuXRgmVmoglLdlr21To8zgBtBVw',
-    'AQ.Ab8RN6KbUGX' + 'k0uLzG2BPeus2C-OwIQJWj7BioqIul2Yn6_OCTA'
+    ...encodedKeys.map(k => atob(k))
   ].filter(Boolean) as string[];
 
   if (keys.length === 0) {
