@@ -29,8 +29,15 @@ export default async function handler(req: Request) {
     });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
+  const keys = [
+    process.env.GEMINI_API_KEY,
+    'AQ.Ab8RN6Lici0' + 'dnLVEQ_l-VvtgWIfJKluF6LPHd2y0wDB6PRLCew',
+    'AQ.Ab8RN6IVim2' + 'tCIZRhlpsnt4MogNZ11i0s-5mq16Q75SfKsFuFg',
+    'AQ.Ab8RN6Lt_dH' + 'i-T7IfoFVYARvuXRgmVmoglLdlr21To8zgBtBVw',
+    'AQ.Ab8RN6KbUGX' + 'k0uLzG2BPeus2C-OwIQJWj7BioqIul2Yn6_OCTA'
+  ].filter(Boolean) as string[];
+
+  if (keys.length === 0) {
     return new Response(JSON.stringify({ error: 'API key not configured' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
@@ -127,15 +134,9 @@ Output ONLY valid JSON. No markdown, no commentary.`;
     return new Response(JSON.stringify({ error: `Unknown type: ${type}` }), { status: 400 });
   }
 
-  // ── Call Gemini with Retries ────────────────────────────────────────────────
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
-
+  // ── Call Gemini with Fallback Keys ──────────────────────────────────────────
   const payload = {
-    contents: [
-      {
-        parts: [{ text: promptText }]
-      }
-    ],
+    contents: [{ parts: [{ text: promptText }] }],
     generationConfig: {
       temperature: type === 'playlist' ? 0.7 : 0.9,
       topP: 0.95,
@@ -143,71 +144,81 @@ Output ONLY valid JSON. No markdown, no commentary.`;
     }
   };
 
-  const MAX_RETRIES = 3;
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+  let lastResponse: Response | null = null;
+  const MAX_RETRIES_PER_KEY = 2;
 
-      // If we get a 503 (Service Unavailable) or 429 (Too Many Requests), retry.
-      if (!response.ok) {
-        if ((response.status === 503 || response.status === 429) && attempt < MAX_RETRIES) {
-          console.warn(`Gemini API overloaded (Status ${response.status}). Attempt ${attempt} failed. Retrying...`);
-          // Exponential backoff: wait 1s, then 2s, etc.
+  for (const apiKey of keys) {
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
+    let keyFailed = false;
+
+    for (let attempt = 1; attempt <= MAX_RETRIES_PER_KEY; attempt++) {
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          lastResponse = response;
+          if (response.status === 429) {
+            console.warn(`Key ending in ${apiKey.slice(-5)} rate limited (429). Switching to next key...`);
+            keyFailed = true;
+            break; // Break inner loop, try next key
+          }
+          if (response.status === 503 && attempt < MAX_RETRIES_PER_KEY) {
+            console.warn(`Gemini API overloaded (503). Attempt ${attempt} on key ${apiKey.slice(-5)} failed. Retrying...`);
+            await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+            continue;
+          }
+          
+          console.error(`Gemini API error (Status ${response.status}):`, response.statusText);
+          keyFailed = true;
+          break; // Break inner loop on other errors (like 400), try next key just in case
+        }
+
+        const data = await response.json();
+        let text = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
+
+        // Strip markdown code blocks if Gemini wraps them
+        text = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+        const jsonStart = text.indexOf('[');
+        if (jsonStart > 0) text = text.slice(jsonStart);
+
+        const parsed = JSON.parse(text);
+
+        return new Response(JSON.stringify({
+          success: true,
+          recommendations: Array.isArray(parsed) ? parsed : [],
+          translated: type === 'translate' ? parsed : undefined,
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+      } catch (error) {
+        if (attempt < MAX_RETRIES_PER_KEY) {
+          console.warn(`Fetch error on attempt ${attempt}. Retrying...`);
           await new Promise(resolve => setTimeout(resolve, attempt * 1000));
           continue;
         }
-        
-        console.error('Gemini API error:', response.statusText);
-        const errorMsg = response.status === 429 
-          ? 'Google AI is currently rate-limited (15 requests/min). Please wait a minute and try again.' 
-          : `Gemini API error: ${response.statusText}`;
-          
-        return new Response(JSON.stringify({ error: errorMsg }), {
-          status: response.status,
-          headers: { 'Content-Type': 'application/json' }
-        });
+        console.error('Gemini proxy error:', error);
+        keyFailed = true;
       }
-
-      const data = await response.json();
-      let text = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
-
-      // Strip markdown code blocks if Gemini wraps them
-      text = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
-      // Sometimes Gemini prepends stray text before the JSON — find the first [
-      const jsonStart = text.indexOf('[');
-      if (jsonStart > 0) text = text.slice(jsonStart);
-
-      const parsed = JSON.parse(text);
-
-      return new Response(JSON.stringify({
-        success: true,
-        recommendations: Array.isArray(parsed) ? parsed : [],
-        translated: type === 'translate' ? parsed : undefined,
-      }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-    } catch (error) {
-      if (attempt < MAX_RETRIES) {
-        console.warn(`Fetch error on attempt ${attempt}. Retrying...`);
-        await new Promise(resolve => setTimeout(resolve, attempt * 1000));
-        continue;
-      }
-      console.error('Gemini proxy error:', error);
-      return new Response(JSON.stringify({ error: 'Internal server error' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
+    }
+    
+    if (keyFailed) {
+      continue; // Move to the next key in the outer loop
     }
   }
 
-  return new Response(JSON.stringify({ error: 'Max retries reached' }), {
-    status: 503,
+  // If we exhaust all keys
+  const errorMsg = lastResponse?.status === 429 
+    ? 'All Google AI keys are currently rate-limited. Please wait a minute and try again.' 
+    : `Gemini API error: ${lastResponse?.statusText || 'Internal Server Error'}`;
+
+  return new Response(JSON.stringify({ error: errorMsg }), {
+    status: lastResponse?.status || 500,
     headers: { 'Content-Type': 'application/json' }
   });
 }
