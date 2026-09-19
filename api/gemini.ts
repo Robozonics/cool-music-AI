@@ -1,36 +1,57 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+export const config = {
+  runtime: 'edge',
+};
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: Request) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
-  const { prompt, type, seed, lyrics, targetLanguage } = req.body;
+  let body;
+  try {
+    body = await req.json();
+  } catch (e) {
+    return new Response(JSON.stringify({ error: 'Invalid JSON' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  const { prompt, type, seed, lyrics, targetLanguage } = body;
 
   if (!type) {
-    return res.status(400).json({ error: 'Missing type' });
+    return new Response(JSON.stringify({ error: 'Missing type' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    return res.status(500).json({ error: 'API key not configured' });
+    return new Response(JSON.stringify({ error: 'API key not configured' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   // ── Build prompt text per request type ─────────────────────────────────────
   let promptText = '';
 
   if (type === 'mood') {
-    if (!prompt) return res.status(400).json({ error: 'Missing prompt' });
+    if (!prompt) return new Response(JSON.stringify({ error: 'Missing prompt' }), { status: 400 });
     promptText = `You are an elite Gen-Z music curator. Return a STRICT JSON array of 6 real songs matching this vibe: "${prompt}". Schema: [{"title": "Song", "artist": "Artist"}]. Output ONLY valid JSON, no markdown, no extra text.`;
 
   } else if (type === 'search') {
-    if (!prompt) return res.status(400).json({ error: 'Missing prompt' });
+    if (!prompt) return new Response(JSON.stringify({ error: 'Missing prompt' }), { status: 400 });
     promptText = `You are the world's foremost music curator and critic. The user is asking for the 'best' music matching: '${prompt}'. Curate a list of 8 objectively top-rated, culturally accurate songs. Return STRICT JSON array schema: [{"title": "Song Title", "artist": "Artist Name", "reason": "why this matches"}]. Output ONLY valid JSON.`;
 
   } else if (type === 'playlist') {
     // ── AI Auto-Playlist: Bell Curve sequencing with audio features ──────────
     if (!seed?.artist || !seed?.song) {
-      return res.status(400).json({ error: 'Missing seed artist/song for playlist generation' });
+      return new Response(JSON.stringify({ error: 'Missing seed artist/song for playlist generation' }), { status: 400 });
     }
 
     promptText = `You are a professional DJ, music data scientist, and sonic architect. Generate a mathematically sequenced 30-song playlist seeded from:
@@ -86,7 +107,7 @@ No markdown, no commentary, no extra keys, no numbering. Pure JSON array only.`;
   } else if (type === 'translate') {
     // ── Live Lyrics Translation ──────────────────────────────────────────────
     if (!lyrics || !targetLanguage) {
-      return res.status(400).json({ error: 'Missing lyrics or targetLanguage' });
+      return new Response(JSON.stringify({ error: 'Missing lyrics or targetLanguage' }), { status: 400 });
     }
 
     promptText = `You are a professional translator specializing in song lyrics. Translate the following song lyrics into ${targetLanguage}.
@@ -104,56 +125,86 @@ Schema: [{"time": number, "text": "original text", "translation": "translated te
 Output ONLY valid JSON. No markdown, no commentary.`;
 
   } else {
-    return res.status(400).json({ error: `Unknown type: ${type}` });
+    return new Response(JSON.stringify({ error: `Unknown type: ${type}` }), { status: 400 });
   }
 
-  // ── Call Gemini ─────────────────────────────────────────────────────────────
-  try {
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
+  // ── Call Gemini with Retries ────────────────────────────────────────────────
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
 
-    const payload = {
-      contents: [
-        {
-          parts: [{ text: promptText }]
-        }
-      ],
-      generationConfig: {
-        temperature: type === 'playlist' ? 0.7 : 0.9,
-        topP: 0.95,
-        maxOutputTokens: type === 'playlist' || type === 'translate' ? 8192 : 2048,
+  const payload = {
+    contents: [
+      {
+        parts: [{ text: promptText }]
       }
-    };
-
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-      console.error('Gemini API error:', response.statusText);
-      return res.status(response.status).json({ error: 'Gemini API error' });
+    ],
+    generationConfig: {
+      temperature: type === 'playlist' ? 0.7 : 0.9,
+      topP: 0.95,
+      maxOutputTokens: type === 'playlist' || type === 'translate' ? 8192 : 2048,
     }
+  };
 
-    const data = await response.json();
-    let text = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
+  const MAX_RETRIES = 3;
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
 
-    // Strip markdown code blocks if Gemini wraps them
-    text = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
-    // Sometimes Gemini prepends stray text before the JSON — find the first [
-    const jsonStart = text.indexOf('[');
-    if (jsonStart > 0) text = text.slice(jsonStart);
+      // If we get a 503 (Service Unavailable) or 429 (Too Many Requests), retry.
+      if (!response.ok) {
+        if ((response.status === 503 || response.status === 429) && attempt < MAX_RETRIES) {
+          console.warn(`Gemini API overloaded (Status ${response.status}). Attempt ${attempt} failed. Retrying...`);
+          // Exponential backoff: wait 1s, then 2s, etc.
+          await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+          continue;
+        }
+        
+        console.error('Gemini API error:', response.statusText);
+        return new Response(JSON.stringify({ error: `Gemini API error: ${response.statusText}` }), {
+          status: response.status,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
 
-    const parsed = JSON.parse(text);
+      const data = await response.json();
+      let text = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
 
-    return res.status(200).json({
-      success: true,
-      recommendations: Array.isArray(parsed) ? parsed : [],
-      translated: type === 'translate' ? parsed : undefined,
-    });
+      // Strip markdown code blocks if Gemini wraps them
+      text = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+      // Sometimes Gemini prepends stray text before the JSON — find the first [
+      const jsonStart = text.indexOf('[');
+      if (jsonStart > 0) text = text.slice(jsonStart);
 
-  } catch (error) {
-    console.error('Gemini proxy error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+      const parsed = JSON.parse(text);
+
+      return new Response(JSON.stringify({
+        success: true,
+        recommendations: Array.isArray(parsed) ? parsed : [],
+        translated: type === 'translate' ? parsed : undefined,
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+    } catch (error) {
+      if (attempt < MAX_RETRIES) {
+        console.warn(`Fetch error on attempt ${attempt}. Retrying...`);
+        await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+        continue;
+      }
+      console.error('Gemini proxy error:', error);
+      return new Response(JSON.stringify({ error: 'Internal server error' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
   }
+
+  return new Response(JSON.stringify({ error: 'Max retries reached' }), {
+    status: 503,
+    headers: { 'Content-Type': 'application/json' }
+  });
 }
