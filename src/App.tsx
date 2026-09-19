@@ -9,10 +9,10 @@ import type { TabType } from './components/BottomNav';
 import { MiniPlayer } from './components/MiniPlayer';
 import { FullPlayer } from './components/FullPlayer';
 import { SyncedLyrics } from './components/SyncedLyrics';
-import YouTubeAudioEngine from './components/YouTubeAudioEngine';
 import { ApiKeyModal } from './components/ApiKeyModal';
 import { SpeedWheel } from './components/SpeedWheel';
 import { ShareSnippetModal } from './components/ShareSnippetModal';
+import { VisualCanvasEngine } from './components/VisualCanvasEngine';
 import { ConnectDeviceModal } from './components/ConnectDeviceModal';
 import { SamplesFeed } from './components/SamplesFeed';
 import { usePlayerStore } from './store/usePlayerStore';
@@ -23,7 +23,6 @@ import { SoundFusionLayout } from './features/soundfusion/layout/SoundFusionLayo
 
 function App() {
   useAudioAnalyzer();
-  const setYtEngine = usePlayerStore(state => state.setYtEngine);
   const isAutoplayBlocked = usePlayerStore(state => state.isAutoplayBlocked);
   const resolveAutoplayBlock = usePlayerStore(state => state.resolveAutoplayBlock);
   const isApiKeyModalOpen = usePlayerStore(state => state.isApiKeyModalOpen);
@@ -126,7 +125,7 @@ function App() {
       <SpeedWheel />
       <ShareSnippetModal />
       <ConnectDeviceModal />
-      <YouTubeAudioEngine ref={(engine) => setYtEngine(engine)} />
+      <VisualCanvasEngine />
     </>
   );
 }

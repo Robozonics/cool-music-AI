@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import type { Track, SavedPlaylist } from '../types/music';
-import type { YouTubeEngineRef } from '../components/YouTubeAudioEngine';
 
 // Global native audio instance for Direct CDNs
 export const nativeAudio = new Audio();
@@ -40,11 +39,7 @@ interface PlayerState {
   isApiKeyModalOpen: boolean;
   setApiKeyModalOpen: (open: boolean) => void;
 
-  // YouTube engine ref
-  ytEngine: YouTubeEngineRef | null;
-  setYtEngine: (engine: YouTubeEngineRef | null) => void;
-
-  // Setters for syncing state from YT Player
+  // Setters for syncing state
   setIsPlaying: (playing: boolean) => void;
   setCurrentTime: (time: number) => void;
   setDuration: (duration: number) => void;
@@ -55,7 +50,7 @@ interface PlayerState {
   seek: (seconds: number) => void;
   nextTrack: () => void;
   prevTrack: () => void;
-  handleTrackEnd: () => void; // BUG FIX: single entry-point that respects repeatMode
+  handleTrackEnd: () => void; // single entry-point that respects repeatMode
   setQueue: (tracks: Track[]) => void;
   setLyricsOpen: (open: boolean) => void;
   setShareSnippetOpen: (open: boolean) => void;
@@ -123,85 +118,66 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
 
   nativeAudio.addEventListener('timeupdate', () => {
     const state = get();
-    if (state.currentTrack?.source === 'saavn') {
-      const t = nativeAudio.currentTime;
-      set({ currentTime: t });
+    const t = nativeAudio.currentTime;
+    set({ currentTime: t });
 
-      // ── Crossfade trigger: 3s before end ──
-      if (
-        state.isCrossfadeEnabled &&
-        !state.isCrossfading &&
-        state.duration > 0 &&
-        state.duration - t <= 3 &&
-        state.duration - t > 0 &&
-        state.repeatMode !== 'one'
-      ) {
-        const { queue, currentTrack } = get();
-        const currentIndex = queue.findIndex(tr => tr.id === currentTrack!.id);
-        const nextIndex =
-          state.repeatMode === 'all' && currentIndex >= queue.length - 1
-            ? 0
-            : currentIndex + 1;
+    // ── Crossfade trigger: 3s before end ──
+    if (
+      state.isCrossfadeEnabled &&
+      !state.isCrossfading &&
+      state.duration > 0 &&
+      state.duration - t <= 3 &&
+      state.duration - t > 0 &&
+      state.repeatMode !== 'one'
+    ) {
+      const { queue, currentTrack } = get();
+      const currentIndex = queue.findIndex(tr => tr.id === currentTrack!.id);
+      const nextIndex =
+        state.repeatMode === 'all' && currentIndex >= queue.length - 1
+          ? 0
+          : currentIndex + 1;
 
-        if (nextIndex < queue.length) {
-          const nextTrk = queue[nextIndex];
-          if (nextTrk.source !== 'invidious' && nextTrk.sourceBadge !== 'YouTube Music') {
-            set({ isCrossfading: true });
+      if (nextIndex < queue.length) {
+        const nextTrk = queue[nextIndex];
+        set({ isCrossfading: true });
 
-            crossfadeAudio.src = nextTrk.streamUrl;
-            crossfadeAudio.volume = 0;
-            crossfadeAudio.playbackRate = get().playbackRate;
-            const cfPlay = crossfadeAudio.play();
-            if (cfPlay) cfPlay.catch(console.error);
+        crossfadeAudio.src = nextTrk.streamUrl;
+        crossfadeAudio.volume = 0;
+        crossfadeAudio.playbackRate = get().playbackRate;
+        const cfPlay = crossfadeAudio.play();
+        if (cfPlay) cfPlay.catch(console.error);
 
-            // Fade OUT main, fade IN crossfade
-            rampVolume(nativeAudio, get().volume, 0, 3000);
-            rampVolume(crossfadeAudio, 0, get().volume, 3000, () => {
-              // Swap: crossfadeAudio becomes main, reset nativeAudio
-              nativeAudio.pause();
-              nativeAudio.src = nextTrk.streamUrl;
-              nativeAudio.volume = get().volume;
-              nativeAudio.currentTime = crossfadeAudio.currentTime;
-              crossfadeAudio.pause();
-              crossfadeAudio.src = '';
-              set({
-                currentTrack: nextTrk,
-                currentTime: nativeAudio.currentTime,
-                duration: nativeAudio.duration || nextTrk.duration || 0,
-                isCrossfading: false,
-              });
-            });
-          }
-        }
+        // Fade OUT main, fade IN crossfade
+        rampVolume(nativeAudio, get().volume, 0, 3000);
+        rampVolume(crossfadeAudio, 0, get().volume, 3000, () => {
+          // Swap: crossfadeAudio becomes main, reset nativeAudio
+          nativeAudio.pause();
+          nativeAudio.src = nextTrk.streamUrl;
+          nativeAudio.volume = get().volume;
+          nativeAudio.currentTime = crossfadeAudio.currentTime;
+          crossfadeAudio.pause();
+          crossfadeAudio.src = '';
+          set({
+            currentTrack: nextTrk,
+            currentTime: nativeAudio.currentTime,
+            duration: nativeAudio.duration || nextTrk.duration || 0,
+            isCrossfading: false,
+          });
+        });
       }
     }
   });
 
   nativeAudio.addEventListener('loadedmetadata', () => {
-    const state = get();
-    if (state.currentTrack?.source === 'saavn') {
-      set({ duration: nativeAudio.duration });
-    }
+    set({ duration: nativeAudio.duration });
   });
 
-  // ── BUG FIX 1: 'ended' now routes to handleTrackEnd() ──
   nativeAudio.addEventListener('ended', () => {
     get().handleTrackEnd();
   });
 
   nativeAudio.addEventListener('error', (e) => {
     console.error('Native Audio playback error:', e);
-    const { currentTrack, ytEngine } = get();
-    // Self-healing recovery: If native CDN drops, attempt to fallback to YouTube Engine
-    if (currentTrack && currentTrack.source === 'saavn' && navigator.onLine) {
-       console.log('Attempting secondary stream recovery via YouTube...');
-       if (ytEngine) {
-         currentTrack.source = 'invidious';
-         currentTrack.streamUrl = `${currentTrack.title} ${currentTrack.artist}`;
-         get().playTrack(currentTrack);
-         return;
-       }
-    }
     get().nextTrack();
   });
 
@@ -210,12 +186,10 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     set({ isAutoplayBlocked: false });
   });
 
-  // ── BUG FIX 3: Use 'playing' (data flowing) NOT 'play' (call issued) for isPlaying ──
   nativeAudio.addEventListener('playing', () => {
     set({ isPlaying: true, isBuffering: false });
   });
 
-  // ── BUG FIX 3: Detect network stall → show buffering spinner ──
   nativeAudio.addEventListener('waiting', () => {
     set({ isBuffering: true });
   });
@@ -250,37 +224,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     isCrossfadeEnabled: false,
     isCrossfading: false,
     isVideoMode: false,
-    toggleVideoMode: () => {
-      const state = get();
-      const isEnabling = !state.isVideoMode;
-      
-      if (isEnabling && state.currentTrack) {
-        const isYT = state.currentTrack.source === 'invidious' || state.currentTrack.sourceBadge === 'YouTube Music';
-        if (!isYT && state.ytEngine) {
-          // Seamless handoff from Native Audio to YouTube Engine!
-          nativeAudio.pause();
-          
-          // Mute native audio just in case
-          nativeAudio.volume = 0;
-          
-          // Route through YouTube
-          state.currentTrack.source = 'invidious'; // Force source change
-          state.ytEngine.playVideo(`${state.currentTrack.title} ${state.currentTrack.artist} official video`);
-          
-          // We wait a tiny bit for the video to load, then seek
-          setTimeout(() => {
-            if (state.ytEngine) {
-              state.ytEngine.seek(state.currentTime);
-              state.ytEngine.setVolume(state.volume);
-              if (state.isPlaying) state.ytEngine.resume();
-            }
-          }, 1500);
-        }
-      }
-      
-      set({ isVideoMode: isEnabling });
-    },
-    ytEngine: null,
+    toggleVideoMode: () => set(state => ({ isVideoMode: !state.isVideoMode })),
     isAutoplayBlocked: false,
     isApiKeyModalOpen: false,
 
@@ -294,50 +238,30 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
        }
     },
 
-    setYtEngine: (engine: YouTubeEngineRef | null) => set({ ytEngine: engine }),
     setIsPlaying: (playing: boolean) => set({ isPlaying: playing }),
     setCurrentTime: (time: number) => set({ currentTime: time }),
     setDuration: (duration: number) => set({ duration }),
 
     playTrack: async (track: Track) => {
-      const { ytEngine } = get();
       set({ currentTrack: track, currentTime: 0, duration: track.duration || 0, isAutoplayBlocked: false, isBuffering: false, isCrossfading: false });
 
       // Abort any in-progress crossfade
       crossfadeAudio.pause();
       crossfadeAudio.src = '';
 
-      if (track.source === 'invidious' || track.sourceBadge === 'YouTube Music') {
-        nativeAudio.pause();
-        nativeAudio.src = '';
-        if (ytEngine) {
-          ytEngine.playVideo(track.streamUrl);
-          ytEngine.setPlaybackRate(get().playbackRate);
-        }
-      } else {
-        if (ytEngine) ytEngine.pause();
-        nativeAudio.src = track.streamUrl;
-        nativeAudio.volume = get().volume;
-        nativeAudio.playbackRate = get().playbackRate;
-        attemptPlay();
-      }
+      nativeAudio.src = track.streamUrl;
+      nativeAudio.volume = get().volume;
+      nativeAudio.playbackRate = get().playbackRate;
+      attemptPlay();
     },
 
-    // ── BUG FIX 1: Central track-end handler that respects repeatMode ──
     handleTrackEnd: () => {
       const { repeatMode, currentTrack, queue, playTrack } = get();
 
       // LOOP ONE: restart the exact same track
       if (repeatMode === 'one') {
-        if (currentTrack?.source !== 'invidious' && currentTrack?.sourceBadge !== 'YouTube Music') {
-          nativeAudio.currentTime = 0;
-          attemptPlay();
-        } else {
-          const { ytEngine } = get();
-          if (ytEngine) {
-            ytEngine.seek(0);
-          }
-        }
+        nativeAudio.currentTime = 0;
+        attemptPlay();
         return;
       }
 
@@ -355,27 +279,19 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     },
 
     togglePlay: () => {
-      const { currentTrack, isPlaying, ytEngine } = get();
+      const { currentTrack, isPlaying } = get();
       if (!currentTrack) return;
-      const isYT = currentTrack.source === 'invidious' || currentTrack.sourceBadge === 'YouTube Music';
       if (isPlaying) {
-        if (isYT && ytEngine) ytEngine.pause();
-        else nativeAudio.pause();
+        nativeAudio.pause();
       } else {
-        if (isYT && ytEngine) ytEngine.resume();
-        else attemptPlay();
+        attemptPlay();
       }
     },
 
     seek: (seconds: number) => {
-      const { currentTrack, ytEngine } = get();
+      const { currentTrack } = get();
       if (!currentTrack) return;
-      const isYT = currentTrack.source === 'invidious' || currentTrack.sourceBadge === 'YouTube Music';
-      if (isYT && ytEngine) {
-        ytEngine.seek(seconds);
-      } else {
-        nativeAudio.currentTime = seconds;
-      }
+      nativeAudio.currentTime = seconds;
       set({ currentTime: seconds });
     },
 
@@ -386,21 +302,17 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
       if (currentIndex >= 0 && currentIndex < queue.length - 1) {
         playTrack(queue[currentIndex + 1]);
       } else {
-        const { ytEngine } = get();
         nativeAudio.pause();
         nativeAudio.src = '';
-        if (ytEngine) ytEngine.pause();
         set({ isPlaying: false, currentTime: 0 });
       }
     },
 
     prevTrack: () => {
-      const { queue, currentTrack, playTrack, currentTime, ytEngine } = get();
+      const { queue, currentTrack, playTrack, currentTime } = get();
       if (!currentTrack) return;
-      const isYT = currentTrack.source === 'invidious' || currentTrack.sourceBadge === 'YouTube Music';
       if (currentTime > 3) {
-        if (isYT && ytEngine) ytEngine.seek(0);
-        else nativeAudio.currentTime = 0;
+        nativeAudio.currentTime = 0;
         return;
       }
       const currentIndex = queue.findIndex(t => t.id === currentTrack.id);
@@ -429,17 +341,13 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
 
     setVolume: (vol: number) => {
       const newVol = Math.max(0, Math.min(1, vol));
-      const { ytEngine } = get();
       nativeAudio.volume = newVol;
-      if (ytEngine) ytEngine.setVolume(newVol);
       set({ volume: newVol });
     },
 
     setPlaybackRate: (rate: number) => {
       const newRate = Math.max(0.5, Math.min(3, rate));
-      const { ytEngine } = get();
       nativeAudio.playbackRate = newRate;
-      if (ytEngine) ytEngine.setPlaybackRate(newRate);
       set({ playbackRate: newRate });
     },
 
