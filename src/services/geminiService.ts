@@ -77,6 +77,7 @@ export interface AIPlaylistItem {
  */
 export const generateAIPlaylist = async (
   seed: PlaylistSeedTrack,
+  customPrompt?: string,
   onProgress?: (pct: number, message: string) => void
 ): Promise<Track[]> => {
   onProgress?.(5, 'Analysing sonic fingerprint…');
@@ -84,7 +85,7 @@ export const generateAIPlaylist = async (
   const response = await fetch('/api/gemini', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ type: 'playlist', seed })
+    body: JSON.stringify({ type: 'playlist', seed, customPrompt })
   });
 
   if (!response.ok) {
@@ -128,6 +129,9 @@ export const generateAIPlaylist = async (
     resolved.push(...batchResults.filter((t): t is Track => t !== null));
     const pct = 25 + Math.round(((i + batchSize) / total) * 70);
     onProgress?.(Math.min(pct, 95), `Resolved ${resolved.length} of ${total} tracks…`);
+    
+    // Sleep to prevent main thread blocking / network pane freezing
+    await new Promise(resolve => setTimeout(resolve, 300));
   }
 
   onProgress?.(100, `Playlist ready! ${resolved.length} tracks loaded.`);

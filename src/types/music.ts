@@ -49,3 +49,8 @@ export interface AudioFeatures {
   mood: 'happy' | 'sad' | 'energetic' | 'calm' | 'aggressive' | 'romantic';
 }
 
+export interface SavedPlaylist {
+  id: string;
+  name: string;
+  tracks: Track[];
+}

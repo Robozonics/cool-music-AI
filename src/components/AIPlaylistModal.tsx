@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Sparkles, Music, Play, ChevronRight, Loader2, AlertCircle } from 'lucide-react';
+import { X, Sparkles, Play, ChevronRight, Loader2, AlertCircle } from 'lucide-react';
 import { generateAIPlaylist } from '../services/geminiService';
 import { usePlayerStore } from '../store/usePlayerStore';
 import type { Track, PlaylistSegment } from '../types/music';
@@ -43,11 +43,15 @@ export const AIPlaylistModal: React.FC<AIPlaylistModalProps> = ({ isOpen, onClos
 
   const [seedArtist, setSeedArtist] = useState('');
   const [seedSong, setSeedSong] = useState('');
+  const [customPrompt, setCustomPrompt] = useState('');
   const [progress, setProgress] = useState(0);
   const [progressMsg, setProgressMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [generatedTracks, setGeneratedTracks] = useState<Track[]>([]);
+  const [selectedTrackIds, setSelectedTrackIds] = useState<Set<string>>(new Set());
+  const [isSaving, setIsSaving] = useState(false);
+  const [playlistName, setPlaylistName] = useState('');
   const [phase, setPhase] = useState<'input' | 'generating' | 'results'>('input');
 
   const handleGenerate = useCallback(async () => {
@@ -61,12 +65,14 @@ export const AIPlaylistModal: React.FC<AIPlaylistModalProps> = ({ isOpen, onClos
     try {
       const tracks = await generateAIPlaylist(
         { artist: seedArtist.trim(), song: seedSong.trim() },
+        customPrompt.trim() || undefined,
         (pct, msg) => {
           setProgress(pct);
           setProgressMsg(msg);
         }
       );
       setGeneratedTracks(tracks);
+      setSelectedTrackIds(new Set(tracks.map(t => t.id)));
       setPhase('results');
     } catch (err: any) {
       setError(err.message || 'Generation failed. Please try again.');
@@ -77,17 +83,30 @@ export const AIPlaylistModal: React.FC<AIPlaylistModalProps> = ({ isOpen, onClos
   }, [seedArtist, seedSong]);
 
   const handleLoadAndPlay = () => {
-    if (generatedTracks.length === 0) return;
-    setQueue(generatedTracks);
-    playTrack(generatedTracks[0]);
+    const tracksToPlay = generatedTracks.filter(t => selectedTrackIds.has(t.id));
+    if (tracksToPlay.length === 0) return;
+    setQueue(tracksToPlay);
+    playTrack(tracksToPlay[0]);
+    onClose();
+  };
+
+  const handleSavePlaylist = () => {
+    const tracksToSave = generatedTracks.filter(t => selectedTrackIds.has(t.id));
+    if (tracksToSave.length === 0 || !playlistName.trim()) return;
+    usePlayerStore.getState().savePlaylist(playlistName.trim(), tracksToSave);
+    setIsSaving(false);
+    setPlaylistName('');
     onClose();
   };
 
   const handleReset = () => {
     setPhase('input');
     setGeneratedTracks([]);
+    setSelectedTrackIds(new Set());
     setError(null);
     setProgress(0);
+    setIsSaving(false);
+    setPlaylistName('');
   };
 
   const foundationTracks = generatedTracks.filter(t => t.segment === 'foundation');
@@ -175,6 +194,17 @@ export const AIPlaylistModal: React.FC<AIPlaylistModalProps> = ({ isOpen, onClos
                           placeholder="e.g. Blinding Lights"
                           value={seedSong}
                           onChange={e => setSeedSong(e.target.value)}
+                          onKeyDown={e => e.key === 'Enter' && handleGenerate()}
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder-zinc-600 text-sm font-medium focus:outline-none focus:border-purple-500/60 focus:bg-purple-500/5 transition-all"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest block mb-1.5">Additional Instructions (Optional)</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Only 10 tracks, high energy"
+                          value={customPrompt}
+                          onChange={e => setCustomPrompt(e.target.value)}
                           onKeyDown={e => e.key === 'Enter' && handleGenerate()}
                           className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder-zinc-600 text-sm font-medium focus:outline-none focus:border-purple-500/60 focus:bg-purple-500/5 transition-all"
                         />
@@ -289,10 +319,24 @@ export const AIPlaylistModal: React.FC<AIPlaylistModalProps> = ({ isOpen, onClos
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: i * 0.02 }}
-                            className="flex items-center gap-3 p-2.5 rounded-xl bg-white/3 hover:bg-white/8 border border-transparent hover:border-white/10 transition-all group cursor-pointer"
-                            onClick={() => { setQueue(generatedTracks); playTrack(track); onClose(); }}
+                            className={`flex items-center gap-3 p-2.5 rounded-xl border transition-all cursor-pointer ${
+                              selectedTrackIds.has(track.id)
+                                ? 'bg-white/10 border-purple-500/30'
+                                : 'bg-white/3 border-transparent opacity-50'
+                            }`}
+                            onClick={() => {
+                              const newSet = new Set(selectedTrackIds);
+                              if (newSet.has(track.id)) newSet.delete(track.id);
+                              else newSet.add(track.id);
+                              setSelectedTrackIds(newSet);
+                            }}
                           >
-                            <span className="text-[10px] font-mono text-zinc-600 w-5 text-right shrink-0">{i + 1}</span>
+                            <input 
+                              type="checkbox" 
+                              checked={selectedTrackIds.has(track.id)} 
+                              readOnly 
+                              className="w-4 h-4 rounded border-white/20 bg-black/20 text-purple-500 focus:ring-0 cursor-pointer"
+                            />
                             <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 shadow-md">
                               <img src={track.thumbnail} alt={track.title} className="w-full h-full object-cover" />
                             </div>
@@ -303,7 +347,16 @@ export const AIPlaylistModal: React.FC<AIPlaylistModalProps> = ({ isOpen, onClos
                             <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border ${meta.bg} ${meta.color} shrink-0`}>
                               {meta.label}
                             </span>
-                            <Play className="w-3 h-3 text-zinc-600 group-hover:text-purple-400 transition-colors shrink-0" />
+                            <button 
+                              className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-white/10 shrink-0"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setQueue([track]);
+                                playTrack(track);
+                              }}
+                            >
+                              <Play className="w-3 h-3 text-zinc-400" />
+                            </button>
                           </motion.div>
                         );
                       })}
@@ -315,23 +368,57 @@ export const AIPlaylistModal: React.FC<AIPlaylistModalProps> = ({ isOpen, onClos
 
             {/* Footer actions (results phase) */}
             {phase === 'results' && (
-              <div className="px-6 py-4 border-t border-white/5 flex gap-3 shrink-0">
-                <button
-                  onClick={handleReset}
-                  className="flex-1 py-3 rounded-2xl border border-white/10 text-zinc-400 hover:text-white hover:border-white/20 transition-all text-sm font-bold"
-                >
-                  New Seed
-                </button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={handleLoadAndPlay}
-                  className="flex-[2] py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-sm font-black shadow-[0_0_25px_rgba(139,92,246,0.4)] transition-all flex items-center justify-center gap-2"
-                >
-                  <Play className="w-4 h-4 fill-white" />
-                  Load & Play All
-                  <Music className="w-4 h-4" />
-                </motion.button>
+              <div className="px-6 py-4 border-t border-white/5 bg-[#060210] shrink-0 z-10">
+                {isSaving ? (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      autoFocus
+                      placeholder="Name this playlist..."
+                      value={playlistName}
+                      onChange={e => setPlaylistName(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleSavePlaylist()}
+                      className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-white text-sm focus:outline-none focus:border-purple-500"
+                    />
+                    <button
+                      onClick={() => setIsSaving(false)}
+                      className="px-4 py-2 rounded-xl text-zinc-400 hover:text-white transition-colors text-sm font-bold"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSavePlaylist}
+                      disabled={!playlistName.trim()}
+                      className="px-6 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white text-sm font-bold shadow-lg transition-colors"
+                    >
+                      Save
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleReset}
+                      className="w-12 h-12 flex shrink-0 items-center justify-center rounded-2xl border border-white/10 text-zinc-400 hover:text-white hover:border-white/20 transition-all"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => setIsSaving(true)}
+                      className="flex-1 py-3 rounded-2xl border border-purple-500/30 text-purple-300 hover:bg-purple-500/10 hover:border-purple-500/50 transition-all text-sm font-bold shadow-[0_0_15px_rgba(139,92,246,0.1)]"
+                    >
+                      Save Playlist
+                    </button>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={handleLoadAndPlay}
+                      className="flex-[1.5] py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-sm font-black shadow-[0_0_25px_rgba(139,92,246,0.4)] transition-all flex items-center justify-center gap-2"
+                    >
+                      <Play className="w-4 h-4 fill-white" />
+                      Play Selected
+                    </motion.button>
+                  </div>
+                )}
               </div>
             )}
 

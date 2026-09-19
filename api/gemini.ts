@@ -20,7 +20,7 @@ export default async function handler(req: Request) {
     });
   }
 
-  const { prompt, type, seed, lyrics, targetLanguage } = body;
+  const { prompt, type, seed, lyrics, targetLanguage, customPrompt } = body;
 
   if (!type) {
     return new Response(JSON.stringify({ error: 'Missing type' }), {
@@ -54,9 +54,11 @@ export default async function handler(req: Request) {
       return new Response(JSON.stringify({ error: 'Missing seed artist/song for playlist generation' }), { status: 400 });
     }
 
-    promptText = `You are a professional DJ, music data scientist, and sonic architect. Generate a mathematically sequenced 30-song playlist seeded from:
+    promptText = `You are a professional DJ, music data scientist, and sonic architect. Generate a mathematically sequenced playlist seeded from:
 SEED ARTIST: "${seed.artist}"
 SEED SONG: "${seed.song}"
+
+${customPrompt ? `USER CUSTOM INSTRUCTIONS: "${customPrompt}"\n(You MUST heavily prioritize these custom instructions over the standard Bell Curve pacing if they conflict. If they ask for a specific number of tracks, return exactly that number.)` : ''}
 
 STEP 1 — AUDIO PROFILE ESTIMATION:
 Estimate these audio features for the seed track:
@@ -70,29 +72,26 @@ Estimate these audio features for the seed track:
 STEP 2 — SIMILAR ARTIST GRAPH:
 Identify 5–8 artists who occupy the EXACT same sonic space and listener demographic as "${seed.artist}". Consider: production style, vocal delivery, lyrical themes, subgenre, era, and fanbase overlap.
 
-STEP 3 — BELL CURVE SEQUENCING (strictly enforce all constraints):
-
+STEP 3 — SEQUENCING:
+${customPrompt ? 'Follow the USER CUSTOM INSTRUCTIONS above for sequencing and track count.' : `
+BELL CURVE SEQUENCING (strictly enforce all constraints):
 Tracks 1–5 (FOUNDATION — "Vibe Lock-In"):
 - BPM within ±5 of seed BPM
 - Energy within ±0.1 of seed energy
-- Same or extremely close genre/subgenre
 - Highest sonic similarity — listener should feel "yes, this is the same universe"
-- Include 2–3 songs BY the seed artist themselves if they have enough catalog
 
 Tracks 6–20 (PEAK — "The Journey"):
 - BPM increases gradually by +1 to +2 BPM per track
 - Energy increases by +0.04 per track
-- Introduce artist variety: pull from the similar artist graph
-- Gradually introduce cross-genre overlaps and "deeper cuts" — fan favorites, B-sides, cult hits
-- By track 15, energy should peak at max(0.95, seed_energy + 0.4)
+- Gradually introduce cross-genre overlaps and "deeper cuts"
 
 Tracks 21–30 (COOLDOWN — "The Resolution"):
 - BPM decreases by -2 per track (winding down)
 - Energy decreases by -0.05 per track
-- Gradually shift toward acoustic, instrumental, or slower variants
-- Close with something emotionally resonant — the "perfect ending" track
+- Close with something emotionally resonant
+`}
 
-STRICT OUTPUT FORMAT — return EXACTLY 30 items, NOTHING ELSE, ONLY valid JSON:
+STRICT OUTPUT FORMAT — return EXACTLY ${customPrompt ? 'the requested number of items' : '30 items'}, NOTHING ELSE, ONLY valid JSON:
 [
   {
     "title": "Song Title",

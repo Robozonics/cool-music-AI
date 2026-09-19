@@ -17,6 +17,9 @@ export const SoundFusionLayout: React.FC<LayoutProps> = ({ children, activeTab, 
   const isLyricsOpen = usePlayerStore(state => state.isLyricsOpen);
   const currentTrack = usePlayerStore(state => state.currentTrack);
   const isPlaying = usePlayerStore(state => state.isPlaying);
+  const savedPlaylists = usePlayerStore(state => state.savedPlaylists);
+  const playTrack = usePlayerStore(state => state.playTrack);
+  const setQueue = usePlayerStore(state => state.setQueue);
   const [isDark, setIsDark] = useState(true);
 
   // Toggle dark/light theme class on document body
@@ -141,9 +144,24 @@ export const SoundFusionLayout: React.FC<LayoutProps> = ({ children, activeTab, 
             </div>
             {/* Filterable list placeholders */}
             <ul className="space-y-2 text-sm text-gray-400 font-medium">
-              <li className="hover:text-acid-lime cursor-pointer py-2 px-2 rounded-lg hover:bg-white/5 transition-colors" onClick={() => setActiveTab('vault')}>📌 Pinned Favorites</li>
-              <li className="hover:text-electric-fuchsia cursor-pointer py-2 px-2 rounded-lg hover:bg-white/5 transition-colors" onClick={() => setActiveTab('vault')}>❤️ Liked Songs</li>
-              <li className="hover:text-cyber-cyan cursor-pointer py-2 px-2 rounded-lg hover:bg-white/5 transition-colors" onClick={() => setActiveTab('vault')}>🎧 Downloaded Audiobooks</li>
+              <li className="hover:text-acid-lime cursor-pointer py-2 px-2 rounded-lg hover:bg-white/5 transition-colors flex items-center gap-2" onClick={() => setActiveTab('vault')}>
+                <span>📌</span> Pinned Favorites
+              </li>
+              <li className="hover:text-electric-fuchsia cursor-pointer py-2 px-2 rounded-lg hover:bg-white/5 transition-colors flex items-center gap-2" onClick={() => setActiveTab('vault')}>
+                <span>❤️</span> Liked Songs
+              </li>
+              {savedPlaylists.map(playlist => (
+                <li 
+                  key={playlist.id}
+                  className="hover:text-purple-400 cursor-pointer py-2 px-2 rounded-lg hover:bg-white/5 transition-colors flex items-center gap-2"
+                  onClick={() => {
+                    setQueue(playlist.tracks);
+                    playTrack(playlist.tracks[0]);
+                  }}
+                >
+                  <span className="text-purple-500">💿</span> {playlist.name}
+                </li>
+              ))}
             </ul>
           </div>
         </aside>

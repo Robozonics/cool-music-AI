@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Track } from '../types/music';
+import type { Track, SavedPlaylist } from '../types/music';
 import type { YouTubeEngineRef } from '../components/YouTubeAudioEngine';
 
 // Global native audio instance for Direct CDNs
@@ -66,6 +66,11 @@ interface PlayerState {
   toggleLikeTrack: (trackId: string) => void;
   setRepeatMode: (mode: 'off' | 'all' | 'one') => void;
   toggleCrossfade: () => void;
+  
+  // Saved Playlists
+  savedPlaylists: SavedPlaylist[];
+  savePlaylist: (name: string, tracks: Track[]) => void;
+  deletePlaylist: (id: string) => void;
 }
 
 export const usePlayerStore = create<PlayerState>((set, get) => {
@@ -238,6 +243,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     searchQuery: '',
     isSpeedWheelOpen: false,
     likedTracks: [],
+    savedPlaylists: [],
     repeatMode: 'off',
     isCrossfadeEnabled: false,
     isCrossfading: false,
@@ -402,6 +408,17 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
       nativeAudio.playbackRate = newRate;
       if (ytEngine) ytEngine.setPlaybackRate(newRate);
       set({ playbackRate: newRate });
-    }
+    },
+
+    savePlaylist: (name: string, tracks: Track[]) => set(state => ({
+      savedPlaylists: [
+        ...state.savedPlaylists,
+        { id: Math.random().toString(36).substring(2, 9), name, tracks }
+      ]
+    })),
+
+    deletePlaylist: (id: string) => set(state => ({
+      savedPlaylists: state.savedPlaylists.filter(p => p.id !== id)
+    })),
   };
 });

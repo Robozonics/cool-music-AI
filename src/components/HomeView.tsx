@@ -107,7 +107,9 @@ export const HomeView: React.FC = () => {
           {MOOD_PILLS.map(pill => (
             <button 
               key={pill.label} 
+              disabled={isLoading}
               onClick={async () => {
+                if (isLoading) return;
                 setIsLoading(true);
                 try {
                   const results = await searchUnblocked(pill.query);
@@ -119,7 +121,7 @@ export const HomeView: React.FC = () => {
                   setIsLoading(false);
                 }
               }}
-              className={`px-5 py-2.5 rounded-full text-xs font-display font-black tracking-widest uppercase transition-transform hover:scale-105 active:scale-95 shadow-lg ${pill.color}`}
+              className={`px-5 py-2.5 rounded-full text-xs font-display font-black tracking-widest uppercase transition-transform shadow-lg ${pill.color} ${isLoading ? 'opacity-50 cursor-not-allowed scale-95' : 'hover:scale-105 active:scale-95'}`}
             >
               {pill.label}
             </button>
