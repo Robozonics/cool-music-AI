@@ -16,6 +16,7 @@ import {
   Sliders,
   Maximize2,
   Loader2,
+  Blend,
   Video,
   X,
 } from 'lucide-react';

@@ -18,8 +18,6 @@ export const SoundFusionLayout: React.FC<LayoutProps> = ({ children, activeTab, 
   const currentTrack = usePlayerStore(state => state.currentTrack);
   const isPlaying = usePlayerStore(state => state.isPlaying);
   const savedPlaylists = usePlayerStore(state => state.savedPlaylists);
-  const playTrack = usePlayerStore(state => state.playTrack);
-  const setQueue = usePlayerStore(state => state.setQueue);
   const [isDark, setIsDark] = useState(true);
 
   // Toggle dark/light theme class on document body

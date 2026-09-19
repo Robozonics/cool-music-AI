@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Play, Trash2, HardDrive, Plus, ListMusic, ChevronRight } from 'lucide-react';
+import { Play, Trash2, HardDrive, Plus, ListMusic } from 'lucide-react';
 import { getOfflineTracks, deleteOfflineTrack } from '../services/downloadService';
 import type { Track } from '../types/music';
 import { usePlayerStore } from '../store/usePlayerStore';
