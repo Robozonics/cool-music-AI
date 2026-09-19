@@ -10,11 +10,23 @@ export const getMoodRecommendations = async (userPrompt: string): Promise<{ titl
       body: JSON.stringify({ prompt: userPrompt, type: 'mood' })
     });
     if (!response.ok) {
-      const error = await response.json();
-      if (error.error === 'API key not configured') throw new Error('MISSING_API_KEY');
-      throw new Error(error.error || 'API error');
+      let errorMsg = 'API error';
+      try {
+        const error = await response.json();
+        errorMsg = error.error || errorMsg;
+        if (errorMsg === 'API key not configured') throw new Error('MISSING_API_KEY');
+      } catch {
+        throw new Error(`AI Service error (${response.status}). Please try again.`);
+      }
+      throw new Error(errorMsg);
     }
-    const data = await response.json();
+    let data;
+    try {
+      data = await response.json();
+    } catch (parseError) {
+      if (!response.ok) throw new Error('AI Service timed out. Please try again.');
+      throw new Error('Invalid response from AI Service.');
+    }
     return data.recommendations || [];
   } catch (error) {
     console.error('Gemini Service Error:', error);
@@ -31,11 +43,23 @@ export const searchBestMusicWithAI = async (userQuery: string): Promise<Track[]>
       body: JSON.stringify({ prompt: userQuery, type: 'search' })
     });
     if (!response.ok) {
-      const error = await response.json();
-      if (error.error === 'API key not configured') throw new Error('MISSING_API_KEY');
-      throw new Error(error.error || 'API error');
+      let errorMsg = 'API error';
+      try {
+        const error = await response.json();
+        errorMsg = error.error || errorMsg;
+        if (errorMsg === 'API key not configured') throw new Error('MISSING_API_KEY');
+      } catch {
+        throw new Error(`AI Service error (${response.status}). Please try again.`);
+      }
+      throw new Error(errorMsg);
     }
-    const data = await response.json();
+    let data;
+    try {
+      data = await response.json();
+    } catch (parseError) {
+      if (!response.ok) throw new Error('AI Service timed out. Please try again.');
+      throw new Error('Invalid response from AI Service.');
+    }
     const recommendations = data.recommendations || [];
     if (!Array.isArray(recommendations)) return [];
 
@@ -89,12 +113,23 @@ export const generateAIPlaylist = async (
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    if (error.error === 'API key not configured') throw new Error('MISSING_API_KEY');
-    throw new Error(error.error || 'Playlist generation failed');
+    let errorMsg = 'Playlist generation failed';
+    try {
+      const error = await response.json();
+      errorMsg = error.error || errorMsg;
+      if (errorMsg === 'API key not configured') throw new Error('MISSING_API_KEY');
+    } catch {
+      throw new Error(`AI Service overloaded (${response.status} Timeout). Please try again.`);
+    }
+    throw new Error(errorMsg);
   }
 
-  const data = await response.json();
+  let data;
+  try {
+    data = await response.json();
+  } catch (parseError) {
+    throw new Error('AI Service is overloaded (504 Gateway Timeout). Please try again in a moment.');
+  }
   const recommendations: AIPlaylistItem[] = data.recommendations || [];
 
   if (!Array.isArray(recommendations) || recommendations.length === 0) {
