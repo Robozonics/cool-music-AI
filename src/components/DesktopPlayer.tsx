@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, SkipForward, SkipBack, Mic2, Download } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Mic2, Download, Plus } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
 
 export const DesktopPlayer: React.FC = () => {
@@ -38,6 +38,13 @@ export const DesktopPlayer: React.FC = () => {
           <h4 className="text-white font-bold truncate hover:underline cursor-pointer">{currentTrack.title}</h4>
           <p className="text-gray-400 text-sm truncate">{currentTrack.artist}</p>
         </div>
+        <button
+          onClick={() => usePlayerStore.getState().openAddToPlaylistModal(currentTrack)}
+          className="p-2 text-gray-400 hover:text-acid-lime transition"
+          title="Add to Playlist"
+        >
+          <Plus className="w-5 h-5" />
+        </button>
         {currentTrack.source === 'saavn' && !currentTrack.isOffline && (
           <button 
             onClick={async () => {
@@ -46,7 +53,8 @@ export const DesktopPlayer: React.FC = () => {
                 usePlayerStore.setState({ currentTrack: { ...currentTrack, isOffline: true } });
               }
             }}
-            className="p-2 text-gray-400 hover:text-white transition"
+            className="p-2 text-gray-400 hover:text-cyber-cyan transition"
+            title="Download Offline"
           >
             <Download className="w-5 h-5" />
           </button>

@@ -134,7 +134,7 @@ export const VisualCanvasEngine = () => {
         We scale it up significantly (130vw/vh) to push the YouTube logo (bottom right) completely off-screen.
       */}
       <div 
-        className={`fixed inset-0 z-[90] bg-black overflow-hidden pointer-events-none transition-opacity duration-500 ${isVideoMode ? 'opacity-100' : 'opacity-0'}`}
+        className={`fixed inset-0 z-[90] bg-black overflow-hidden pointer-events-none transition-opacity duration-150 ${isVideoMode ? 'opacity-100' : 'opacity-0'}`}
         style={{ visibility: isVideoMode ? 'visible' : 'hidden' }}
       >
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140vw] h-[140vh] md:w-[120vw] md:h-[120vh]">
@@ -147,10 +147,10 @@ export const VisualCanvasEngine = () => {
       <AnimatePresence>
         {isVideoMode && (
           <motion.div 
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
             className="fixed inset-0 z-[100] pointer-events-none"
           >
             {/* Close Button (Enable pointer events just for this) */}

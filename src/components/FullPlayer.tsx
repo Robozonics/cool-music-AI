@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, SkipForward, SkipBack, ChevronDown, Mic2, Download } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, ChevronDown, Mic2, Download, Plus } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
 
 export const FullPlayer: React.FC = () => {
@@ -67,12 +67,23 @@ export const FullPlayer: React.FC = () => {
            <img src={currentTrack.thumbnail} alt={currentTrack.title} className="w-full h-full object-cover" />
         </div>
 
-        <div className="w-full flex justify-between items-end mb-6">
-          <div className="flex-1 min-w-0 pr-4">
-            <h2 className="text-2xl font-black text-white truncate mb-1">{currentTrack.title}</h2>
-            <p className="text-gray-400 text-lg truncate">{currentTrack.artist}</p>
+        <div className="w-full flex flex-col mb-6">
+          <div className="w-full flex justify-between items-start mb-4">
+            <div className="flex-1 min-w-0 pr-4">
+              <h2 className="text-2xl font-black text-white truncate mb-1">{currentTrack.title}</h2>
+              <p className="text-gray-400 text-lg truncate">{currentTrack.artist}</p>
+            </div>
           </div>
-          <div className="flex gap-3 shrink-0">
+          
+          <div className="w-full flex items-center justify-between gap-2 overflow-x-auto no-scrollbar py-2">
+            <button
+              onClick={() => usePlayerStore.getState().openAddToPlaylistModal(currentTrack)}
+              className="p-3 shrink-0 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all hover:text-acid-lime"
+              title="Add to Playlist"
+            >
+              <Plus className="w-6 h-6" />
+            </button>
+            
             {currentTrack.source === 'saavn' && !currentTrack.isOffline && (
               <button 
                 onClick={async () => {
@@ -81,23 +92,25 @@ export const FullPlayer: React.FC = () => {
                     usePlayerStore.setState({ currentTrack: { ...currentTrack, isOffline: true } });
                   }
                 }}
-                className="p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all"
+                className="p-3 shrink-0 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all hover:text-cyber-cyan"
               >
                 <Download className="w-6 h-6" />
               </button>
             )}
+            
             <button
               onClick={() => setSpeedWheelOpen(true)}
-              className="flex items-center justify-center px-4 py-2.5 rounded-full font-bold text-sm bg-white/10 text-white hover:bg-white/20 transition-all duration-300"
+              className="flex items-center shrink-0 justify-center px-5 py-3 rounded-full font-bold text-sm bg-white/10 text-white hover:bg-white/20 transition-all"
             >
               {playbackRate}x
             </button>
+            
             <button 
               onClick={() => setLyricsOpen(!isLyricsOpen)}
-              className={`flex items-center space-x-2 px-5 py-2.5 rounded-full font-bold uppercase tracking-widest text-sm transition-all duration-300 ${isLyricsOpen ? 'bg-acid-lime text-obsidian shadow-[0_0_20px_rgba(204,255,0,0.6)]' : 'bg-white/10 text-white hover:bg-white/20'}`}
+              className={`p-3 shrink-0 rounded-full transition-all ${isLyricsOpen ? 'bg-acid-lime text-black shadow-[0_0_20px_rgba(204,255,0,0.6)]' : 'bg-white/10 text-white hover:bg-white/20'}`}
+              title="Lyrics"
             >
-              <Mic2 className="w-5 h-5" />
-              <span>Lyrics</span>
+              <Mic2 className="w-6 h-6" />
             </button>
           </div>
         </div>
