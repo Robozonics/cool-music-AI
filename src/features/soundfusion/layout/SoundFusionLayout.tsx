@@ -154,10 +154,7 @@ export const SoundFusionLayout: React.FC<LayoutProps> = ({ children, activeTab, 
                 <li 
                   key={playlist.id}
                   className="hover:text-purple-400 cursor-pointer py-2 px-2 rounded-lg hover:bg-white/5 transition-colors flex items-center gap-2"
-                  onClick={() => {
-                    setQueue(playlist.tracks);
-                    playTrack(playlist.tracks[0]);
-                  }}
+                  onClick={() => setActiveTab(`playlist:${playlist.id}`)}
                 >
                   <span className="text-purple-500">💿</span> {playlist.name}
                 </li>

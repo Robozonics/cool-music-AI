@@ -60,7 +60,7 @@ function App() {
       case 'samples':
         return <SamplesFeed />;
       case 'vault':
-        return <OfflineVault />;
+        return <OfflineVault setActiveTab={setActiveTab} />;
       default:
         return <HomeView setActiveTab={setActiveTab} />;
     }

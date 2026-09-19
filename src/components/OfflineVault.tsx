@@ -1,11 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { Play, Trash2, HardDrive, Plus } from 'lucide-react';
+import { Play, Trash2, HardDrive, Plus, ListMusic, ChevronRight } from 'lucide-react';
 import { getOfflineTracks, deleteOfflineTrack } from '../services/downloadService';
 import type { Track } from '../types/music';
 import { usePlayerStore } from '../store/usePlayerStore';
 
-export const OfflineVault: React.FC = () => {
+interface OfflineVaultProps {
+  setActiveTab?: (tab: string) => void;
+}
+
+export const OfflineVault: React.FC<OfflineVaultProps> = ({ setActiveTab }) => {
   const [tracks, setTracks] = useState<Track[]>([]);
+  const savedPlaylists = usePlayerStore(state => state.savedPlaylists);
   const playTrack = usePlayerStore(state => state.playTrack);
   const setQueue = usePlayerStore(state => state.setQueue);
 
@@ -37,10 +42,35 @@ export const OfflineVault: React.FC = () => {
           <HardDrive className="w-6 h-6 text-cyber-cyan" />
         </div>
         <div>
-          <h2 className="text-3xl font-black text-white tracking-tight">Offline Vault</h2>
-          <p className="text-gray-400">Zero data required. Pure vibes.</p>
+          <h2 className="text-3xl font-black text-white tracking-tight">Library & Vault</h2>
+          <p className="text-gray-400">Your saved playlists and offline tracks.</p>
         </div>
       </div>
+
+      {savedPlaylists.length > 0 && (
+        <div className="mb-10">
+          <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4 pl-2">Your Playlists</h3>
+          <div className="grid grid-cols-2 gap-4">
+            {savedPlaylists.map(playlist => (
+              <div 
+                key={playlist.id} 
+                onClick={() => setActiveTab?.(`playlist:${playlist.id}`)}
+                className="bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col justify-between aspect-square cursor-pointer hover:bg-white/10 transition group shadow-[0_10px_20px_rgba(0,0,0,0.3)]"
+              >
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                  <ListMusic className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-white text-lg truncate mb-1">{playlist.name}</h4>
+                  <p className="text-gray-400 text-xs font-medium uppercase tracking-wider">{playlist.tracks.length} Tracks</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4 pl-2">Offline Tracks</h3>
 
       {tracks.length === 0 ? (
         <div className="text-center py-20 text-gray-500">
