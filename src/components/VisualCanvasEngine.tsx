@@ -1,43 +1,26 @@
-import { useRef, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-
-const CANVAS_VIDEOS = [
-  'https://assets.mixkit.co/videos/preview/mixkit-liquid-neon-gradient-loop-animation-4309-large.mp4',
-  'https://assets.mixkit.co/videos/preview/mixkit-abstract-waves-animation-in-blue-and-purple-4286-large.mp4',
-  'https://assets.mixkit.co/videos/preview/mixkit-ink-swirling-in-water-4318-large.mp4',
-  'https://assets.mixkit.co/videos/preview/mixkit-abstract-technology-particle-background-3134-large.mp4',
-];
 
 export const VisualCanvasEngine = () => {
   const isVideoMode = usePlayerStore(state => state.isVideoMode);
   const toggleVideoMode = usePlayerStore(state => state.toggleVideoMode);
   const currentTrack = usePlayerStore(state => state.currentTrack);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [videoSrc, setVideoSrc] = useState(CANVAS_VIDEOS[0]);
+  const [pulse, setPulse] = useState(0);
 
-  // Deterministically select a video based on track ID so it stays the same for a given track
+  // Sync with the global --vibe-intensity variable for an audio-reactive effect
   useEffect(() => {
-    if (currentTrack) {
-      const hash = currentTrack.id.split('').reduce((a, b) => {
-        a = ((a << 5) - a) + b.charCodeAt(0);
-        return a & a;
-      }, 0);
-      const index = Math.abs(hash) % CANVAS_VIDEOS.length;
-      setVideoSrc(CANVAS_VIDEOS[index]);
-    }
-  }, [currentTrack]);
-
-  useEffect(() => {
-    if (videoRef.current) {
-      if (isVideoMode) {
-        videoRef.current.play().catch(() => {});
-      } else {
-        videoRef.current.pause();
-      }
-    }
-  }, [isVideoMode, videoSrc]);
+    if (!isVideoMode) return;
+    let raf: number;
+    const loop = () => {
+      const vibe = getComputedStyle(document.documentElement).getPropertyValue('--vibe-intensity');
+      setPulse(parseFloat(vibe || '0'));
+      raf = requestAnimationFrame(loop);
+    };
+    loop();
+    return () => cancelAnimationFrame(raf);
+  }, [isVideoMode]);
 
   return (
     <AnimatePresence>
@@ -57,7 +40,7 @@ export const VisualCanvasEngine = () => {
             <ChevronDown className="w-8 h-8" />
           </button>
           
-          {/* Track Info Overlay (Canvas Style) */}
+          {/* Track Info Overlay */}
           {currentTrack && (
             <div className="absolute bottom-32 left-8 z-[110] pointer-events-none">
               <h2 className="text-4xl font-black tracking-tight text-white drop-shadow-lg mb-1">{currentTrack.title}</h2>
@@ -65,18 +48,33 @@ export const VisualCanvasEngine = () => {
             </div>
           )}
           
-          {/* Subtle vignette over video */}
+          {/* Cinematic Vignette */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 z-[105] pointer-events-none" />
           
-          {/* The Looping Canvas */}
-          <video
-            ref={videoRef}
-            src={videoSrc}
-            className="absolute inset-0 w-full h-full object-cover opacity-90 scale-105 blur-[1px]"
-            loop
-            muted
-            playsInline
-          />
+          {/* Audio-Reactive Fluid Visualizer */}
+          <div 
+            className="absolute inset-0 w-full h-full opacity-80" 
+            style={{
+              background: `radial-gradient(circle at 50% 50%, rgba(163,230,53, ${0.2 + pulse * 0.3}), transparent 70%),
+                           radial-gradient(circle at 80% 20%, rgba(255,0,128, ${0.3 + pulse * 0.2}), transparent 50%),
+                           radial-gradient(circle at 20% 80%, rgba(0,255,255, ${0.2 + pulse * 0.4}), transparent 50%)`,
+              backgroundColor: '#0a0a0c',
+              transform: `scale(${1 + pulse * 0.05})`,
+              transition: 'transform 0.1s ease-out'
+            }}
+          >
+             {currentTrack && (
+                <div 
+                  className="absolute inset-0 bg-cover bg-center opacity-30 mix-blend-overlay"
+                  style={{ 
+                    backgroundImage: `url(${currentTrack.thumbnail})`,
+                    transform: `scale(${1.1 + pulse * 0.1})`,
+                    transition: 'transform 0.1s ease-out',
+                    filter: 'blur(20px)'
+                  }} 
+                />
+             )}
+          </div>
         </motion.div>
       )}
     </AnimatePresence>
