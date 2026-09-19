@@ -31,6 +31,7 @@ interface PlayerState {
   isCrossfadeEnabled: boolean;
   isCrossfading: boolean; // actively crossfading right now
   isVideoMode: boolean;
+  toggleVideoMode: () => void;
 
   // Autoplay Handling
   isAutoplayBlocked: boolean;

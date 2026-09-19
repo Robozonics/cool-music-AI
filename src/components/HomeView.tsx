@@ -25,7 +25,11 @@ const SECTIONS: Section[] = [
   { title: "VIBE MATCH", query: "viral tiktok songs" }
 ];
 
-export const HomeView: React.FC = () => {
+interface HomeViewProps {
+  setActiveTab?: (tab: TabType) => void;
+}
+
+export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab }) => {
   const [sectionsData, setSectionsData] = useState<Record<string, Track[]>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isAIPlaylistOpen, setIsAIPlaylistOpen] = useState(false);

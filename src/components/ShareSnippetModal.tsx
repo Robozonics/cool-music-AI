@@ -138,7 +138,7 @@ export const ShareSnippetModal: React.FC = () => {
           text: `Check out this snippet starting at ${formatTime(snippetStart)} on MUSIFY!`,
           url,
         });
-      } catch (e) {
+      } catch {
         // user cancelled — that's fine
       }
     } else {
