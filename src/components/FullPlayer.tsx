@@ -77,7 +77,9 @@ export const FullPlayer: React.FC = () => {
               <button 
                 onClick={async () => {
                   const success = await (await import('../services/downloadService')).downloadTrack(currentTrack);
-                  if (success) currentTrack.isOffline = true;
+                  if (success) {
+                    usePlayerStore.setState({ currentTrack: { ...currentTrack, isOffline: true } });
+                  }
                 }}
                 className="p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all"
               >

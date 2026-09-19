@@ -42,7 +42,9 @@ export const DesktopPlayer: React.FC = () => {
           <button 
             onClick={async () => {
               const success = await (await import('../services/downloadService')).downloadTrack(currentTrack);
-              if (success) currentTrack.isOffline = true;
+              if (success) {
+                usePlayerStore.setState({ currentTrack: { ...currentTrack, isOffline: true } });
+              }
             }}
             className="p-2 text-gray-400 hover:text-white transition"
           >

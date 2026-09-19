@@ -9,6 +9,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
+  const savedPlaylists = usePlayerStore(state => state.savedPlaylists);
   const tabs = [
     { id: 'home', icon: Home, label: 'Home' },
     { id: 'mood', icon: Sparkles, label: 'Mood AI' },
@@ -46,11 +47,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
         </div>
 
         {/* Playlists Section */}
-        {usePlayerStore(state => state.savedPlaylists).length > 0 && (
+        {savedPlaylists.length > 0 && (
           <div className="pt-6 mt-6 border-t border-white/5">
             <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 px-3">Your Playlists</h2>
             <div className="space-y-1">
-              {usePlayerStore(state => state.savedPlaylists).map(playlist => {
+              {savedPlaylists.map(playlist => {
                 const playlistTabId = `playlist:${playlist.id}`;
                 const isActive = activeTab === playlistTabId;
                 return (
