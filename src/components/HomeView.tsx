@@ -5,6 +5,7 @@ import type { Track } from '../types/music';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { DaylistWidget } from './DaylistWidget';
 import { AIPlaylistModal } from './AIPlaylistModal';
+import type { TabType } from './BottomNav';
 
 const MOOD_PILLS = [
   { label: '3 AM OVERTHINKING', color: 'bg-lime-400 text-black', query: 'sad lofi study beats' },
@@ -77,7 +78,7 @@ export const HomeView: React.FC = () => {
   return (
     <div className="space-y-12 pb-32">
       {/* AI Playlist Modal */}
-      <AIPlaylistModal isOpen={isAIPlaylistOpen} onClose={() => setIsAIPlaylistOpen(false)} />
+      <AIPlaylistModal isOpen={isAIPlaylistOpen} onClose={() => setIsAIPlaylistOpen(false)} onNavigateToPlaylist={(id) => setActiveTab && setActiveTab(`playlist:${id}`)} />
 
       {/* Daylist Widget — Time-Contextual (Feature 4) */}
       <DaylistWidget />

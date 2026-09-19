@@ -1,7 +1,7 @@
 import React from 'react';
 import { Home, Sparkles, Search, HardDrive, Zap } from 'lucide-react';
 
-export type TabType = 'home' | 'mood' | 'search' | 'vault' | 'samples';
+export type TabType = string;
 
 interface BottomNavProps {
   activeTab: TabType;

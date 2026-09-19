@@ -8,6 +8,7 @@ import type { Track, PlaylistSegment } from '../types/music';
 interface AIPlaylistModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onNavigateToPlaylist?: (id: string) => void;
 }
 
 const SEGMENT_META: Record<PlaylistSegment, { label: string; color: string; bg: string; desc: string }> = {
@@ -37,7 +38,7 @@ const CURVE_SEGMENTS = [
   { segment: 'cooldown' as PlaylistSegment, label: 'Cooldown', range: '21–30', icon: '🌙' },
 ];
 
-export const AIPlaylistModal: React.FC<AIPlaylistModalProps> = ({ isOpen, onClose }) => {
+export const AIPlaylistModal: React.FC<AIPlaylistModalProps> = ({ isOpen, onClose, onNavigateToPlaylist }) => {
   const playTrack = usePlayerStore(state => state.playTrack);
   const setQueue = usePlayerStore(state => state.setQueue);
 
@@ -93,10 +94,13 @@ export const AIPlaylistModal: React.FC<AIPlaylistModalProps> = ({ isOpen, onClos
   const handleSavePlaylist = () => {
     const tracksToSave = generatedTracks.filter(t => selectedTrackIds.has(t.id));
     if (tracksToSave.length === 0 || !playlistName.trim()) return;
-    usePlayerStore.getState().savePlaylist(playlistName.trim(), tracksToSave);
+    const newId = usePlayerStore.getState().savePlaylist(playlistName.trim(), tracksToSave);
     setIsSaving(false);
     setPlaylistName('');
     onClose();
+    if (onNavigateToPlaylist) {
+      onNavigateToPlaylist(newId);
+    }
   };
 
   const handleReset = () => {

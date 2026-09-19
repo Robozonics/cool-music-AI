@@ -3,6 +3,7 @@ import { HomeView } from './components/HomeView';
 import { SearchView } from './components/SearchView';
 import { MoodView } from './components/MoodView';
 import { OfflineVault } from './components/OfflineVault';
+import { PlaylistView } from './components/PlaylistView';
 import { BottomNav } from './components/BottomNav';
 import type { TabType } from './components/BottomNav';
 import { MiniPlayer } from './components/MiniPlayer';
@@ -45,9 +46,13 @@ function App() {
   }, []);
 
   const renderContent = () => {
+    if (activeTab.startsWith('playlist:')) {
+      return <PlaylistView playlistId={activeTab.split(':')[1]} setActiveTab={setActiveTab} />;
+    }
+    
     switch (activeTab) {
       case 'home':
-        return <HomeView />;
+        return <HomeView setActiveTab={setActiveTab} />;
       case 'mood':
         return <MoodView />;
       case 'search':
@@ -57,7 +62,7 @@ function App() {
       case 'vault':
         return <OfflineVault />;
       default:
-        return <HomeView />;
+        return <HomeView setActiveTab={setActiveTab} />;
     }
   };
 

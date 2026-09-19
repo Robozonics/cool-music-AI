@@ -69,7 +69,7 @@ interface PlayerState {
   
   // Saved Playlists
   savedPlaylists: SavedPlaylist[];
-  savePlaylist: (name: string, tracks: Track[]) => void;
+  savePlaylist: (name: string, tracks: Track[]) => string;
   deletePlaylist: (id: string) => void;
 }
 
@@ -410,12 +410,16 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
       set({ playbackRate: newRate });
     },
 
-    savePlaylist: (name: string, tracks: Track[]) => set(state => ({
-      savedPlaylists: [
-        ...state.savedPlaylists,
-        { id: Math.random().toString(36).substring(2, 9), name, tracks }
-      ]
-    })),
+    savePlaylist: (name: string, tracks: Track[]) => {
+      const id = Math.random().toString(36).substring(2, 9);
+      set(state => ({
+        savedPlaylists: [
+          ...state.savedPlaylists,
+          { id, name, tracks }
+        ]
+      }));
+      return id;
+    },
 
     deletePlaylist: (id: string) => set(state => ({
       savedPlaylists: state.savedPlaylists.filter(p => p.id !== id)
