@@ -73,7 +73,7 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
   };
 
   return (
-    <div className="h-full flex flex-col bg-obsidian">
+    <div className="flex flex-col min-h-full bg-obsidian">
       {/* Header */}
       <div className="relative pt-16 pb-8 px-6 bg-gradient-to-b from-purple-900/40 to-obsidian">
         <button 
@@ -83,8 +83,8 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
           <ChevronLeft className="w-6 h-6" />
         </button>
         
-        <div className="flex flex-col md:flex-row gap-6 items-center md:items-end mt-4 text-center md:text-left">
-          <div className="relative w-56 h-56 md:w-64 md:h-64 shrink-0 rounded-md overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] bg-white/5 border border-white/10 flex items-center justify-center">
+        <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-center md:items-end mt-2 md:mt-4 text-center md:text-left">
+          <div className="relative w-40 h-40 md:w-64 md:h-64 shrink-0 rounded-md overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] bg-white/5 border border-white/10 flex items-center justify-center">
             {playlist.tracks[0] ? (
               <img src={playlist.tracks[0].thumbnail} alt="Cover" className="w-full h-full object-cover blur-md scale-125 opacity-40" />
             ) : (
@@ -137,7 +137,7 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
       </div>
 
       {/* Tracklist */}
-      <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 pb-32">
+      <div className="px-4 md:px-6 py-2 md:py-4 pb-32">
         <div className="space-y-1 md:space-y-2">
           {playlist.tracks.map((track, idx) => {
             const isPlayingThis = currentTrack?.id === track.id;

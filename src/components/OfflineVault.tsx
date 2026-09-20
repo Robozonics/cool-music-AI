@@ -36,7 +36,7 @@ export const OfflineVault: React.FC<OfflineVaultProps> = ({ setActiveTab }) => {
   };
 
   return (
-    <div className="p-4 pt-8 w-full max-w-2xl mx-auto h-full flex flex-col pb-32 overflow-y-auto">
+    <div className="p-4 pt-8 w-full max-w-2xl mx-auto min-h-full pb-32">
       <div className="flex items-center space-x-4 mb-8 pl-2">
         <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center">
           <HardDrive className="w-6 h-6 text-cyber-cyan" />
