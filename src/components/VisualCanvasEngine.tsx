@@ -17,7 +17,6 @@ export const VisualCanvasEngine = () => {
   const isPlaying = usePlayerStore(state => state.isPlaying);
   
   const playerRef = useRef<any>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const [isReady, setIsReady] = useState(false);
   const [videoId, setVideoId] = useState<string | null>(null);
 
@@ -129,20 +128,6 @@ export const VisualCanvasEngine = () => {
     return unsub;
   }, []);
 
-  // Request native fullscreen on mobile when video mode opens
-  useEffect(() => {
-    if (!isVideoMode) {
-      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
-      return;
-    }
-    const isMobile = window.innerWidth < 768;
-    if (isMobile && containerRef.current) {
-      const el = containerRef.current as any;
-      const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
-      if (req) req.call(el).catch(() => {});
-    }
-  }, [isVideoMode]);
-
   return (
     <>
       {/* 
@@ -150,7 +135,6 @@ export const VisualCanvasEngine = () => {
         We scale it up significantly (130vw/vh) to push the YouTube logo (bottom right) completely off-screen.
       */}
       <div 
-        ref={containerRef}
         className={`fixed inset-0 z-[90] bg-black overflow-hidden pointer-events-none transition-opacity duration-150 ${isVideoMode ? 'opacity-100' : 'opacity-0'}`}
       >
         <div 
@@ -184,11 +168,23 @@ export const VisualCanvasEngine = () => {
               <ChevronDown className="w-8 h-8" />
             </button>
             
-            {/* Track Info Overlay */}
+            {/* Track Info — gradient name overlay */}
             {currentTrack && (
-              <div className="absolute bottom-32 left-8 z-[110]">
-                <h2 className="text-4xl font-black tracking-tight text-white drop-shadow-lg mb-1">{currentTrack.title}</h2>
-                <p className="text-xl font-medium text-white/80 drop-shadow-md">{currentTrack.artist}</p>
+              <div className="absolute bottom-32 left-0 right-0 px-8 z-[110]">
+                <p className="text-xs font-bold uppercase tracking-[0.3em] text-white/50 mb-1">Now Playing</p>
+                <h2
+                  className="text-4xl md:text-6xl font-black tracking-tight leading-none mb-2"
+                  style={{
+                    background: 'linear-gradient(90deg, #CCFF00 0%, #ff00ff 50%, #00ffff 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    filter: 'drop-shadow(0 0 20px rgba(204,255,0,0.4))'
+                  }}
+                >
+                  {currentTrack.title}
+                </h2>
+                <p className="text-lg font-medium text-white/70">{currentTrack.artist}</p>
               </div>
             )}
           </motion.div>
