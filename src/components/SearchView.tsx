@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Play, Download, Loader2, Sparkles, Plus } from 'lucide-react';
+import { Search, Play, Download, Loader2, Sparkles, Plus, Mic, MicOff } from 'lucide-react';
 import { searchUnblocked } from '../services/unblockedMusicService';
 import { searchBestMusicWithAI } from '../services/geminiService';
 import type { Track } from '../types/music';
@@ -11,6 +11,7 @@ export const SearchView: React.FC = () => {
   const [results, setResults] = useState<Track[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchMode, setSearchMode] = useState<'standard' | 'ai'>('standard');
+  const [isListening, setIsListening] = useState(false);
   
   const playTrack = usePlayerStore(state => state.playTrack);
   const setQueue = usePlayerStore(state => state.setQueue);
@@ -18,9 +19,9 @@ export const SearchView: React.FC = () => {
 
   const aiPills = [
     '🔥 All-Time Best Billboard Hits',
-    '🏎️ Hardest Gym Phonk Ever',
+    '🤠🐎🎸',
     '🌌 Songs That Make You Feel Like Floating',
-    '☕ Best Cozy Coffee Shop Lofi'
+    '#sad #lofi #study'
   ];
 
   const executeSearch = async (searchQuery: string) => {
@@ -66,6 +67,48 @@ export const SearchView: React.FC = () => {
     }
   };
 
+  const toggleListening = () => {
+    if (isListening) {
+      setIsListening(false);
+      return;
+    }
+    
+    // @ts-ignore
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Your browser does not support Sound Search (Speech Recognition). Please try a modern browser like Chrome.');
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      setSearchMode('ai'); // Sound search works best with AI
+    };
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setQuery(transcript);
+      executeSearch(transcript);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error('Speech recognition error', event.error);
+      alert('Could not hear you. Please try again.');
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognition.start();
+  };
+
   useEffect(() => {
     if (!query.trim()) {
       setResults([]);
@@ -102,20 +145,50 @@ export const SearchView: React.FC = () => {
         </button>
       </div>
 
-      <form onSubmit={handleSearch} className="relative mb-6">
+      <form onSubmit={handleSearch} className="relative mb-6 flex items-center group">
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder={searchMode === 'ai' ? "e.g. 'Best 90s hip-hop basslines', 'Top 10 synthwave'..." : "Search for any song, artist, or vibe..."}
-          className={`w-full bg-white/5 border rounded-full py-4 pl-12 pr-6 text-white placeholder-gray-400 focus:outline-none transition-all glass-panel ${searchMode === 'ai' ? 'border-acid-lime/50 focus:border-acid-lime focus:ring-1 focus:ring-acid-lime' : 'border-white/10 focus:border-white'}`}
+          placeholder={searchMode === 'ai' ? "e.g. 🏎️🔥💨 or #lateNightVibes or Hum..." : "Search for any song, artist, or vibe..."}
+          className={`w-full bg-white/5 border rounded-full py-4 pl-12 pr-16 text-white placeholder-gray-400 focus:outline-none transition-all glass-panel ${searchMode === 'ai' ? 'border-acid-lime/50 focus:border-acid-lime focus:ring-1 focus:ring-acid-lime' : 'border-white/10 focus:border-white'}`}
         />
         {searchMode === 'ai' ? (
            <Sparkles className="absolute left-4 top-1/2 -translate-y-1/2 text-acid-lime w-5 h-5" />
         ) : (
            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
         )}
+        <button
+          type="button"
+          onClick={toggleListening}
+          className={`absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full transition-all flex items-center justify-center ${
+            isListening 
+              ? 'bg-red-500 text-white animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.6)]' 
+              : 'bg-white/10 text-gray-400 hover:text-white hover:bg-white/20'
+          }`}
+          title="Sound Search: Hum or Sing"
+        >
+          {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+        </button>
       </form>
+      
+      {isListening && (
+        <div className="flex flex-col items-center justify-center mb-8 p-6 bg-red-500/10 border border-red-500/20 rounded-3xl">
+          <div className="flex items-end space-x-1 h-8 mb-4">
+            {[1, 2, 3, 4, 5, 6, 7].map((bar) => (
+              <div 
+                key={bar}
+                className="w-1.5 bg-red-500 rounded-t-sm"
+                style={{
+                  height: `${Math.max(20, Math.random() * 100)}%`,
+                  animation: `bounce-eq 0.${3 + bar}s ease-in-out infinite alternate`
+                }}
+              />
+            ))}
+          </div>
+          <p className="text-red-400 font-bold tracking-widest uppercase text-sm animate-pulse">Listening... Sing or Hum</p>
+        </div>
+      )}
 
       {searchMode === 'ai' && !isLoading && results.length === 0 && (
         <div className="flex flex-wrap gap-2 mb-6">

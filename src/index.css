@@ -226,3 +226,8 @@ html, body {
   background-repeat: repeat-x;
   background-position: 0px 50%;
 }
+
+@keyframes bounce-eq {
+  0% { transform: scaleY(0.3); }
+  100% { transform: scaleY(1); }
+}
