@@ -1,6 +1,12 @@
 export type MusicSource = 'saavn' | 'audius' | 'invidious';
 export type PlaylistSegment = 'foundation' | 'peak' | 'cooldown';
 
+export interface DjEvent {
+  timestamp: number; // in seconds
+  trackId: string;
+  type: 'play' | 'pause' | 'fade_in' | 'fade_out' | 'cut_vocals' | 'restore_vocals';
+}
+
 export interface Track {
   id: string;
   title: string;
@@ -13,7 +19,8 @@ export interface Track {
   isOffline?: boolean;
   reason?: string; // AI reason
   segment?: PlaylistSegment; // AI playlist segment
-  mashupStreamUrls?: string[]; // Used to play multiple tracks concurrently
+  mashupStreamUrls?: { id: string, url: string }[]; // Used to play multiple tracks concurrently
+  arrangement?: DjEvent[]; // AI generated timeline for DJ actions
 }
 
 export interface LyricLine {

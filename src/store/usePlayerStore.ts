@@ -1,18 +1,118 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Track, SavedPlaylist } from '../types/music';
+import type { Track, SavedPlaylist, DjEvent } from '../types/music';
 
 // Global native audio instance for Direct CDNs
 export const nativeAudio = new Audio();
-// Cross-origin for audio context
 nativeAudio.crossOrigin = "anonymous";
 
 // Secondary audio instance for crossfade — lives here at module scope so it persists
 export const crossfadeAudio = new Audio();
 crossfadeAudio.crossOrigin = "anonymous";
 
-// Auxiliary audio instances for AI Mashup Studio (playing multiple tracks simultaneously)
-export let auxAudios: HTMLAudioElement[] = [];
+// DJ Arrangement Web Audio State
+export let audioCtx: AudioContext | null = null;
+export let nativeAudioSource: MediaElementAudioSourceNode | null = null;
+export let nativeAudioFilter: BiquadFilterNode | null = null;
+
+interface AuxContext {
+  audio: HTMLAudioElement;
+  source: MediaElementAudioSourceNode | null;
+  filter: BiquadFilterNode | null;
+  trackId: string;
+}
+export let auxContexts: AuxContext[] = [];
+
+export let currentArrangement: DjEvent[] = [];
+export let processedEvents: Set<string> = new Set();
+
+const initAudioContext = () => {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    nativeAudioSource = audioCtx.createMediaElementSource(nativeAudio);
+    nativeAudioFilter = audioCtx.createBiquadFilter();
+    nativeAudioFilter.type = 'peaking';
+    nativeAudioFilter.frequency.value = 1000;
+    nativeAudioFilter.Q.value = 1.5;
+    nativeAudioFilter.gain.value = 0; // 0 = no cut
+    
+    nativeAudioSource.connect(nativeAudioFilter);
+    nativeAudioFilter.connect(audioCtx.destination);
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+};
+
+export const rampVolume = (
+  audio: HTMLAudioElement,
+  from: number,
+  to: number,
+  durationMs: number,
+  onComplete?: () => void
+) => {
+  const startTime = performance.now();
+  const tick = (now: number) => {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / durationMs, 1);
+    audio.volume = from + (to - from) * progress;
+    if (progress < 1) {
+      requestAnimationFrame(tick);
+    } else {
+      audio.volume = to;
+      onComplete?.();
+    }
+  };
+  requestAnimationFrame(tick);
+};
+
+const executeDjEvent = (evt: DjEvent, currentTrackId: string, volume: number) => {
+  let targetAudio: HTMLAudioElement | null = null;
+  let targetFilter: BiquadFilterNode | null = null;
+  
+  if (evt.trackId === currentTrackId) {
+     targetAudio = nativeAudio;
+     targetFilter = nativeAudioFilter;
+  } else {
+     const aux = auxContexts.find(x => x.trackId === evt.trackId);
+     if (aux) {
+       targetAudio = aux.audio;
+       targetFilter = aux.filter;
+     }
+  }
+  
+  if (!targetAudio) return;
+  
+  switch (evt.type) {
+    case 'play':
+      targetAudio.volume = volume;
+      targetAudio.play().catch(() => {});
+      break;
+    case 'pause':
+      targetAudio.pause();
+      break;
+    case 'fade_in':
+      targetAudio.volume = 0;
+      targetAudio.play().catch(() => {});
+      rampVolume(targetAudio, 0, volume, 2000);
+      break;
+    case 'fade_out':
+      rampVolume(targetAudio, targetAudio.volume, 0, 2000, () => {
+         targetAudio!.pause();
+      });
+      break;
+    case 'cut_vocals':
+      if (targetFilter && audioCtx) {
+        targetFilter.gain.setTargetAtTime(-24, audioCtx.currentTime, 0.5);
+      }
+      break;
+    case 'restore_vocals':
+      if (targetFilter && audioCtx) {
+        targetFilter.gain.setTargetAtTime(0, audioCtx.currentTime, 0.5);
+      }
+      break;
+  }
+};
 
 interface PlayerState {
   currentTrack: Track | null;
@@ -122,34 +222,12 @@ export const usePlayerStore = create<PlayerState>()(
     }
     
     // Attempt to play all auxiliary mashup tracks
-    auxAudios.forEach(a => {
-       const p = a.play();
+    auxContexts.forEach(a => {
+       const p = a.audio.play();
        if (p !== undefined) p.catch(() => {}); // Ignore aux autoplay errors
     });
   };
 
-  // Smooth volume ramp via requestAnimationFrame
-  const rampVolume = (
-    audio: HTMLAudioElement,
-    from: number,
-    to: number,
-    durationMs: number,
-    onComplete?: () => void
-  ) => {
-    const startTime = performance.now();
-    const tick = (now: number) => {
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / durationMs, 1);
-      audio.volume = from + (to - from) * progress;
-      if (progress < 1) {
-        requestAnimationFrame(tick);
-      } else {
-        audio.volume = to;
-        onComplete?.();
-      }
-    };
-    requestAnimationFrame(tick);
-  };
 
   // ─────────────────────────────────────────────
   // Native audio event listeners
@@ -159,6 +237,17 @@ export const usePlayerStore = create<PlayerState>()(
     const state = get();
     const t = nativeAudio.currentTime;
     set({ currentTime: t });
+
+    // Process DJ Arrangement
+    if (currentArrangement && currentArrangement.length > 0 && state.currentTrack) {
+      currentArrangement.forEach((evt, idx) => {
+        const eventId = `${idx}-${evt.timestamp}-${evt.type}-${evt.trackId}`;
+        if (t >= evt.timestamp && !processedEvents.has(eventId)) {
+          processedEvents.add(eventId);
+          executeDjEvent(evt, state.currentTrack!.id, state.volume);
+        }
+      });
+    }
 
     // ── Crossfade trigger: 3s before end ──
     if (
@@ -225,9 +314,9 @@ export const usePlayerStore = create<PlayerState>()(
     set({ isAutoplayBlocked: false });
     
     // Sync auxiliary tracks
-    auxAudios.forEach(a => {
-       a.playbackRate = get().playbackRate;
-       const p = a.play();
+    auxContexts.forEach(a => {
+       a.audio.playbackRate = get().playbackRate;
+       const p = a.audio.play();
        if (p !== undefined) p.catch(() => {});
     });
   });
@@ -246,7 +335,7 @@ export const usePlayerStore = create<PlayerState>()(
 
   nativeAudio.addEventListener('pause', () => {
     set({ isPlaying: false, isBuffering: false });
-    auxAudios.forEach(a => a.pause());
+    auxContexts.forEach(a => a.audio.pause());
   });
 
   // ─────────────────────────────────────────────
@@ -335,17 +424,39 @@ export const usePlayerStore = create<PlayerState>()(
       crossfadeAudio.src = '';
       
       // Clear previous auxiliary audios
-      auxAudios.forEach(a => { a.pause(); a.src = ''; });
-      auxAudios = [];
+      auxContexts.forEach(a => { a.audio.pause(); a.audio.src = ''; });
+      auxContexts = [];
+      processedEvents.clear();
+      currentArrangement = track.arrangement || [];
+      
+      initAudioContext();
+      if (nativeAudioFilter && audioCtx) {
+         nativeAudioFilter.gain.value = 0; // reset cut
+      }
       
       // Setup new auxiliary audios for mashups
       if (track.mashupStreamUrls && track.mashupStreamUrls.length > 0) {
-        track.mashupStreamUrls.forEach(url => {
-           const aux = new Audio(url);
+        track.mashupStreamUrls.forEach(item => {
+           const aux = new Audio(item.url);
            aux.crossOrigin = "anonymous";
            aux.volume = get().volume;
            aux.playbackRate = get().playbackRate;
-           auxAudios.push(aux);
+           
+           let source = null;
+           let filter = null;
+           
+           if (audioCtx) {
+             source = audioCtx.createMediaElementSource(aux);
+             filter = audioCtx.createBiquadFilter();
+             filter.type = 'peaking';
+             filter.frequency.value = 1000;
+             filter.Q.value = 1.5;
+             filter.gain.value = 0;
+             source.connect(filter);
+             filter.connect(audioCtx.destination);
+           }
+           
+           auxContexts.push({ audio: aux, source, filter, trackId: item.id });
         });
       }
 
@@ -393,8 +504,8 @@ export const usePlayerStore = create<PlayerState>()(
       nativeAudio.src = '';
       crossfadeAudio.pause();
       crossfadeAudio.src = '';
-      auxAudios.forEach(a => { a.pause(); a.src = ''; });
-      auxAudios = [];
+      auxContexts.forEach(a => { a.audio.pause(); a.audio.src = ''; });
+      auxContexts = [];
       set({ 
         currentTrack: null, 
         isPlaying: false, 
@@ -409,7 +520,8 @@ export const usePlayerStore = create<PlayerState>()(
       const { currentTrack } = get();
       if (!currentTrack) return;
       nativeAudio.currentTime = seconds;
-      auxAudios.forEach(a => a.currentTime = seconds);
+      auxContexts.forEach(a => a.audio.currentTime = seconds);
+      processedEvents.clear(); // Reset processed events so it re-evaluates
       set({ currentTime: seconds });
     },
 
@@ -466,14 +578,14 @@ export const usePlayerStore = create<PlayerState>()(
     setVolume: (vol: number) => {
       const newVol = Math.max(0, Math.min(1, vol));
       nativeAudio.volume = newVol;
-      auxAudios.forEach(a => a.volume = newVol);
+      auxContexts.forEach(a => a.audio.volume = newVol);
       set({ volume: newVol });
     },
 
     setPlaybackRate: (rate: number) => {
       const newRate = Math.max(0.5, Math.min(3, rate));
       nativeAudio.playbackRate = newRate;
-      auxAudios.forEach(a => a.playbackRate = newRate);
+      auxContexts.forEach(a => a.audio.playbackRate = newRate);
       set({ playbackRate: newRate });
     },
 
