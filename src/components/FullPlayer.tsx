@@ -13,7 +13,7 @@ export const FullPlayer: React.FC = () => {
   const nextTrack = usePlayerStore(state => state.nextTrack);
   const prevTrack = usePlayerStore(state => state.prevTrack);
   const repeatMode = usePlayerStore(state => state.repeatMode);
-  const toggleRepeat = usePlayerStore(state => state.toggleRepeat);
+  const setRepeatMode = usePlayerStore(state => state.setRepeatMode);
   const seek = usePlayerStore(state => state.seek);
   const setSpeedWheelOpen = usePlayerStore(state => state.setSpeedWheelOpen);
   
@@ -24,6 +24,12 @@ export const FullPlayer: React.FC = () => {
   
   const isVideoMode = usePlayerStore(state => state.isVideoMode);
   const toggleVideoMode = usePlayerStore(state => state.toggleVideoMode);
+
+  const toggleRepeat = () => {
+    if (repeatMode === 'off') setRepeatMode('all');
+    else if (repeatMode === 'all') setRepeatMode('one');
+    else setRepeatMode('off');
+  };
 
   if (!currentTrack || !isFullPlayerOpen) return null;
 
