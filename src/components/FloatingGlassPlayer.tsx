@@ -425,6 +425,19 @@ export const FloatingGlassPlayer: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {/* Queue Button */}
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={(e) => {
+              e.stopPropagation();
+              usePlayerStore.getState().setQueueOpen(true);
+            }}
+            title="Up Next"
+            className="hidden sm:block p-1.5 lg:p-2 ml-1 lg:ml-2 rounded-xl transition-all text-zinc-400 hover:text-white shrink-0"
+          >
+            <ListMusic className="w-4 h-4 lg:w-5 lg:h-5" />
+          </motion.button>
           
           {/* Close Player Button */}
           <motion.button

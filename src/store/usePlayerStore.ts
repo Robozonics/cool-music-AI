@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import type { Track, SavedPlaylist } from '../types/music';
 
 // Global native audio instance for Direct CDNs
@@ -36,6 +37,11 @@ interface PlayerState {
   isAutoplayBlocked: boolean;
   resolveAutoplayBlock: () => void;
 
+  isQueueOpen: boolean;
+  setQueueOpen: (open: boolean) => void;
+  isFullPlayerOpen: boolean;
+  setFullPlayerOpen: (open: boolean) => void;
+
   isApiKeyModalOpen: boolean;
   setApiKeyModalOpen: (open: boolean) => void;
 
@@ -60,6 +66,14 @@ interface PlayerState {
   setFullPlayerOpen: (open: boolean) => void;
   setSpeedWheelOpen: (open: boolean) => void;
   setVolume: (volume: number) => void;
+  audioAnalyzer: any;
+  setAudioAnalyzer: (analyzer: any) => void;
+  audioDataArray: Uint8Array | null;
+  setAudioDataArray: (data: Uint8Array) => void;
+  theme: 'default' | 'cyberpunk' | 'midnight' | 'sunset';
+  setTheme: (theme: 'default' | 'cyberpunk' | 'midnight' | 'sunset') => void;
+  removeFromQueue: (index: number) => void;
+  playNext: (track: Track) => void;
   setPlaybackRate: (rate: number) => void;
   toggleLikeTrack: (trackId: string) => void;
   setRepeatMode: (mode: 'off' | 'all' | 'one') => void;
@@ -78,7 +92,9 @@ interface PlayerState {
   closeAddToPlaylistModal: () => void;
 }
 
-export const usePlayerStore = create<PlayerState>((set, get) => {
+export const usePlayerStore = create<PlayerState>()(
+  persist(
+    (set, get) => {
   // ─────────────────────────────────────────────
   // Internal helpers
   // ─────────────────────────────────────────────
@@ -220,6 +236,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     volume: 1,
     playbackRate: 1,
     queue: [],
+    isQueueOpen: false,
+    setQueueOpen: (open: boolean) => set({ isQueueOpen: open }),
     isFullPlayerOpen: false,
     isLyricsOpen: false,
     isShareSnippetOpen: false,
@@ -248,6 +266,35 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
 
     setIsPlaying: (playing: boolean) => set({ isPlaying: playing }),
     setCurrentTime: (time: number) => set({ currentTime: time }),
+    audioAnalyzer: null,
+    setAudioAnalyzer: (a) => set({ audioAnalyzer: a }),
+    audioDataArray: null,
+    setAudioDataArray: (d) => set({ audioDataArray: d }),
+    theme: 'default',
+    setTheme: (theme) => {
+      set({ theme });
+      if (theme === 'default') {
+        document.documentElement.removeAttribute('data-theme');
+      } else {
+        document.documentElement.setAttribute('data-theme', theme);
+      }
+    },
+    
+    removeFromQueue: (index: number) => {
+      set(state => {
+        const newQueue = [...state.queue];
+        newQueue.splice(index, 1);
+        return { queue: newQueue };
+      });
+    },
+
+    playNext: (track: Track) => {
+      set(state => {
+        const newQueue = [track, ...state.queue];
+        return { queue: newQueue };
+      });
+    },
+
     setDuration: (duration: number) => set({ duration }),
 
     playTrack: async (track: Track) => {
@@ -406,4 +453,14 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
       savedPlaylists: state.savedPlaylists.filter(p => p.id !== id)
     })),
   };
-});
+    },
+    {
+      name: 'musify-storage',
+      partialize: (state) => ({ 
+        savedPlaylists: state.savedPlaylists,
+        likedTracks: state.likedTracks,
+        theme: state.theme
+      }),
+    }
+  )
+);

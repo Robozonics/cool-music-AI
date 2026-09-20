@@ -11,8 +11,8 @@ export default {
         display: ['Space Grotesk', 'sans-serif'],
       },
       colors: {
-        obsidian: '#050505',
-        'acid-lime': '#A3E635',
+        obsidian: 'var(--color-bg)',
+        'acid-lime': 'var(--color-primary)',
         'electric-fuchsia': '#EC4899',
         'cyber-cyan': '#06B6D4',
         'electric-violet': '#8B5CF6',

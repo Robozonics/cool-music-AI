@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, SkipForward, SkipBack, ChevronDown, Mic2, Download, Plus, X, Repeat, Share2, Video, Blend } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, ChevronDown, Mic2, Download, Plus, X, Repeat, Share2, Video, Blend, ListMusic } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
 
 export const FullPlayer: React.FC = () => {
@@ -231,8 +231,13 @@ export const FullPlayer: React.FC = () => {
             <SkipForward className="w-8 h-8 fill-current" />
           </button>
 
-          {/* Placeholder for symmetry */}
-          <div className="w-10" />
+          <button 
+            onClick={() => usePlayerStore.getState().setQueueOpen(true)}
+            className="p-2 text-zinc-500 hover:text-white transition rounded-full"
+            title="Up Next"
+          >
+            <ListMusic className="w-6 h-6" />
+          </button>
         </div>
       </div>
     </div>

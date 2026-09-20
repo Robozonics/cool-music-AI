@@ -21,9 +21,11 @@ import { WifiOff, AlertTriangle, Settings } from 'lucide-react';
 
 import { useAudioAnalyzer } from './store/useAudioAnalyzer';
 import { SoundFusionLayout } from './features/soundfusion/layout/SoundFusionLayout';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 
 function App() {
   useAudioAnalyzer();
+  useKeyboardShortcuts();
   const isAutoplayBlocked = usePlayerStore(state => state.isAutoplayBlocked);
   const resolveAutoplayBlock = usePlayerStore(state => state.resolveAutoplayBlock);
   const isApiKeyModalOpen = usePlayerStore(state => state.isApiKeyModalOpen);
@@ -128,6 +130,7 @@ function App() {
       <ConnectDeviceModal />
       <VisualCanvasEngine />
       <AddToPlaylistModal />
+      <QueuePanel />
     </>
   );
 }

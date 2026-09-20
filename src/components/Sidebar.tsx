@@ -82,7 +82,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
           <span className="font-bold tracking-wide">Settings</span>
         </button>
         <p className="text-xs text-gray-500 font-medium">A product of robozonics</p>
-        <p className="text-xs text-acid-lime/70 font-medium mt-1">Crafted with love by rehan</p>
+        <p className="text-xs text-[var(--color-primary)]/70 font-medium mt-1">Crafted with love by rehan</p>
       </div>
       <style>{`.no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}`}</style>
     </div>

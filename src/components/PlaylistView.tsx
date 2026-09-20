@@ -83,7 +83,7 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
           <ChevronLeft className="w-6 h-6" />
         </button>
         
-        <div className="flex flex-col md:flex-row gap-6 items-end mt-4">
+        <div className="flex flex-col md:flex-row gap-6 items-center md:items-end mt-4 text-center md:text-left">
           <div className="relative w-32 h-32 md:w-48 md:h-48 shrink-0 rounded-2xl overflow-hidden shadow-2xl bg-white/5 border border-white/10 flex items-center justify-center">
             {playlist.tracks[0] ? (
               <img src={playlist.tracks[0].thumbnail} alt="Cover" className="w-full h-full object-cover blur-sm scale-110" />
@@ -97,7 +97,7 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
             </div>
           </div>
           
-          <div className="flex-1">
+          <div className="flex-1 w-full">
             <h4 className="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-2">Playlist</h4>
             <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter mb-4 line-clamp-2">
               {playlist.name}
@@ -169,7 +169,7 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
                 </div>
                 
                 {track.duration && (
-                  <div className="flex items-center gap-1.5 text-xs text-zinc-500 font-mono shrink-0 mr-4">
+                  <div className="hidden sm:flex items-center gap-1.5 text-xs text-zinc-500 font-mono shrink-0 mr-4">
                     <Clock className="w-3 h-3" />
                     {Math.floor(track.duration / 60)}:{(track.duration % 60).toString().padStart(2, '0')}
                   </div>

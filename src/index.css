@@ -4,6 +4,32 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  :root {
+    --color-primary: #CCFF00; /* acid-lime */
+    --color-bg: #050505; /* obsidian */
+    --color-panel: rgba(255, 255, 255, 0.03);
+  }
+
+  [data-theme='cyberpunk'] {
+    --color-primary: #FF00FF; /* hot pink */
+    --color-bg: #090014; /* deep purple bg */
+    --color-panel: rgba(255, 0, 255, 0.05);
+  }
+
+  [data-theme='midnight'] {
+    --color-primary: #00E5FF; /* cyan */
+    --color-bg: #000B18; /* deep navy */
+    --color-panel: rgba(0, 229, 255, 0.05);
+  }
+
+  [data-theme='sunset'] {
+    --color-primary: #FF4D00; /* vibrant orange */
+    --color-bg: #1A0500; /* deep red-black */
+    --color-panel: rgba(255, 77, 0, 0.05);
+  }
+}
+
 @layer components {
   .glass-panel {
     @apply bg-[rgba(255,255,255,0.03)] backdrop-blur-[24px] border border-[rgba(255,255,255,0.08)];
