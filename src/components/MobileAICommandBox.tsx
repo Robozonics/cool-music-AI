@@ -39,12 +39,17 @@ export const MobileAICommandBox = ({ isOpen, onClose }: { isOpen: boolean, onClo
       recognitionRef.current?.stop();
       setIsRecording(false);
     } else {
+      if (!recognitionRef.current) {
+        alert("Voice recognition is not supported on this browser. Try Chrome or Android.");
+        return;
+      }
       setText('');
       try {
         recognitionRef.current?.start();
         setIsRecording(true);
       } catch (e) {
         console.warn('Speech recognition start failed', e);
+        alert("Could not start microphone. Please check permissions.");
       }
     }
   };

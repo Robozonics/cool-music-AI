@@ -35,9 +35,7 @@ export const useAICommandProcessor = () => {
           break;
         }
         case 'share': {
-          if (usePlayerStore.getState().currentTrack) {
-            usePlayerStore.getState().setShareSnippetOpen(true);
-          }
+          usePlayerStore.getState().setShareSnippetOpen(true);
           break;
         }
         case 'mood': {
@@ -60,21 +58,19 @@ export const useAICommandProcessor = () => {
           break;
         }
         case 'create_playlist': {
+          let seedArtist = 'Various Artists';
+          let seedTitle = parsed.query || 'Hits';
           if (parsed.query) {
-            // For a simple seamless experience, we extract seed roughly
-            // Or we could trigger AIPlaylistModal, but user asked it to do it directly.
-            // Let's just generate directly if we have a seed. 
-            // We assume query contains the seed (e.g. "Starboy by The Weeknd").
-            // We'll just search it, grab the first result as seed.
             const results = await searchSaavn(parsed.query);
             if (results && results.length > 0) {
-              const seedTrack = results[0];
-              const tracks = await generateAIPlaylist({ artist: seedTrack.artist, song: seedTrack.title });
-              if (tracks.length > 0) {
-                usePlayerStore.getState().setQueue(tracks);
-                usePlayerStore.getState().playTrack(tracks[0]);
-              }
+              seedArtist = results[0].artist || seedArtist;
+              seedTitle = results[0].title || seedTitle;
             }
+          }
+          const tracks = await generateAIPlaylist({ artist: seedArtist, song: seedTitle });
+          if (tracks.length > 0) {
+            usePlayerStore.getState().setQueue(tracks);
+            usePlayerStore.getState().playTrack(tracks[0]);
           }
           break;
         }

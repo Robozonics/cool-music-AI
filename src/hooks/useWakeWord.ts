@@ -85,12 +85,17 @@ export const useWakeWord = (onWakeWordDetected: (command: string) => void) => {
       recognitionRef.current?.stop();
       setIsListening(false);
     } else {
+      if (!recognitionRef.current) {
+        alert("Voice recognition is not supported on this browser. Try Chrome or Android.");
+        return;
+      }
       isEnabledRef.current = true;
       try {
         recognitionRef.current?.start();
         setIsListening(true);
       } catch (e) {
         console.warn('Could not start wake word listening', e);
+        alert("Could not start microphone. Please check permissions.");
       }
     }
   };
