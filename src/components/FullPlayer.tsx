@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, SkipForward, SkipBack, ChevronDown, Mic2, Download, Plus, X } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, ChevronDown, Mic2, Download, Plus, X, Repeat } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
 
 export const FullPlayer: React.FC = () => {
@@ -12,6 +12,8 @@ export const FullPlayer: React.FC = () => {
   const togglePlay = usePlayerStore(state => state.togglePlay);
   const nextTrack = usePlayerStore(state => state.nextTrack);
   const prevTrack = usePlayerStore(state => state.prevTrack);
+  const repeatMode = usePlayerStore(state => state.repeatMode);
+  const toggleRepeat = usePlayerStore(state => state.toggleRepeat);
   const seek = usePlayerStore(state => state.seek);
   const setSpeedWheelOpen = usePlayerStore(state => state.setSpeedWheelOpen);
   
@@ -37,17 +39,19 @@ export const FullPlayer: React.FC = () => {
       {/* Background glow based on thumbnail (simplified for now) */}
       <div className="absolute inset-0 opacity-20 blur-3xl pointer-events-none" style={{ backgroundImage: `url(${currentTrack.thumbnail})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
 
-      <div className="flex justify-center items-center relative z-10 mb-8 h-12">
+      <div className="flex justify-between items-center relative z-10 mb-8 h-12 w-full shrink-0">
         <button 
           onClick={() => setFullPlayerOpen(false)} 
-          className="p-2 rounded-full hover:bg-white/10 transition absolute left-0"
+          className="p-2 rounded-full hover:bg-white/10 transition shrink-0"
         >
           <ChevronDown className="w-8 h-8 text-white" />
         </button>
         
-        <span className="text-xs font-bold tracking-widest uppercase text-gray-400">Now Playing</span>
+        <span className="text-xs font-bold tracking-widest uppercase text-gray-400 hidden sm:block absolute left-1/2 -translate-x-1/2">
+          Now Playing
+        </span>
         
-        <div className="absolute right-0 flex items-center space-x-2">
+        <div className="flex items-center space-x-2 shrink-0">
           <button 
             onClick={toggleVideoMode}
             className={`px-4 py-2 rounded-full font-bold text-xs uppercase tracking-widest transition-all ${
@@ -164,14 +168,23 @@ export const FullPlayer: React.FC = () => {
         </div>
 
         {/* Controls */}
-        <div className="flex items-center justify-between w-full max-w-xs mb-8">
+        <div className="flex items-center justify-between w-full max-w-sm px-4 mb-8">
+          <button 
+            onClick={toggleRepeat}
+            className={`p-2 rounded-full transition relative ${repeatMode === 'one' ? 'text-acid-lime' : repeatMode === 'all' ? 'text-white' : 'text-zinc-500'}`}
+            title="Repeat Mode"
+          >
+            <Repeat className="w-6 h-6" />
+            {repeatMode === 'one' && <span className="absolute text-[10px] font-bold right-1 bottom-1">1</span>}
+          </button>
+          
           <button onClick={prevTrack} className="p-3 text-white hover:text-acid-lime transition">
             <SkipBack className="w-8 h-8 fill-current" />
           </button>
           
           <button 
             onClick={togglePlay}
-            className="w-20 h-20 flex items-center justify-center rounded-full bg-white text-obsidian hover:scale-105 transition-transform shadow-[0_0_20px_rgba(255,255,255,0.3)]"
+            className="w-20 h-20 flex items-center justify-center rounded-full bg-white text-obsidian hover:scale-105 transition-transform shadow-[0_0_20px_rgba(255,255,255,0.3)] shrink-0"
           >
             {isPlaying ? <Pause className="w-10 h-10 fill-current" /> : <Play className="w-10 h-10 fill-current ml-1" />}
           </button>
@@ -179,6 +192,9 @@ export const FullPlayer: React.FC = () => {
           <button onClick={nextTrack} className="p-3 text-white hover:text-acid-lime transition">
             <SkipForward className="w-8 h-8 fill-current" />
           </button>
+
+          {/* Placeholder for symmetry */}
+          <div className="w-10" />
         </div>
       </div>
     </div>

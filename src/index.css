@@ -117,20 +117,21 @@ html, body {
 
 @keyframes zigzag-move {
   0% { background-position: 0px 50%; }
-  100% { background-position: -30px 50%; }
+  100% { background-position: -40px 50%; }
 }
 
 .genz-waveform {
-  background-image: url("data:image/svg+xml,%3Csvg width='30' height='16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M 0 8 L 7.5 2 L 22.5 14 L 30 8' fill='none' stroke='%23a3e635' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-size: 30px 16px;
+  background-image: url("data:image/svg+xml,%3Csvg width='40' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M 0 10 L 6 2 L 14 18 L 22 4 L 30 16 L 35 8 L 40 10' fill='none' stroke='%23ccff00' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-size: 40px 20px;
   background-repeat: repeat-x;
   background-position: 0px 50%;
-  animation: zigzag-move 1s linear infinite;
+  animation: zigzag-move 0.8s linear infinite;
+  filter: drop-shadow(0 0 6px rgba(204, 255, 0, 0.8));
 }
 
 .genz-waveform-bg {
-  background-image: url("data:image/svg+xml,%3Csvg width='30' height='16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M 0 8 L 7.5 2 L 22.5 14 L 30 8' fill='none' stroke='rgba(255,255,255,0.2)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-size: 30px 16px;
+  background-image: url("data:image/svg+xml,%3Csvg width='40' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M 0 10 L 6 2 L 14 18 L 22 4 L 30 16 L 35 8 L 40 10' fill='none' stroke='rgba(255,255,255,0.15)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-size: 40px 20px;
   background-repeat: repeat-x;
   background-position: 0px 50%;
 }

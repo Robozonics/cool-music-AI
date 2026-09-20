@@ -97,38 +97,33 @@ export const SyncedLyrics: React.FC<{ inline?: boolean }> = ({ inline = false })
     <div className={
       inline
         ? 'w-full h-full flex flex-col bg-transparent text-white'
-        : 'fixed inset-0 z-50 bg-[#08080A]/95 backdrop-blur-2xl text-white flex flex-col items-center pt-20 pb-32'
+        : 'fixed inset-0 z-50 bg-[#08080A]/95 backdrop-blur-2xl text-white flex flex-col items-center pt-8 pb-32'
     }>
-      {/* ── Close button (non-inline) ── */}
+      {/* ── Non-Inline Header (Track Info, Translate, Close) ── */}
       {!inline && (
-        <button
-          onClick={() => setLyricsOpen(false)}
-          className="absolute top-6 right-6 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-all border border-white/10 shadow-lg z-50"
-        >
-          <X className="w-6 h-6 text-white" />
-        </button>
-      )}
+        <div className="w-full flex flex-col sm:flex-row items-center justify-between px-6 gap-4 z-50 mb-4 sm:mb-8 max-w-5xl shrink-0">
+          
+          {/* Track Info */}
+          {currentTrack && (
+            <div className="flex items-center gap-4 self-start sm:self-auto">
+              <img src={currentTrack.thumbnail} alt={currentTrack.title} className="w-12 h-12 rounded-lg shadow-lg" />
+              <div className="text-left">
+                <h2 className="font-bold text-lg truncate max-w-[200px]">{currentTrack.title}</h2>
+                <p className="text-sm text-gray-400 truncate max-w-[200px]">{currentTrack.artist}</p>
+              </div>
+            </div>
+          )}
 
-      {/* ── Track info (non-inline) ── */}
-      {!inline && currentTrack && (
-        <div className="absolute top-6 left-6 text-left flex items-center gap-4 z-50">
-          <img src={currentTrack.thumbnail} alt={currentTrack.title} className="w-12 h-12 rounded-lg shadow-lg" />
-          <div>
-            <h2 className="font-bold text-lg">{currentTrack.title}</h2>
-            <p className="text-sm text-gray-400">{currentTrack.artist}</p>
-          </div>
-        </div>
-      )}
-
-      {/* ── Translation toolbar ── */}
-      {synced && synced.length > 0 && !isLoading && (
-        <div className={`${inline ? 'px-4 pb-2' : 'absolute top-6 left-1/2 -translate-x-1/2'} z-50 flex items-center gap-2`}>
-          {/* Language picker */}
-          <div className="relative">
-            <button
-              onClick={() => setShowLangPicker(!showLangPicker)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 border border-white/15 text-white text-xs font-bold hover:bg-white/15 transition-all"
-            >
+          <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+            {/* Translation Toolbar */}
+            {synced && synced.length > 0 && !isLoading && (
+              <div className="flex items-center gap-2 relative">
+                {/* Language picker */}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowLangPicker(!showLangPicker)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 border border-white/15 text-white text-xs font-bold hover:bg-white/15 transition-all"
+                  >
               <span>{selectedLang.flag}</span>
               <span>{selectedLang.label}</span>
               <ChevronDown className="w-3 h-3 text-white/50" />
@@ -184,10 +179,21 @@ export const SyncedLyrics: React.FC<{ inline?: boolean }> = ({ inline = false })
         </div>
       )}
 
+          {/* Close button */}
+          <button
+            onClick={() => setLyricsOpen(false)}
+            className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-all border border-white/10 shadow-lg shrink-0"
+          >
+            <X className="w-6 h-6 text-white" />
+          </button>
+        </div>
+        </div>
+      )}
+
       {/* ── Main lyric scroll ── */}
       <div
         ref={containerRef}
-        className={`w-full ${inline ? 'flex-1' : 'max-w-2xl h-full'} overflow-y-auto px-6 ${inline ? 'py-4' : 'py-24'} no-scrollbar relative`}
+        className={`w-full ${inline ? 'flex-1' : 'flex-1 max-w-2xl'} overflow-y-auto px-6 ${inline ? 'py-4' : 'py-8'} no-scrollbar relative`}
       >
         {isLoading ? (
           <div className="flex flex-col items-center justify-center h-full gap-2">

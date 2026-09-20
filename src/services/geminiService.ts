@@ -13,7 +13,7 @@ const getKeys = () => [
   ...reversedKeys.map(k => k.split('').reverse().join(''))
 ].filter(Boolean) as string[];
 
-const callGeminiDirectly = async (promptText: string, type: 'playlist' | 'search' | 'mood' | 'translate') => {
+export const callGeminiDirectly = async (promptText: string, type: 'playlist' | 'search' | 'mood' | 'translate') => {
   const keys = getKeys();
   if (keys.length === 0) throw new Error('API key not configured');
 

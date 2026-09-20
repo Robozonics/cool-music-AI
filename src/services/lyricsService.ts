@@ -1,4 +1,5 @@
 import type { LyricLine, TranslatedLyricLine } from '../types/music';
+import { callGeminiDirectly } from './geminiService';
 
 export const fetchLyrics = async (
   title: string,
@@ -91,22 +92,15 @@ export const translateLyrics = async (
   if (nonEmpty.length === 0) return lines.map(l => ({ ...l }));
 
   try {
-    const response = await fetch('/api/gemini', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type: 'translate',
-        lyrics: nonEmpty,
-        targetLanguage,
-      }),
-    });
+    const promptText = `You are a professional lyric translator. Translate the following lyrics into ${targetLanguage}. 
+Return a STRICT JSON array with schema: [{"time": number, "translation": "string"}].
+Do not include any original lyrics or explanations. ONLY output the valid JSON array.
 
-    if (!response.ok) {
-      throw new Error('Translation API request failed');
-    }
-
-    const data = await response.json();
-    const translated: TranslatedLyricLine[] = data.translated || data.recommendations || [];
+LYRICS:
+${JSON.stringify(nonEmpty.map(l => ({ time: l.time, text: l.text })))}
+`;
+    
+    const translated = await callGeminiDirectly(promptText, 'translate');
 
     if (!Array.isArray(translated) || translated.length === 0) {
       throw new Error('Empty translation response');
