@@ -140,8 +140,6 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
   const savedPlaylists = usePlayerStore(state => state.savedPlaylists);
   const playTrack = usePlayerStore(state => state.playTrack);
   const setQueue = usePlayerStore(state => state.setQueue);
-  const currentTrack = usePlayerStore(state => state.currentTrack);
-  const removeTrackFromPlaylist = usePlayerStore(state => state.removeTrackFromPlaylist);
   const reorderPlaylist = usePlayerStore(state => state.reorderPlaylist);
   const deletePlaylist = usePlayerStore(state => state.deletePlaylist);
   const [isDownloading, setIsDownloading] = React.useState(false);

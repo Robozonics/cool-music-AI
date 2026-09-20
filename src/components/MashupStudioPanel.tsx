@@ -1,31 +1,55 @@
 import React, { useEffect, useState } from 'react';
 import { Reorder, AnimatePresence } from 'framer-motion';
-import { X, Loader2, Cpu, Waves, Sparkles, Disc, Trash2, Crosshair, Upload } from 'lucide-react';
+import { X, Loader2, Cpu, Waves, Sparkles, Disc, Crosshair, Upload, Search, Music, Plus, Check, Layers } from 'lucide-react';
 import { useMashupStore } from '../store/useMashupStore';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { generateAiMashup } from '../services/mashupService';
+import { searchUnblocked } from '../services/unblockedMusicService';
 import type { Track } from '../types/music';
 
 export const MashupStudioPanel: React.FC = () => {
   const { 
     isOpen, setIsOpen, selectedTracks, anchorTrackId, 
     status, progress, setStatus, removeTrack, 
-    setAnchorTrack, clearQueue, reorderTracks
+    setAnchorTrack, clearQueue, reorderTracks,
+    step, targetCount, setStep, setTargetCount, addTrack
   } = useMashupStore();
   const { playTrack, setQueue, queue } = usePlayerStore();
   
   const [localTracks, setLocalTracks] = useState<Track[]>(selectedTracks);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Track[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   
   useEffect(() => {
     setLocalTracks(selectedTracks);
   }, [selectedTracks]);
+
+  // Debounced search for the mini search bar
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const results = await searchUnblocked(searchQuery);
+        setSearchResults(results.slice(0, 15)); // Limit results for mini panel
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
   
   if (!isOpen) return null;
   
   const isGenerating = status !== 'idle' && status !== 'complete' && status !== 'error';
-  const canGenerate = selectedTracks.length >= 2 && selectedTracks.length <= 7;
-  
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const canGenerate = selectedTracks.length === targetCount && targetCount !== null;
   
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -33,7 +57,7 @@ export const MashupStudioPanel: React.FC = () => {
     
     let added = 0;
     files.forEach(file => {
-      if (useMashupStore.getState().selectedTracks.length + added >= 7) return;
+      if (selectedTracks.length + added >= (targetCount || 7)) return;
       
       const tempUrl = URL.createObjectURL(file);
       const newTrack: Track = {
@@ -46,7 +70,7 @@ export const MashupStudioPanel: React.FC = () => {
         source: 'saavn', 
         sourceBadge: 'Upload',
       };
-      useMashupStore.getState().addTrack(newTrack);
+      addTrack(newTrack);
       added++;
     });
     
@@ -60,7 +84,6 @@ export const MashupStudioPanel: React.FC = () => {
     try {
       const generatedTrack = await generateAiMashup(selectedTracks, anchorTrackId);
       
-      // Add to player queue and play
       const newQueue = [generatedTrack, ...queue];
       setQueue(newQueue);
       playTrack(generatedTrack);
@@ -107,62 +130,122 @@ export const MashupStudioPanel: React.FC = () => {
     );
   };
 
-  return (
-    <aside className="w-[340px] shrink-0 h-full border-l border-white/10 flex flex-col transition-all duration-300 z-10 pb-24 bg-[#0a0a0c]/80 backdrop-blur-2xl">
-      <div className="p-4 border-b border-white/10 flex items-center justify-between shrink-0 bg-black/20">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-acid-lime" />
-          <h2 className="font-display font-black tracking-wide text-lg text-white">Mashup Studio</h2>
+  const renderSelectCount = () => (
+    <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-8 animate-in fade-in zoom-in duration-300">
+      <div className="text-center space-y-2">
+        <div className="w-16 h-16 bg-acid-lime/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Layers className="w-8 h-8 text-acid-lime" />
         </div>
-        <button 
-          onClick={() => setIsOpen(false)}
-          className="p-2 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition"
-        >
-          <X className="w-5 h-5" />
-        </button>
+        <h3 className="text-xl font-black text-white">New AI Mashup</h3>
+        <p className="text-sm text-gray-400">How many tracks do you want to mix together?</p>
       </div>
       
-      <div className="p-4 shrink-0">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Selected Tracks</span>
-          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${selectedTracks.length >= 2 ? 'bg-acid-lime/20 text-acid-lime' : 'bg-white/10 text-gray-400'}`}>
-            {selectedTracks.length} / 7
+      <div className="grid grid-cols-3 gap-3 w-full">
+        {[2, 3, 4, 5, 6, 7].map(num => (
+          <button
+            key={num}
+            onClick={() => setTargetCount(num)}
+            className="aspect-square rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-acid-lime/50 text-2xl font-black text-white hover:text-acid-lime transition-all flex flex-col items-center justify-center group"
+          >
+            {num}
+            <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wider group-hover:text-acid-lime/70 mt-1">Tracks</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderSearchTracks = () => (
+    <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in slide-in-from-right-4 duration-300">
+      <div className="p-4 shrink-0 border-b border-white/10 space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Select Tracks</span>
+          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-acid-lime/20 text-acid-lime">
+            {selectedTracks.length} / {targetCount}
           </span>
         </div>
-        
-        {selectedTracks.length === 0 && (
-          <div className="text-center py-8 px-4 text-sm text-gray-500 border border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center space-y-4">
-            <p>Select 2 to 7 tracks from your library or search to create an AI Mashup.</p>
-            <button 
-              onClick={() => fileInputRef.current?.click()}
-              className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg flex items-center gap-2 transition"
-            >
-              <Upload className="w-4 h-4" />
-              Upload Audio
-            </button>
-          </div>
-        )}
-        
-        {selectedTracks.length > 0 && selectedTracks.length < 7 && (
-           <button 
-             onClick={() => fileInputRef.current?.click()}
-             className="w-full mt-2 py-2 border border-dashed border-white/20 text-gray-400 hover:text-white hover:border-white/40 rounded-xl flex items-center justify-center gap-2 transition text-xs font-bold uppercase tracking-wider"
-           >
-             <Upload className="w-3 h-3" />
-             Upload Track
-           </button>
-        )}
-        <input 
-          type="file" 
-          multiple 
-          accept="audio/*" 
-          className="hidden" 
-          ref={fileInputRef} 
-          onChange={handleFileUpload} 
-        />
+        <div className="relative">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search songs to add..."
+            className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-acid-lime transition-colors"
+          />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        </div>
+        <button 
+          onClick={() => fileInputRef.current?.click()}
+          className="w-full py-2 border border-dashed border-white/20 text-gray-400 hover:text-white hover:border-white/40 rounded-xl flex items-center justify-center gap-2 transition text-xs font-bold tracking-wider"
+        >
+          <Upload className="w-3 h-3" />
+          Upload Local Audio
+        </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 pb-4">
+      <div className="flex-1 overflow-y-auto p-2 space-y-1">
+        {isSearching ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+          </div>
+        ) : searchResults.length > 0 ? (
+          searchResults.map(track => {
+            const isSelected = selectedTracks.some(t => t.id === track.id);
+            return (
+              <div 
+                key={track.id} 
+                onClick={() => !isSelected && addTrack(track)}
+                className={`flex items-center p-2 rounded-xl transition-all cursor-pointer ${isSelected ? 'opacity-50 pointer-events-none' : 'hover:bg-white/5 group'}`}
+              >
+                <img src={track.thumbnail} className="w-10 h-10 rounded-lg object-cover shrink-0" />
+                <div className="ml-3 flex-1 min-w-0">
+                  <p className="text-sm font-bold text-white truncate">{track.title}</p>
+                  <p className="text-xs text-gray-400 truncate">{track.artist}</p>
+                </div>
+                <div className="shrink-0 p-2">
+                  {isSelected ? <Check className="w-4 h-4 text-acid-lime" /> : <Plus className="w-4 h-4 text-gray-500 group-hover:text-white" />}
+                </div>
+              </div>
+            );
+          })
+        ) : searchQuery ? (
+          <div className="text-center py-8 text-sm text-gray-500">No results found</div>
+        ) : (
+          <div className="text-center py-12 px-4 flex flex-col items-center space-y-3">
+            <Music className="w-8 h-8 text-gray-600" />
+            <p className="text-sm text-gray-400">Search for tracks or use the upload button above to fill your queue.</p>
+          </div>
+        )}
+      </div>
+      
+      {/* Mini Selected Tracks Tray */}
+      {selectedTracks.length > 0 && (
+        <div className="p-3 bg-black/40 border-t border-white/10 shrink-0 flex items-center gap-2 overflow-x-auto">
+          {selectedTracks.map(t => (
+            <div key={t.id} className="relative group shrink-0">
+              <img src={t.thumbnail} className="w-10 h-10 rounded-lg object-cover" />
+              <button 
+                onClick={() => removeTrack(t.id)}
+                className="absolute -top-1 -right-1 bg-red-500 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <X className="w-3 h-3 text-white" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  const renderReady = () => (
+    <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in slide-in-from-right-4 duration-300">
+      <div className="p-4 shrink-0 border-b border-white/10 flex items-center justify-between">
+        <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Review & Order</span>
+        <button onClick={() => setStep('search_tracks')} className="text-xs text-acid-lime hover:underline">Edit Selection</button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-4 py-2">
+        <div className="text-xs text-gray-500 mb-4 px-2">Drag to reorder. The <strong className="text-acid-lime">Anchor</strong> dictates the final tempo & key.</div>
         <Reorder.Group 
           axis="y" 
           values={localTracks} 
@@ -199,18 +282,11 @@ export const MashupStudioPanel: React.FC = () => {
                       <button 
                         onClick={() => setAnchorTrack(track.id)}
                         className="p-1.5 text-gray-400 hover:text-cyan-400 transition"
-                        title="Set as Anchor (Tempo/Key)"
+                        title="Set as Anchor"
                       >
                         <Crosshair className="w-4 h-4" />
                       </button>
                     )}
-                    <button 
-                      onClick={() => removeTrack(track.id)}
-                      className="p-1.5 text-gray-400 hover:text-red-400 transition"
-                      title="Remove"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
                   </div>
                   
                   {isAnchor && (
@@ -226,17 +302,6 @@ export const MashupStudioPanel: React.FC = () => {
       </div>
 
       <div className="p-4 border-t border-white/10 shrink-0 bg-black/40">
-        <div className="flex justify-between items-center mb-4">
-          <span className="text-xs text-gray-400">Anchor dictates the final tempo & key.</span>
-          <button 
-            onClick={clearQueue}
-            disabled={isGenerating || selectedTracks.length === 0}
-            className="text-xs text-gray-400 hover:text-white transition disabled:opacity-50"
-          >
-            Clear All
-          </button>
-        </div>
-        
         <button
           onClick={handleGenerate}
           disabled={!canGenerate || isGenerating}
@@ -249,9 +314,43 @@ export const MashupStudioPanel: React.FC = () => {
           {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
           {isGenerating ? 'Processing...' : 'Generate AI Mashup'}
         </button>
-        
         {renderStatus()}
       </div>
+    </div>
+  );
+
+  return (
+    <aside className="w-[340px] shrink-0 h-full border-l border-white/10 flex flex-col transition-all duration-300 z-10 pb-24 bg-[#0a0a0c]/95 md:bg-[#0a0a0c]/80 backdrop-blur-2xl">
+      <div className="p-4 border-b border-white/10 flex items-center justify-between shrink-0 bg-black/20">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-5 h-5 text-acid-lime" />
+          <h2 className="font-display font-black tracking-wide text-lg text-white">Mashup Studio</h2>
+        </div>
+        <div className="flex items-center gap-2">
+           {step !== 'select_count' && (
+             <button onClick={clearQueue} className="text-xs text-gray-400 hover:text-white mr-2">Reset</button>
+           )}
+           <button 
+             onClick={() => setIsOpen(false)}
+             className="p-2 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition"
+           >
+             <X className="w-5 h-5" />
+           </button>
+        </div>
+      </div>
+      
+      {step === 'select_count' && renderSelectCount()}
+      {step === 'search_tracks' && renderSearchTracks()}
+      {step === 'ready' && renderReady()}
+
+      <input 
+        type="file" 
+        multiple 
+        accept="audio/*" 
+        className="hidden" 
+        ref={fileInputRef} 
+        onChange={handleFileUpload} 
+      />
     </aside>
   );
 };

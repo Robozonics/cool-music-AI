@@ -1,11 +1,16 @@
 import { create } from 'zustand';
 import type { Track } from '../types/music';
 
+export type MashupStep = 'select_count' | 'search_tracks' | 'ready';
 export type MashupStatus = 'idle' | 'extracting' | 'syncing' | 'mastering' | 'complete' | 'error';
 
 interface MashupState {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
+  step: MashupStep;
+  targetCount: number | null;
+  setStep: (step: MashupStep) => void;
+  setTargetCount: (count: number | null) => void;
   selectedTracks: Track[];
   anchorTrackId: string | null;
   status: MashupStatus;
@@ -22,6 +27,11 @@ export const useMashupStore = create<MashupState>((set, get) => ({
   isOpen: false,
   setIsOpen: (open) => set({ isOpen: open }),
   
+  step: 'select_count',
+  targetCount: null,
+  setStep: (step) => set({ step }),
+  setTargetCount: (count) => set({ targetCount: count, step: count ? 'search_tracks' : 'select_count', selectedTracks: [] }),
+  
   selectedTracks: [],
   anchorTrackId: null,
   status: 'idle',
@@ -30,9 +40,19 @@ export const useMashupStore = create<MashupState>((set, get) => ({
   setStatus: (status, progress = 0) => set({ status, progress }),
   
   addTrack: (track) => {
-    const { selectedTracks } = get();
-    if (selectedTracks.length >= 7) {
-      alert('Maximum 7 tracks allowed in Mashup Studio.');
+    const { selectedTracks, targetCount, step } = get();
+    
+    // Auto open and switch to search if not in flow
+    if (!get().isOpen) set({ isOpen: true });
+    if (step === 'select_count' && !targetCount) {
+       // Default to 2 if they randomly add a track from somewhere
+       set({ targetCount: 2, step: 'search_tracks' });
+    }
+    
+    const maxCount = get().targetCount || 7;
+    
+    if (selectedTracks.length >= maxCount) {
+      alert(`Maximum ${maxCount} tracks allowed for this mashup.`);
       return;
     }
     if (selectedTracks.find(t => t.id === track.id)) {
@@ -41,12 +61,13 @@ export const useMashupStore = create<MashupState>((set, get) => ({
     }
     
     const newTracks = [...selectedTracks, track];
-    // Set first track as anchor by default
     const newAnchorId = get().anchorTrackId || track.id;
     
     set({ selectedTracks: newTracks, anchorTrackId: newAnchorId });
-    // Auto-open panel when adding a track
-    set({ isOpen: true });
+    
+    if (newTracks.length === maxCount) {
+       set({ step: 'ready' });
+    }
   },
   
   removeTrack: (trackId) => {
@@ -72,5 +93,12 @@ export const useMashupStore = create<MashupState>((set, get) => ({
     set({ selectedTracks: result });
   },
   
-  clearQueue: () => set({ selectedTracks: [], anchorTrackId: null, status: 'idle', progress: 0 }),
+  clearQueue: () => set({ 
+    selectedTracks: [], 
+    anchorTrackId: null, 
+    status: 'idle', 
+    progress: 0,
+    step: 'select_count',
+    targetCount: null
+  }),
 }));
