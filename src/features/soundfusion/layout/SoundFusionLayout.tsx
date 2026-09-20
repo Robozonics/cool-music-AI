@@ -3,7 +3,9 @@ import type { TabType } from '../../../components/BottomNav';
 import { FloatingGlassPlayer } from '../../../components/FloatingGlassPlayer';
 import { SyncedLyrics } from '../../../components/SyncedLyrics';
 import { usePlayerStore } from '../../../store/usePlayerStore';
-import { Camera, Sun, Moon, AudioWaveform } from 'lucide-react';
+import { useMashupStore } from '../../../store/useMashupStore';
+import { MashupStudioPanel } from '../../../components/MashupStudioPanel';
+import { Camera, Sun, Moon, AudioWaveform, Layers } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 
@@ -18,6 +20,8 @@ export const SoundFusionLayout: React.FC<LayoutProps> = ({ children, activeTab, 
   const currentTrack = usePlayerStore(state => state.currentTrack);
   const isPlaying = usePlayerStore(state => state.isPlaying);
   const savedPlaylists = usePlayerStore(state => state.savedPlaylists);
+  const isMashupOpen = useMashupStore(state => state.isOpen);
+  const setMashupOpen = useMashupStore(state => state.setIsOpen);
   const [isDark, setIsDark] = useState(true);
 
   // Toggle dark/light theme class on document body
@@ -92,6 +96,14 @@ export const SoundFusionLayout: React.FC<LayoutProps> = ({ children, activeTab, 
             <Camera className="w-4 h-4" />
             <span>Share Snippet</span>
           </motion.button>
+          
+          <button 
+            onClick={() => setMashupOpen(!isMashupOpen)}
+            className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${isMashupOpen ? 'bg-acid-lime text-black shadow-[0_0_15px_rgba(204,255,0,0.4)]' : isDark ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-black/10 hover:bg-black/20 text-black'}`}
+            title="AI Mashup Studio"
+          >
+            <Layers className="w-4 h-4" />
+          </button>
           
           <button 
             onClick={() => setIsDark(!isDark)}
@@ -188,6 +200,9 @@ export const SoundFusionLayout: React.FC<LayoutProps> = ({ children, activeTab, 
             </div>
           </aside>
         )}
+        
+        {/* 5. Mashup Studio Panel */}
+        <MashupStudioPanel />
       </div>
       
       {/* Gen Z Floating Glass Player Bar */}

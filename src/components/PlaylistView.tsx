@@ -1,9 +1,10 @@
 import React from 'react';
 import { usePlayerStore } from '../store/usePlayerStore';
-import { Play, Shuffle, Clock, ChevronLeft, Download, Plus, CheckCircle2, Trash2, GripVertical } from 'lucide-react';
+import { Play, Shuffle, Clock, ChevronLeft, Download, Plus, CheckCircle2, Trash2, GripVertical, Layers } from 'lucide-react';
 import { Reorder } from 'framer-motion';
 import type { TabType } from './BottomNav';
 import { downloadTrack } from '../services/downloadService';
+import { useMashupStore } from '../store/useMashupStore';
 
 interface PlaylistViewProps {
   playlistId: string;
@@ -178,7 +179,7 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
               <Reorder.Item 
                 key={`${track.id}-${idx}`}
                 value={track}
-                onClick={() => {
+                onTap={() => {
                   setQueue(playlist.tracks);
                   playTrack(track);
                 }}
@@ -233,6 +234,16 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
                     title="Add to Playlist"
                   >
                     <Plus className="w-5 h-5 md:w-4 md:h-4" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      useMashupStore.getState().addTrack(track);
+                    }}
+                    className="p-3 md:p-2 rounded-full hover:bg-white/10 transition text-zinc-400 hover:text-electric-fuchsia"
+                    title="Add to AI Mashup Studio"
+                  >
+                    <Layers className="w-5 h-5 md:w-4 md:h-4" />
                   </button>
                   <button
                     onClick={(e) => {

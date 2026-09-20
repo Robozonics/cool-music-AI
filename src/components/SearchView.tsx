@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Play, Download, Loader2, Sparkles, Plus, Mic, MicOff } from 'lucide-react';
+import { Search, Play, Download, Loader2, Sparkles, Plus, Mic, MicOff, Layers } from 'lucide-react';
 import { searchUnblocked } from '../services/unblockedMusicService';
 import { searchBestMusicWithAI } from '../services/geminiService';
 import type { Track } from '../types/music';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { downloadTrack } from '../services/downloadService';
+import { useMashupStore } from '../store/useMashupStore';
 
 export const SearchView: React.FC = () => {
   const [query, setQuery] = useState('');
@@ -323,6 +324,16 @@ export const SearchView: React.FC = () => {
                     title="Add to Playlist"
                   >
                     <Plus className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      useMashupStore.getState().addTrack(track);
+                    }}
+                    className="p-1.5 rounded-full hover:bg-white/10 transition text-gray-400 hover:text-electric-fuchsia"
+                    title="Add to AI Mashup Studio"
+                  >
+                    <Layers className="w-4 h-4" />
                   </button>
                   {track.source === 'saavn' && (
                     <button 
