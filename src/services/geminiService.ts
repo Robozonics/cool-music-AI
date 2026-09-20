@@ -15,7 +15,7 @@ const getKeys = () => [
 ].filter(Boolean) as string[];
 
 const REVERSED_GROQ_API_KEY = 'KlapevTwTqnaVhYCv2RLVFKFY3bydGWx1EQDpE7E1UcC27xkjez_ksg';
-const GROQ_MODEL = 'groq/compound-mini';
+const GROQ_MODEL = 'qwen/qwen3.8-27b';
 
 const callGroqFallback = async (promptText: string) => {
   const endpoint = `https://api.groq.com/openai/v1/chat/completions`;
