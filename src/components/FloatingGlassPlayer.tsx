@@ -127,7 +127,7 @@ export const FloatingGlassPlayer: React.FC = () => {
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: 'spring', damping: 20, stiffness: 100 }}
-        className="relative grid grid-cols-3 lg:grid-cols-[1fr_1.5fr_1fr] items-center h-22 px-4 lg:px-6 rounded-2xl bg-black/60 backdrop-blur-2xl border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.8)] py-4 gap-2 lg:gap-4"
+        className="relative grid grid-cols-3 lg:grid-cols-[1fr_1.5fr_1fr] items-center h-22 px-4 lg:px-6 rounded-[2rem] bg-white/5 backdrop-blur-3xl border border-white/10 shadow-[0_15px_50px_rgba(0,0,0,0.6)] py-4 gap-2 lg:gap-4 overflow-hidden"
       >
         {/* Glowing Ambient Mesh Overlay inside Player Bar */}
         <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 via-pink-500/10 to-cyan-500/10 opacity-50 blur-xl pointer-events-none" />
