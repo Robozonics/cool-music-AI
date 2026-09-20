@@ -136,15 +136,15 @@ export const FullPlayer: React.FC = () => {
             />
             
             {/* The Wavy ZigZag Track */}
-            <div className="absolute inset-x-0 h-4 pointer-events-none genz-waveform-bg" />
+            <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-4 pointer-events-none genz-waveform-bg" />
             
             {/* The Filled Wavy ZigZag Track */}
             <div 
-              className="absolute left-0 h-4 pointer-events-none overflow-hidden"
+              className="absolute left-0 top-1/2 -translate-y-1/2 h-4 pointer-events-none overflow-hidden"
               style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
             >
               <div 
-                className={`absolute inset-0 w-[100vw] h-full ${isPlaying ? 'genz-waveform' : 'genz-waveform'} ${!isPlaying && 'opacity-70'}`}
+                className={`absolute left-0 top-0 w-[100vw] h-full genz-waveform ${!isPlaying ? 'opacity-70' : ''}`}
                 style={{ animationPlayState: isPlaying ? 'running' : 'paused' }}
               />
             </div>

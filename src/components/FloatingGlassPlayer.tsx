@@ -269,31 +269,31 @@ export const FloatingGlassPlayer: React.FC = () => {
             <span className="text-[10px] lg:text-[11px] font-mono text-zinc-400 min-w-[32px] text-right">
               {formatTime(currentTime)}
             </span>
-            <div className="relative flex-1 group cursor-pointer h-3 flex items-center min-w-0">
+            <div className="relative flex-1 group cursor-pointer h-8 flex items-center min-w-0">
               <input
                 type="range"
                 min="0"
                 max={duration || 100}
                 value={currentTime}
                 onChange={(e) => seek(parseFloat(e.target.value))}
-                className="absolute inset-0 w-full h-1 opacity-0 z-10 cursor-pointer"
+                className="absolute inset-0 w-full h-full opacity-0 z-20 cursor-pointer"
               />
             {/* The Wavy ZigZag Track */}
-            <div className="absolute inset-x-0 h-4 pointer-events-none genz-waveform-bg" />
+            <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-4 pointer-events-none genz-waveform-bg" />
             
             {/* The Filled Wavy ZigZag Track */}
             <div 
-              className="absolute left-0 h-4 pointer-events-none overflow-hidden"
+              className="absolute left-0 top-1/2 -translate-y-1/2 h-4 pointer-events-none overflow-hidden"
               style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
             >
               <div 
-                className={`absolute inset-0 w-[100vw] h-full ${isPlaying ? 'genz-waveform' : 'genz-waveform'} ${!isPlaying && 'opacity-70'}`}
+                className={`absolute left-0 top-0 w-[100vw] h-full genz-waveform ${!isPlaying ? 'opacity-70' : ''}`}
                 style={{ animationPlayState: isPlaying ? 'running' : 'paused' }}
               />
             </div>
               {/* Glowing Slider Thumb on Hover */}
               <div
-                className="absolute w-3 h-3 bg-white rounded-full shadow-[0_0_10px_#ffffff] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none -translate-x-1/2"
+                className="absolute w-4 h-4 bg-white rounded-full shadow-[0_0_10px_#ffffff] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none -translate-x-1/2"
                 style={{
                   left: `${duration ? (currentTime / duration) * 100 : 0}%`,
                 }}
