@@ -17,6 +17,7 @@ export const VisualCanvasEngine = () => {
   const isPlaying = usePlayerStore(state => state.isPlaying);
   
   const playerRef = useRef<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [isReady, setIsReady] = useState(false);
   const [videoId, setVideoId] = useState<string | null>(null);
 
@@ -128,6 +129,20 @@ export const VisualCanvasEngine = () => {
     return unsub;
   }, []);
 
+  // Request native fullscreen on mobile when video mode opens
+  useEffect(() => {
+    if (!isVideoMode) {
+      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      return;
+    }
+    const isMobile = window.innerWidth < 768;
+    if (isMobile && containerRef.current) {
+      const el = containerRef.current as any;
+      const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+      if (req) req.call(el).catch(() => {});
+    }
+  }, [isVideoMode]);
+
   return (
     <>
       {/* 
@@ -135,6 +150,7 @@ export const VisualCanvasEngine = () => {
         We scale it up significantly (130vw/vh) to push the YouTube logo (bottom right) completely off-screen.
       */}
       <div 
+        ref={containerRef}
         className={`fixed inset-0 z-[90] bg-black overflow-hidden pointer-events-none transition-opacity duration-150 ${isVideoMode ? 'opacity-100' : 'opacity-0'}`}
       >
         <div 

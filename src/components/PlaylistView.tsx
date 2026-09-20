@@ -1,6 +1,6 @@
 import React from 'react';
 import { usePlayerStore } from '../store/usePlayerStore';
-import { Play, Clock, ChevronLeft, Download, Plus, CheckCircle2, Trash2 } from 'lucide-react';
+import { Play, Shuffle, Clock, ChevronLeft, Download, Plus, CheckCircle2, Trash2 } from 'lucide-react';
 import type { TabType } from './BottomNav';
 import { downloadTrack } from '../services/downloadService';
 
@@ -15,6 +15,7 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
   const setQueue = usePlayerStore(state => state.setQueue);
   const currentTrack = usePlayerStore(state => state.currentTrack);
   const removeTrackFromPlaylist = usePlayerStore(state => state.removeTrackFromPlaylist);
+  const deletePlaylist = usePlayerStore(state => state.deletePlaylist);
   const [isDownloading, setIsDownloading] = React.useState(false);
   const [downloadProgress, setDownloadProgress] = React.useState(0);
 
@@ -111,30 +112,52 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
       </div>
 
       {/* Action Buttons */}
-      <div className="px-6 py-4 flex items-center justify-between border-b border-white/5 bg-obsidian sticky top-0 z-10 shadow-md">
-        <div className="flex items-center gap-4">
+      <div className="px-4 md:px-6 py-3 flex items-center justify-between border-b border-white/5 bg-obsidian sticky top-0 z-10 shadow-md">
+        <div className="flex items-center gap-2">
           <button 
             onClick={handleDownloadPlaylist}
             disabled={isDownloading}
-            className={`p-2 rounded-full transition-all border border-transparent ${isDownloading ? 'text-acid-lime' : 'text-zinc-400 hover:text-white'}`}
+            className={`p-2 rounded-full transition-all ${isDownloading ? 'text-acid-lime' : 'text-zinc-400 hover:text-white'}`}
+            title="Download all for offline"
           >
             {isDownloading ? (
-               <span className="animate-pulse text-xs font-bold">Downloading {downloadProgress}%</span>
+               <span className="animate-pulse text-xs font-bold">Saving {downloadProgress}%</span>
             ) : (
-               <Download className="w-7 h-7" />
+               <Download className="w-6 h-6" />
             )}
           </button>
-          <button className="p-2 rounded-full text-zinc-400 hover:text-white transition-all">
-             <Plus className="w-8 h-8" />
+          <button
+            onClick={() => {
+              if (confirm(`Delete playlist "${playlist.name}"? This cannot be undone.`)) {
+                deletePlaylist(playlistId);
+                setActiveTab('vault');
+              }
+            }}
+            className="p-2 rounded-full text-zinc-400 hover:text-red-400 transition-all"
+            title="Delete playlist"
+          >
+            <Trash2 className="w-6 h-6" />
           </button>
         </div>
         
-        <button 
-          onClick={handleShuffle}
-          className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-acid-lime text-black flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-[0_8px_30px_rgba(163,230,53,0.3)]"
-        >
-          <Play className="w-6 h-6 md:w-7 md:h-7 ml-1 fill-black" />
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Shuffle */}
+          <button 
+            onClick={handleShuffle}
+            className="w-12 h-12 md:w-14 md:h-14 rounded-full border border-white/20 text-white flex items-center justify-center hover:bg-white/10 hover:scale-105 active:scale-95 transition-all"
+            title="Shuffle play"
+          >
+            <Shuffle className="w-5 h-5 md:w-6 md:h-6" />
+          </button>
+          {/* Play all */}
+          <button 
+            onClick={() => { if (playlist.tracks.length > 0) { setQueue(playlist.tracks); playTrack(playlist.tracks[0]); } }}
+            className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-acid-lime text-black flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-[0_8px_30px_rgba(163,230,53,0.3)]"
+            title="Play all"
+          >
+            <Play className="w-5 h-5 md:w-6 md:h-6 ml-0.5 fill-black" />
+          </button>
+        </div>
       </div>
 
       {/* Tracklist */}
