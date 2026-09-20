@@ -36,11 +36,18 @@ const TrackItem = ({ track, playlist, idx, playlistId }: { track: Track, playlis
         <GripVertical className="w-5 h-5 md:w-4 md:h-4" />
       </div>
       
-      <div 
-        className="flex flex-1 items-center gap-3 md:gap-4 min-w-0 cursor-pointer"
+      <button 
+        type="button"
+        className="flex flex-1 items-center gap-3 md:gap-4 min-w-0 cursor-pointer text-left focus:outline-none"
         onClick={() => {
           setQueue(playlist.tracks);
           playTrack(track);
+        }}
+        onPointerUp={(e) => {
+          if (e.pointerType === 'touch') {
+            setQueue(playlist.tracks);
+            playTrack(track);
+          }
         }}
       >
         <span className={`hidden md:block text-xs font-bold w-4 text-right ${isPlayingThis ? 'text-acid-lime' : 'text-zinc-500 group-hover:text-white'}`}>
@@ -75,7 +82,7 @@ const TrackItem = ({ track, playlist, idx, playlistId }: { track: Track, playlis
             {Math.floor(track.duration / 60)}:{(track.duration % 60).toString().padStart(2, '0')}
           </div>
         )}
-      </div>
+      </button>
 
       <div className="flex items-center gap-0 md:gap-2 shrink-0 relative z-10">
         <button
