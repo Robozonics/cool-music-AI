@@ -67,49 +67,83 @@ export const SearchView: React.FC = () => {
     }
   };
 
-  const toggleListening = () => {
-    if (isListening) {
-      setIsListening(false);
-      return;
-    }
-    
-    // @ts-ignore
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      alert('Your browser does not support Sound Search (Speech Recognition). Please try a modern browser like Chrome.');
+  const mediaRecorderRef = React.useRef<MediaRecorder | null>(null);
+
+  const toggleListening = async () => {
+    if (isListening && mediaRecorderRef.current) {
+      if (mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
+      }
       return;
     }
 
-    const recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.lang = 'en-US';
-
-    recognition.onstart = () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setIsListening(true);
-      setSearchMode('ai'); // Sound search works best with AI
-    };
+      setSearchMode('ai');
+      
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      mediaRecorderRef.current = mediaRecorder;
+      const audioChunks: Blob[] = [];
 
-    recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript;
-      setQuery(transcript);
-      executeSearch(transcript);
-    };
+      mediaRecorder.addEventListener('dataavailable', event => {
+        if (event.data.size > 0) {
+          audioChunks.push(event.data);
+        }
+      });
 
-    recognition.onerror = (event: any) => {
-      console.error('Speech recognition error', event.error);
-      alert('Could not hear you. Please try again.');
+      mediaRecorder.addEventListener('stop', async () => {
+        setIsListening(false);
+        stream.getTracks().forEach(track => track.stop());
+        
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        const reader = new FileReader();
+        reader.readAsDataURL(audioBlob);
+        reader.onloadend = async () => {
+          const base64data = (reader.result as string).split(',')[1];
+          setQuery('Analyzing audio...');
+          setIsLoading(true);
+          setResults([]);
+          try {
+            const tracks = await searchBestMusicWithAI('Audio Search', base64data);
+            setResults(tracks);
+            if (tracks.length > 0) {
+              setQuery(`Found: ${tracks[0].title}`);
+            } else {
+              setQuery('');
+            }
+          } catch (e) {
+            console.error(e);
+            alert('Failed to identify audio.');
+            setQuery('');
+          } finally {
+            setIsLoading(false);
+          }
+        };
+      });
+
+      mediaRecorder.start();
+      
+      // Auto stop after 6 seconds
+      setTimeout(() => {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+          mediaRecorderRef.current.stop();
+        }
+      }, 6000);
+
+    } catch (err) {
+      console.error('Mic error:', err);
+      alert('Could not access microphone. Please check permissions.');
       setIsListening(false);
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-    };
-
-    recognition.start();
+    }
   };
 
   useEffect(() => {
+    const hasEmoji = /\p{Extended_Pictographic}/u.test(query);
+    if (hasEmoji && searchMode === 'standard') {
+      setSearchMode('ai');
+    }
+
     if (!query.trim()) {
       setResults([]);
       return;
@@ -158,18 +192,27 @@ export const SearchView: React.FC = () => {
         ) : (
            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
         )}
-        <button
-          type="button"
-          onClick={toggleListening}
-          className={`absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full transition-all flex items-center justify-center ${
-            isListening 
-              ? 'bg-red-500 text-white animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.6)]' 
-              : 'bg-white/10 text-gray-400 hover:text-white hover:bg-white/20'
-          }`}
-          title="Sound Search: Hum or Sing"
-        >
-          {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-        </button>
+        {query.trim().length > 0 ? (
+          <button
+            type="submit"
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-acid-lime text-obsidian shadow-[0_0_15px_rgba(204,255,0,0.5)] transition-all hover:scale-105"
+          >
+            <Search className="w-4 h-4" />
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={toggleListening}
+            className={`absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full transition-all flex items-center justify-center ${
+              isListening 
+                ? 'bg-red-500 text-white animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.6)]' 
+                : 'bg-white/10 text-gray-400 hover:text-white hover:bg-white/20'
+            }`}
+            title="Sound Search: Hum or Sing"
+          >
+            {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+          </button>
+        )}
       </form>
       
       {isListening && (

@@ -178,7 +178,11 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
               <Reorder.Item 
                 key={`${track.id}-${idx}`}
                 value={track}
-                className={`group flex items-center gap-3 md:gap-4 py-2 md:p-3 rounded-none md:rounded-xl transition-all cursor-default ${
+                onClick={() => {
+                  setQueue(playlist.tracks);
+                  playTrack(track);
+                }}
+                className={`group flex items-center gap-3 md:gap-4 py-2 md:p-3 rounded-none md:rounded-xl transition-all cursor-pointer ${
                   isPlayingThis ? 'bg-white/5 md:bg-white/10' : 'hover:bg-white/5 bg-transparent'
                 }`}
               >
@@ -191,11 +195,7 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
                 </span>
                 
                 <div 
-                  className="w-12 h-12 md:w-14 md:h-14 rounded-sm md:rounded-md overflow-hidden bg-white/10 shrink-0 relative cursor-pointer"
-                  onClick={() => {
-                    setQueue(playlist.tracks);
-                    playTrack(track);
-                  }}
+                  className="w-12 h-12 md:w-14 md:h-14 rounded-sm md:rounded-md overflow-hidden bg-white/10 shrink-0 relative"
                 >
                   <img src={track.thumbnail} alt={track.title} className="w-full h-full object-cover pointer-events-none" />
                   {isPlayingThis ? (

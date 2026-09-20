@@ -32,22 +32,43 @@ const DiscoverWeeklyBanner: React.FC = () => {
   const handleGenerate = async () => {
     setIsGenerating(true);
     try {
-      // Find a seed track from saved playlists, fallback to a Gen-Z pop hit
       let seedArtist = "The Weeknd";
       let seedSong = "Starboy";
+      let customPromptContext = "Curate a 30-song 'Discover Weekly' playlist based on this vibe. Make it sound fresh, obscure but catchy, and perfect for the start of the week.";
+      let inspirations = "";
       
       const allTracks = savedPlaylists.flatMap(p => p.tracks);
       if (allTracks.length > 0) {
-        const randomTrack = allTracks[Math.floor(Math.random() * allTracks.length)];
-        seedArtist = randomTrack.artist || seedArtist;
-        seedSong = randomTrack.title || seedSong;
+        // Find most frequent artist as seed
+        const artistCounts = allTracks.reduce((acc, t) => {
+          if (t.artist) acc[t.artist] = (acc[t.artist] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>);
+        
+        const topArtist = Object.keys(artistCounts).length > 0 
+          ? Object.keys(artistCounts).reduce((a, b) => artistCounts[a] > artistCounts[b] ? a : b)
+          : seedArtist;
+        
+        seedArtist = topArtist;
+        
+        // Find a song by this top artist
+        const songByTopArtist = allTracks.find(t => t.artist === topArtist);
+        if (songByTopArtist) {
+          seedSong = songByTopArtist.title || seedSong;
+        }
+
+        // Get up to 3 diverse tracks to include in custom prompt for diverse inspiration
+        const shuffled = [...allTracks].sort(() => 0.5 - Math.random());
+        inspirations = shuffled.slice(0, 3).map(t => `"${t.title}" by ${t.artist}`).join(", ");
+        
+        customPromptContext = `Curate a 30-song 'Discover Weekly' playlist. The user's primary vibe is anchored by ${seedSong} by ${seedArtist}, but their broader taste includes ${inspirations}. Blend these influences perfectly. Make it sound fresh, obscure but catchy, and perfect for the start of the week.`;
       }
 
       // 1. Start both Aura Analysis and Playlist Generation simultaneously
-      const auraPromise = generateAuraAnalysis(seedArtist, seedSong);
+      const auraPromise = generateAuraAnalysis(seedArtist, seedSong, inspirations);
       const tracksPromise = generateAIPlaylist(
         { artist: seedArtist, song: seedSong },
-        "Curate a 30-song 'Discover Weekly' playlist based on this vibe. Make it sound fresh, obscure but catchy, and perfect for the start of the week.",
+        customPromptContext,
         (pct, msg) => setProgress({ pct, msg })
       );
 

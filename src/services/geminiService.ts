@@ -50,12 +50,23 @@ const callGroqFallback = async (promptText: string) => {
   return Array.isArray(parsed) ? parsed : (parsed ? [parsed] : []);
 };
 
-export const callGeminiDirectly = async (promptText: string, type: 'playlist' | 'search' | 'mood' | 'translate') => {
+export const callGeminiDirectly = async (promptText: string, type: 'playlist' | 'search' | 'mood' | 'translate', audioBase64?: string) => {
   const keys = getKeys();
   if (keys.length === 0) throw new Error('API key not configured');
 
+  const parts: any[] = [];
+  if (promptText) parts.push({ text: promptText });
+  if (audioBase64) {
+    parts.push({
+      inlineData: {
+        mimeType: 'audio/webm',
+        data: audioBase64
+      }
+    });
+  }
+
   const payload = {
-    contents: [{ parts: [{ text: promptText }] }],
+    contents: [{ parts }],
     generationConfig: {
       temperature: type === 'playlist' ? 0.7 : 0.9,
       topP: 0.95,
@@ -138,9 +149,9 @@ export interface AuraAnalysis {
   vibeColor: string;
 }
 
-export const generateAuraAnalysis = async (seedArtist: string, seedSong: string): Promise<AuraAnalysis> => {
-  const promptText = `You are a Gen-Z music aura reader. The user's seed track is "${seedSong}" by "${seedArtist}".
-Analyze the sonic vibe and emotional frequency of this track. 
+export const generateAuraAnalysis = async (seedArtist: string, seedSong: string, inspirations?: string): Promise<AuraAnalysis> => {
+  const promptText = `You are a Gen-Z music aura reader. The user's seed track is "${seedSong}" by "${seedArtist}". ${inspirations ? `They also deeply resonate with these tracks: ${inspirations}.` : ''}
+Analyze the sonic vibe and emotional frequency of this overall taste. 
 Return EXACTLY ONE JSON object with these keys:
 - "vibeTitle": A short, edgy, highly Gen-Z title for this aura (e.g. "NEON MIDNIGHT OVERTHINKER", "MAIN CHARACTER COMPLEX", "FERAL CLUB RAT", "ETHEREAL FLOAT", "DOOMSCROLLING LOFI"). ALL CAPS. Max 4 words.
 - "vibeDescription": A 1-2 sentence description of what this music says about their current mood, using Gen-Z internet slang but keeping it poetic and cool.
@@ -165,10 +176,12 @@ Output ONLY valid JSON ARRAY containing ONE object. Example: [{"vibeTitle": "CYB
 };
 
 // ── Existing: Best Music Search ──────────────────────────────────────────────
-export const searchBestMusicWithAI = async (userQuery: string): Promise<Track[]> => {
-  const promptText = `You are the world's foremost music curator and critic. The user is asking for the 'best' music matching: '${userQuery}'. Curate a list of 8 objectively top-rated, culturally accurate songs. Return STRICT JSON array schema: [{"title": "Song Title", "artist": "Artist Name", "reason": "why this matches"}]. Output ONLY valid JSON.`;
+export const searchBestMusicWithAI = async (userQuery: string, audioBase64?: string): Promise<Track[]> => {
+  const promptText = audioBase64 
+    ? `You are an expert music identifier. Listen to the provided audio (which might be humming, singing, or a song playing). Identify the song being hummed/played. If you cannot identify a specific song, suggest 5 songs that sound very similar to the melody/vibe. Return STRICT JSON array schema: [{"title": "Song Title", "artist": "Artist Name", "reason": "why this matches"}]. Output ONLY valid JSON.`
+    : `You are the world's foremost music curator and critic. The user is asking for the 'best' music matching: '${userQuery}'. Curate a list of 8 objectively top-rated, culturally accurate songs. Return STRICT JSON array schema: [{"title": "Song Title", "artist": "Artist Name", "reason": "why this matches"}]. Output ONLY valid JSON.`;
   
-  const recommendations = await callGeminiDirectly(promptText, 'search');
+  const recommendations = await callGeminiDirectly(promptText, 'search', audioBase64);
   if (!Array.isArray(recommendations)) return [];
 
   const resolvedTracksPromises = recommendations.map(async (item: any) => {
