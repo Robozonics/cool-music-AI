@@ -82,6 +82,7 @@ interface PlayerState {
   savedPlaylists: SavedPlaylist[];
   savePlaylist: (name: string, tracks: Track[]) => string;
   addTrackToPlaylist: (playlistId: string, track: Track) => void;
+  removeTrackFromPlaylist: (playlistId: string, trackId: string) => void;
   deletePlaylist: (id: string) => void;
 
   // Add to Playlist Modal
@@ -444,6 +445,14 @@ export const usePlayerStore = create<PlayerState>()(
       savedPlaylists: state.savedPlaylists.map(p => 
         p.id === playlistId 
           ? { ...p, tracks: [...p.tracks, track] }
+          : p
+      )
+    })),
+
+    removeTrackFromPlaylist: (playlistId: string, trackId: string) => set(state => ({
+      savedPlaylists: state.savedPlaylists.map(p =>
+        p.id === playlistId
+          ? { ...p, tracks: p.tracks.filter(t => t.id !== trackId) }
           : p
       )
     })),

@@ -1,6 +1,6 @@
 import React from 'react';
 import { usePlayerStore } from '../store/usePlayerStore';
-import { Play, Clock, ChevronLeft, Download, Plus, CheckCircle2 } from 'lucide-react';
+import { Play, Clock, ChevronLeft, Download, Plus, CheckCircle2, Trash2 } from 'lucide-react';
 import type { TabType } from './BottomNav';
 import { downloadTrack } from '../services/downloadService';
 
@@ -14,6 +14,7 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
   const playTrack = usePlayerStore(state => state.playTrack);
   const setQueue = usePlayerStore(state => state.setQueue);
   const currentTrack = usePlayerStore(state => state.currentTrack);
+  const removeTrackFromPlaylist = usePlayerStore(state => state.removeTrackFromPlaylist);
   const [isDownloading, setIsDownloading] = React.useState(false);
   const [downloadProgress, setDownloadProgress] = React.useState(0);
 
@@ -103,7 +104,7 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
               {playlist.name}
             </h1>
             <p className="text-xs md:text-sm font-medium text-zinc-300 flex items-center justify-start gap-1 md:gap-2">
-              <span className="font-bold">You</span> • {playlist.tracks.length} tracks
+              <span className="font-bold">You</span> • {playlist.tracks.length} tracks • <span className="text-zinc-400">{formattedDuration}</span>
             </p>
           </div>
         </div>
@@ -180,7 +181,7 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
                   </div>
                 )}
 
-                <div className="flex items-center gap-1 md:gap-2 shrink-0">
+                <div className="flex items-center gap-0 md:gap-2 shrink-0">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -190,6 +191,16 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
                     title="Add to Playlist"
                   >
                     <Plus className="w-5 h-5 md:w-4 md:h-4" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeTrackFromPlaylist(playlistId, track.id);
+                    }}
+                    className="p-3 md:p-2 rounded-full hover:bg-red-500/20 transition text-zinc-500 hover:text-red-400"
+                    title="Remove from Playlist"
+                  >
+                    <Trash2 className="w-5 h-5 md:w-4 md:h-4" />
                   </button>
                   {track.source === 'saavn' && (
                     <button 
