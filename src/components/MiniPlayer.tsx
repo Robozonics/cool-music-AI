@@ -12,31 +12,34 @@ export const MiniPlayer: React.FC = () => {
   if (!currentTrack) return null;
 
   return (
-    <div className="fixed bottom-[84px] left-2 right-2 z-40 md:hidden">
+    <div 
+      className="fixed left-2 right-2 z-40 md:hidden"
+      style={{ bottom: 'calc(72px + env(safe-area-inset-bottom) + 8px)' }}
+    >
       <div 
         className="bg-[#2a2a2a]/95 backdrop-blur-xl border border-white/5 rounded-xl flex items-center p-2 cursor-pointer shadow-2xl" 
         onClick={() => setFullPlayerOpen(true)}
       >
         <img src={currentTrack.thumbnail} alt={currentTrack.title} className="w-10 h-10 rounded-md object-cover" />
         
-        <div className="ml-3 flex-1 min-w-0">
+        <div className="ml-3 flex-1 min-w-0 pr-2">
           <h4 className="text-white font-bold truncate text-sm">{currentTrack.title}</h4>
           <p className="text-gray-400 text-xs truncate">{currentTrack.artist}</p>
         </div>
         
-        <div className="flex items-center space-x-1 ml-2 shrink-0" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center space-x-3 pr-1 shrink-0" onClick={e => e.stopPropagation()}>
           <button 
             onClick={togglePlay}
-            className="p-3 rounded-full text-white hover:bg-white/10 transition-colors"
+            className="p-2 rounded-full text-white hover:bg-white/10 transition-colors"
           >
-            {isPlaying ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current" />}
+            {isPlaying ? <Pause className="w-6 h-6 fill-current" /> : <Play className="w-6 h-6 fill-current" />}
           </button>
           
           <button 
             onClick={nextTrack}
-            className="p-3 rounded-full text-white hover:bg-white/10 transition-colors"
+            className="p-2 rounded-full text-white hover:bg-white/10 transition-colors"
           >
-            <SkipForward className="w-5 h-5 fill-current" />
+            <SkipForward className="w-6 h-6 fill-current" />
           </button>
         </div>
       </div>

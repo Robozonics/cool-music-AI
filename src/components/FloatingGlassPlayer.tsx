@@ -278,9 +278,9 @@ export const FloatingGlassPlayer: React.FC = () => {
                 onChange={(e) => seek(parseFloat(e.target.value))}
                 className="absolute inset-0 w-full h-1 opacity-0 z-10 cursor-pointer"
               />
-              <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+              <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden pointer-events-none">
                 <div
-                  className="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-lime-400 rounded-full relative"
+                  className={`h-full rounded-full relative ${isPlaying ? 'bg-genz-zigzag' : 'bg-gradient-to-r from-purple-500 via-pink-500 to-lime-400'}`}
                   style={{
                     width: `${duration ? (currentTime / duration) * 100 : 0}%`,
                   }}

@@ -125,14 +125,29 @@ export const FullPlayer: React.FC = () => {
 
         {/* Progress Bar */}
         <div className="w-full mb-8">
-          <input 
-            type="range"
-            min="0"
-            max={duration || 100}
-            value={currentTime}
-            onChange={(e) => seek(parseFloat(e.target.value))}
-            className="w-full h-2 rounded-full appearance-none bg-white/20 cursor-pointer accent-acid-lime"
-          />
+          <div className="relative group cursor-pointer h-6 flex items-center w-full">
+            <input 
+              type="range"
+              min="0"
+              max={duration || 100}
+              value={currentTime}
+              onChange={(e) => seek(parseFloat(e.target.value))}
+              className="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer"
+            />
+            <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden pointer-events-none">
+              <div 
+                className={`h-full rounded-full relative ${isPlaying ? 'bg-genz-zigzag' : 'bg-acid-lime'}`}
+                style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
+              />
+            </div>
+            {/* Glowing Slider Thumb on Hover */}
+            <div
+              className="absolute w-4 h-4 bg-white rounded-full shadow-[0_0_15px_#ffffff] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none -translate-x-1/2"
+              style={{
+                left: `${duration ? (currentTime / duration) * 100 : 0}%`,
+              }}
+            />
+          </div>
           <div className="flex justify-between text-xs text-gray-400 mt-2 font-medium">
             <span>{formatTime(currentTime)}</span>
             <span>{formatTime(duration)}</span>

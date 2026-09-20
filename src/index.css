@@ -98,3 +98,19 @@ html, body {
   width: 100% !important;
   height: 100% !important;
 }
+@keyframes genz-zigzag {
+  0% { background-position: 0 0; }
+  100% { background-position: 28px 0; }
+}
+
+.bg-genz-zigzag {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(255,255,255,0.2),
+    rgba(255,255,255,0.2) 10px,
+    transparent 10px,
+    transparent 20px
+  );
+  background-size: 28px 28px;
+  animation: genz-zigzag 1s linear infinite;
+}

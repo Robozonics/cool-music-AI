@@ -358,7 +358,10 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
         : [...state.likedTracks, trackId]
     })),
 
-    setRepeatMode: (mode: 'off' | 'all' | 'one') => set({ repeatMode: mode }),
+    setRepeatMode: (mode: 'off' | 'all' | 'one') => {
+      nativeAudio.loop = (mode === 'one');
+      set({ repeatMode: mode });
+    },
 
     toggleCrossfade: () => set(state => ({ isCrossfadeEnabled: !state.isCrossfadeEnabled })),
 
