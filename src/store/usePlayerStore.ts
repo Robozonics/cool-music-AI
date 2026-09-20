@@ -90,6 +90,10 @@ interface PlayerState {
   trackToAddToPlaylist: Track | null;
   openAddToPlaylistModal: (track: Track) => void;
   closeAddToPlaylistModal: () => void;
+
+  // Discover Weekly
+  discoverWeekly: { tracks: Track[], generatedAt: number } | null;
+  setDiscoverWeekly: (tracks: Track[], generatedAt: number) => void;
 }
 
 export const usePlayerStore = create<PlayerState>()(
@@ -256,6 +260,9 @@ export const usePlayerStore = create<PlayerState>()(
     isApiKeyModalOpen: false,
 
     setApiKeyModalOpen: (open: boolean) => set({ isApiKeyModalOpen: open }),
+
+    discoverWeekly: null,
+    setDiscoverWeekly: (tracks: Track[], generatedAt: number) => set({ discoverWeekly: { tracks, generatedAt } }),
 
     resolveAutoplayBlock: () => {
        const { isAutoplayBlocked } = get();
@@ -470,7 +477,8 @@ export const usePlayerStore = create<PlayerState>()(
       partialize: (state) => ({ 
         savedPlaylists: state.savedPlaylists,
         likedTracks: state.likedTracks,
-        theme: state.theme
+        theme: state.theme,
+        discoverWeekly: state.discoverWeekly
       }),
     }
   )

@@ -6,6 +6,131 @@ import { usePlayerStore } from '../store/usePlayerStore';
 import { DaylistWidget } from './DaylistWidget';
 import { AIPlaylistModal } from './AIPlaylistModal';
 import type { TabType } from './BottomNav';
+import { generateAIPlaylist } from '../services/geminiService';
+
+const getMostRecentMonday = () => {
+  const d = new Date();
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(d.setDate(diff));
+  monday.setHours(0, 0, 0, 0);
+  return monday.getTime();
+};
+
+const DiscoverWeeklyBanner: React.FC = () => {
+  const discoverWeekly = usePlayerStore(state => state.discoverWeekly);
+  const setDiscoverWeekly = usePlayerStore(state => state.setDiscoverWeekly);
+  const savedPlaylists = usePlayerStore(state => state.savedPlaylists);
+  const playTrack = usePlayerStore(state => state.playTrack);
+  const setQueue = usePlayerStore(state => state.setQueue);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [progress, setProgress] = useState({ pct: 0, msg: '' });
+
+  const lastMonday = getMostRecentMonday();
+  const needsRefresh = !discoverWeekly || discoverWeekly.generatedAt < lastMonday;
+
+  const handleGenerate = async () => {
+    setIsGenerating(true);
+    try {
+      // Find a seed track from saved playlists, fallback to a Gen-Z pop hit
+      let seedArtist = "The Weeknd";
+      let seedSong = "Starboy";
+      
+      const allTracks = savedPlaylists.flatMap(p => p.tracks);
+      if (allTracks.length > 0) {
+        const randomTrack = allTracks[Math.floor(Math.random() * allTracks.length)];
+        seedArtist = randomTrack.artist || seedArtist;
+        seedSong = randomTrack.title || seedSong;
+      }
+
+      const tracks = await generateAIPlaylist(
+        { artist: seedArtist, song: seedSong },
+        "Curate a 30-song 'Discover Weekly' playlist based on this vibe. Make it sound fresh, obscure but catchy, and perfect for the start of the week.",
+        (pct, msg) => setProgress({ pct, msg })
+      );
+
+      if (tracks.length > 0) {
+        setDiscoverWeekly(tracks, Date.now());
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Failed to generate Discover Weekly. Check API key.');
+    } finally {
+      setIsGenerating(false);
+      setProgress({ pct: 0, msg: '' });
+    }
+  };
+
+  const handlePlay = () => {
+    if (discoverWeekly?.tracks && discoverWeekly.tracks.length > 0) {
+      setQueue(discoverWeekly.tracks);
+      playTrack(discoverWeekly.tracks[0]);
+    }
+  };
+
+  if (isGenerating) {
+    return (
+      <div className="relative overflow-hidden rounded-3xl p-6 bg-gradient-to-br from-indigo-900/40 to-purple-900/40 border border-indigo-500/30 flex flex-col items-center justify-center h-48 shadow-[0_0_40px_rgba(79,70,229,0.2)]">
+        <Loader2 className="w-10 h-10 animate-spin text-indigo-400 mb-4" />
+        <h3 className="text-white font-bold tracking-widest uppercase text-sm mb-2">Curating Discover Weekly...</h3>
+        <p className="text-indigo-300 text-xs font-mono">{progress.msg} ({progress.pct}%)</p>
+        <div className="w-full max-w-xs h-1 bg-white/10 rounded-full mt-4 overflow-hidden">
+          <div className="h-full bg-indigo-500 transition-all duration-300" style={{ width: `${progress.pct}%` }} />
+        </div>
+      </div>
+    );
+  }
+
+  if (needsRefresh) {
+    return (
+      <div className="relative overflow-hidden rounded-3xl p-6 bg-gradient-to-br from-blue-600/20 to-indigo-600/20 border border-blue-500/30 shadow-[0_10px_40px_rgba(59,130,246,0.15)] flex flex-col sm:flex-row items-center gap-6">
+        <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center shadow-[0_0_30px_rgba(59,130,246,0.4)] shrink-0 animate-pulse">
+          <Sparkles className="w-10 h-10 text-white" />
+        </div>
+        <div className="flex-1 text-center sm:text-left">
+          <h2 className="text-2xl font-black text-white tracking-tighter mb-1">Discover Weekly</h2>
+          <p className="text-zinc-400 text-sm mb-4">It's a new week! Your custom AI-curated 30-song playlist is ready to be generated based on your sonic vibe.</p>
+          <button 
+            onClick={handleGenerate}
+            className="px-6 py-2.5 rounded-full bg-blue-500 text-white font-bold text-sm hover:bg-blue-400 active:scale-95 transition-all shadow-[0_0_20px_rgba(59,130,246,0.5)]"
+          >
+            Generate Now
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative overflow-hidden rounded-3xl p-6 bg-gradient-to-br from-indigo-600/20 to-purple-600/20 border border-indigo-500/30 shadow-[0_10px_40px_rgba(79,70,229,0.15)] flex flex-col sm:flex-row items-center gap-6 group">
+      <div className="relative w-32 h-32 rounded-2xl overflow-hidden shadow-[0_0_30px_rgba(79,70,229,0.4)] shrink-0">
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-purple-500 opacity-80" />
+        <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 opacity-50 mix-blend-overlay">
+          {discoverWeekly?.tracks.slice(0, 4).map((t, i) => (
+            <img key={i} src={t.thumbnail} className="w-full h-full object-cover" alt="" />
+          ))}
+        </div>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-white font-black text-4xl opacity-50">DW</span>
+        </div>
+        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all cursor-pointer backdrop-blur-sm" onClick={handlePlay}>
+          <Play className="w-12 h-12 text-white fill-current" />
+        </div>
+      </div>
+      <div className="flex-1 text-center sm:text-left">
+        <h2 className="text-sm font-bold tracking-[0.2em] uppercase text-indigo-400 mb-1">Made for you</h2>
+        <h1 className="text-3xl font-black text-white tracking-tighter mb-2">Discover Weekly</h1>
+        <p className="text-zinc-400 text-sm mb-4">30 fresh tracks curated specifically for your unique sonic footprint.</p>
+        <button 
+          onClick={handlePlay}
+          className="px-8 py-3 rounded-full bg-indigo-500 text-white font-bold text-sm hover:bg-indigo-400 active:scale-95 transition-all shadow-[0_0_20px_rgba(79,70,229,0.5)] flex items-center gap-2 mx-auto sm:mx-0"
+        >
+          <Play className="w-4 h-4 fill-current" /> Play Now
+        </button>
+      </div>
+    </div>
+  );
+};
 
 const MOOD_PILLS = [
   { label: '3 AM OVERTHINKING', color: 'bg-lime-400 text-black', query: 'sad lofi study beats' },
@@ -83,6 +208,9 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab }) => {
     <div className="space-y-12 pb-32">
       {/* AI Playlist Modal */}
       <AIPlaylistModal isOpen={isAIPlaylistOpen} onClose={() => setIsAIPlaylistOpen(false)} onNavigateToPlaylist={(id) => setActiveTab && setActiveTab(`playlist:${id}`)} />
+
+      {/* Discover Weekly Banner */}
+      <DiscoverWeeklyBanner />
 
       {/* Daylist Widget — Time-Contextual (Feature 4) */}
       <DaylistWidget />
