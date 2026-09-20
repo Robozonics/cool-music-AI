@@ -11,6 +11,7 @@ interface OfflineVaultProps {
 export const OfflineVault: React.FC<OfflineVaultProps> = ({ setActiveTab }) => {
   const [tracks, setTracks] = useState<Track[]>([]);
   const savedPlaylists = usePlayerStore(state => state.savedPlaylists);
+  const deletePlaylist = usePlayerStore(state => state.deletePlaylist);
   const playTrack = usePlayerStore(state => state.playTrack);
   const setQueue = usePlayerStore(state => state.setQueue);
 
@@ -73,6 +74,18 @@ export const OfflineVault: React.FC<OfflineVaultProps> = ({ setActiveTab }) => {
                   <h4 className="font-bold text-white text-base md:text-lg truncate mb-1">{playlist.name}</h4>
                   <p className="text-gray-400 text-sm font-medium">Playlist • {playlist.tracks.length} tracks</p>
                 </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (confirm(`Delete playlist "${playlist.name}"?`)) {
+                      deletePlaylist(playlist.id);
+                    }
+                  }}
+                  className="p-2 text-zinc-600 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 shrink-0"
+                  title="Delete Playlist"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
               </div>
             ))}
           </div>

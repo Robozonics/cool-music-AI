@@ -367,11 +367,14 @@ export const usePlayerStore = create<PlayerState>()(
     },
 
     nextTrack: () => {
-      const { queue, currentTrack, playTrack } = get();
+      const { queue, currentTrack, playTrack, repeatMode } = get();
       if (!currentTrack || queue.length === 0) return;
       const currentIndex = queue.findIndex(t => t.id === currentTrack.id);
       if (currentIndex >= 0 && currentIndex < queue.length - 1) {
         playTrack(queue[currentIndex + 1]);
+      } else if (repeatMode === 'all' && queue.length > 0) {
+        // Wrap around to beginning
+        playTrack(queue[0]);
       } else {
         nativeAudio.pause();
         nativeAudio.src = '';

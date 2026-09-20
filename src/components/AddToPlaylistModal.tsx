@@ -17,6 +17,11 @@ export const AddToPlaylistModal: React.FC = () => {
   if (!isOpen || !track) return null;
 
   const handleAddToExisting = (playlistId: string, name: string) => {
+    const playlist = savedPlaylists.find(p => p.id === playlistId);
+    if (playlist?.tracks.some(t => t.id === track.id)) {
+      showSuccess(`Already in ${name}`);
+      return;
+    }
     addTrackToPlaylist(playlistId, track);
     showSuccess(`Added to ${name}`);
   };

@@ -37,11 +37,19 @@ export const useKeyboardShortcuts = () => {
           break;
         case 'KeyF':
           e.preventDefault();
-          store.toggleVideoMode();
+          store.setFullPlayerOpen(!store.isFullPlayerOpen);
           break;
         case 'KeyL':
           e.preventDefault();
           store.setLyricsOpen(!store.isLyricsOpen);
+          break;
+        case 'KeyJ':
+          e.preventDefault();
+          store.seek(Math.max(0, store.currentTime - 10));
+          break;
+        case 'KeyK':
+          e.preventDefault();
+          store.seek(Math.min(store.duration, store.currentTime + 10));
           break;
       }
     };

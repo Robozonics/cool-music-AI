@@ -139,6 +139,12 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
 
       {/* Tracklist */}
       <div className="px-4 md:px-6 py-2 md:py-4 pb-32">
+        {playlist.tracks.length === 0 ? (
+          <div className="text-center py-16 text-zinc-500">
+            <p className="text-lg font-bold mb-2">This playlist is empty</p>
+            <p className="text-sm">Search for songs and add them using the + button.</p>
+          </div>
+        ) : (
         <div className="space-y-1 md:space-y-2">
           {playlist.tracks.map((track, idx) => {
             const isPlayingThis = currentTrack?.id === track.id;
@@ -230,6 +236,7 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
             );
           })}
         </div>
+        )}
       </div>
     </div>
   );

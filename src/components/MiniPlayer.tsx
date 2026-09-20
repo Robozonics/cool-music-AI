@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, SkipForward } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
 
 export const MiniPlayer: React.FC = () => {
@@ -7,6 +7,7 @@ export const MiniPlayer: React.FC = () => {
   const isPlaying = usePlayerStore(state => state.isPlaying);
   const togglePlay = usePlayerStore(state => state.togglePlay);
   const nextTrack = usePlayerStore(state => state.nextTrack);
+  const prevTrack = usePlayerStore(state => state.prevTrack);
   const setFullPlayerOpen = usePlayerStore(state => state.setFullPlayerOpen);
 
   if (!currentTrack) return null;
@@ -27,7 +28,13 @@ export const MiniPlayer: React.FC = () => {
           <p className="text-gray-400 text-xs truncate">{currentTrack.artist}</p>
         </div>
         
-        <div className="flex items-center space-x-3 pr-1 shrink-0" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center space-x-1 pr-1 shrink-0" onClick={e => e.stopPropagation()}>
+          <button 
+            onClick={prevTrack}
+            className="p-2 rounded-full text-white hover:bg-white/10 transition-colors"
+          >
+            <SkipBack className="w-5 h-5 fill-current" />
+          </button>
           <button 
             onClick={togglePlay}
             className="p-2 rounded-full text-white hover:bg-white/10 transition-colors"
@@ -39,7 +46,7 @@ export const MiniPlayer: React.FC = () => {
             onClick={nextTrack}
             className="p-2 rounded-full text-white hover:bg-white/10 transition-colors"
           >
-            <SkipForward className="w-6 h-6 fill-current" />
+            <SkipForward className="w-5 h-5 fill-current" />
           </button>
         </div>
       </div>
