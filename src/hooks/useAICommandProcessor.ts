@@ -74,6 +74,11 @@ export const useAICommandProcessor = () => {
           }
           break;
         }
+        case 'create_empty_playlist': {
+          const playlistName = parsed.query || 'New AI Playlist';
+          usePlayerStore.getState().savePlaylist(playlistName, []);
+          break;
+        }
         default:
           if (openAICommandBox) {
             // If unknown and wake word triggered, open the box to let the user see it

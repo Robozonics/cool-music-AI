@@ -267,16 +267,17 @@ No markdown, no commentary, no extra keys, no numbering. Pure JSON array only.`;
 };
 
 // ── NEW: AI Command Parser ──────────────────────────────────────────────────
-export const parseAICommand = async (command: string): Promise<{ action: 'play' | 'add_to_playlist' | 'create_playlist' | 'mood' | 'share' | 'unknown', query: string }> => {
+export const parseAICommand = async (command: string): Promise<{ action: 'play' | 'add_to_playlist' | 'create_playlist' | 'create_empty_playlist' | 'mood' | 'share' | 'unknown', query: string }> => {
   const promptText = `You are an AI assistant in a music app. The user just gave the command: "${command}". 
 Parse this command into a JSON object with exactly two keys:
-1. "action": one of "play", "add_to_playlist", "create_playlist", "mood", "share"
-   - use "create_playlist" if they ask to make/build a playlist
+1. "action": one of "play", "add_to_playlist", "create_playlist", "create_empty_playlist", "mood", "share"
+   - use "create_empty_playlist" if they explicitly ask to create a new, empty, or blank playlist (e.g. "create an empty playlist", "make a new playlist called Favorites")
+   - use "create_playlist" if they ask to generate or build an AI/auto playlist with songs in it
    - use "mood" if they ask for relaxing, focus, sad, happy, or mood-based music
    - use "share" if they ask to share the music
    - use "play" if they ask to play a specific song or artist
    - use "add_to_playlist" if they ask to add a specific song to a playlist
-2. "query": the name of the song, artist, mood, or seed required to perform the action (e.g. "blinding lights", "relaxing beats"). For share, it can be empty.
+2. "query": the name of the song, artist, mood, seed, or playlist name required to perform the action (e.g. "blinding lights", "relaxing beats", "My Summer Mix"). For share, it can be empty.
 
 If you cannot understand the command, return {"action": "unknown", "query": ""}.
 Output ONLY valid JSON ARRAY containing ONE object. Example: [{"action": "play", "query": "starboy"}]. No markdown, no extra text.`;
