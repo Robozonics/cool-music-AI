@@ -131,6 +131,39 @@ export const getMoodRecommendations = async (userPrompt: string): Promise<{ titl
   return callGeminiDirectly(promptText, 'mood');
 };
 
+// ── NEW: Aura Analysis ──────────────────────────────────────────────────────
+export interface AuraAnalysis {
+  vibeTitle: string;
+  vibeDescription: string;
+  vibeColor: string;
+}
+
+export const generateAuraAnalysis = async (seedArtist: string, seedSong: string): Promise<AuraAnalysis> => {
+  const promptText = `You are a Gen-Z music aura reader. The user's seed track is "${seedSong}" by "${seedArtist}".
+Analyze the sonic vibe and emotional frequency of this track. 
+Return EXACTLY ONE JSON object with these keys:
+- "vibeTitle": A short, edgy, highly Gen-Z title for this aura (e.g. "NEON MIDNIGHT OVERTHINKER", "MAIN CHARACTER COMPLEX", "FERAL CLUB RAT", "ETHEREAL FLOAT", "DOOMSCROLLING LOFI"). ALL CAPS. Max 4 words.
+- "vibeDescription": A 1-2 sentence description of what this music says about their current mood, using Gen-Z internet slang but keeping it poetic and cool.
+- "vibeColor": A vibrant, neon hex color code (e.g. "#FF00FF") that perfectly represents the emotional frequency of the seed track.
+
+Output ONLY valid JSON ARRAY containing ONE object. Example: [{"vibeTitle": "CYBERPUNK HEARTBREAK", "vibeDescription": "You're deep in your feelings but making it aesthetic. Main character energy in a rainy cyberpunk city.", "vibeColor": "#00FFFF"}]. No markdown, no extra text.`;
+
+  try {
+    const result = await callGeminiDirectly(promptText, 'search');
+    if (result && result.length > 0) {
+      return result[0] as AuraAnalysis;
+    }
+  } catch (e) {
+    console.error('Aura generation failed', e);
+  }
+  // Fallback
+  return {
+    vibeTitle: "MYSTERY VIBE",
+    vibeDescription: "Your aura is unreadable right now, but the vibes are immaculate anyway.",
+    vibeColor: "#8B5CF6" // Purple
+  };
+};
+
 // ── Existing: Best Music Search ──────────────────────────────────────────────
 export const searchBestMusicWithAI = async (userQuery: string): Promise<Track[]> => {
   const promptText = `You are the world's foremost music curator and critic. The user is asking for the 'best' music matching: '${userQuery}'. Curate a list of 8 objectively top-rated, culturally accurate songs. Return STRICT JSON array schema: [{"title": "Song Title", "artist": "Artist Name", "reason": "why this matches"}]. Output ONLY valid JSON.`;

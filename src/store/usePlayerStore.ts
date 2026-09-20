@@ -94,8 +94,8 @@ interface PlayerState {
   closeAddToPlaylistModal: () => void;
 
   // Discover Weekly
-  discoverWeekly: { tracks: Track[], generatedAt: number } | null;
-  setDiscoverWeekly: (tracks: Track[], generatedAt: number) => void;
+  discoverWeekly: { tracks: Track[], generatedAt: number, vibeTitle?: string, vibeDescription?: string, vibeColor?: string } | null;
+  setDiscoverWeekly: (tracks: Track[], generatedAt: number, vibeTitle?: string, vibeDescription?: string, vibeColor?: string) => void;
 }
 
 export const usePlayerStore = create<PlayerState>()(
@@ -264,7 +264,8 @@ export const usePlayerStore = create<PlayerState>()(
     setApiKeyModalOpen: (open: boolean) => set({ isApiKeyModalOpen: open }),
 
     discoverWeekly: null,
-    setDiscoverWeekly: (tracks: Track[], generatedAt: number) => set({ discoverWeekly: { tracks, generatedAt } }),
+    setDiscoverWeekly: (tracks: Track[], generatedAt: number, vibeTitle?: string, vibeDescription?: string, vibeColor?: string) => 
+      set({ discoverWeekly: { tracks, generatedAt, vibeTitle, vibeDescription, vibeColor } }),
 
     resolveAutoplayBlock: () => {
        const { isAutoplayBlocked } = get();

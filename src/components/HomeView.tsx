@@ -6,7 +6,7 @@ import { usePlayerStore } from '../store/usePlayerStore';
 import { DaylistWidget } from './DaylistWidget';
 import { AIPlaylistModal } from './AIPlaylistModal';
 import type { TabType } from './BottomNav';
-import { generateAIPlaylist } from '../services/geminiService';
+import { generateAIPlaylist, generateAuraAnalysis } from '../services/geminiService';
 
 const getMostRecentMonday = () => {
   const d = new Date();
@@ -43,14 +43,18 @@ const DiscoverWeeklyBanner: React.FC = () => {
         seedSong = randomTrack.title || seedSong;
       }
 
-      const tracks = await generateAIPlaylist(
+      // 1. Start both Aura Analysis and Playlist Generation simultaneously
+      const auraPromise = generateAuraAnalysis(seedArtist, seedSong);
+      const tracksPromise = generateAIPlaylist(
         { artist: seedArtist, song: seedSong },
         "Curate a 30-song 'Discover Weekly' playlist based on this vibe. Make it sound fresh, obscure but catchy, and perfect for the start of the week.",
         (pct, msg) => setProgress({ pct, msg })
       );
 
+      const [aura, tracks] = await Promise.all([auraPromise, tracksPromise]);
+
       if (tracks.length > 0) {
-        setDiscoverWeekly(tracks, Date.now());
+        setDiscoverWeekly(tracks, Date.now(), aura.vibeTitle, aura.vibeDescription, aura.vibeColor);
       }
     } catch (e) {
       console.error(e);
@@ -70,12 +74,23 @@ const DiscoverWeeklyBanner: React.FC = () => {
 
   if (isGenerating) {
     return (
-      <div className="relative overflow-hidden rounded-3xl p-6 bg-gradient-to-br from-indigo-900/40 to-purple-900/40 border border-indigo-500/30 flex flex-col items-center justify-center h-48 shadow-[0_0_40px_rgba(79,70,229,0.2)]">
-        <Loader2 className="w-10 h-10 animate-spin text-indigo-400 mb-4" />
-        <h3 className="text-white font-bold tracking-widest uppercase text-sm mb-2">Curating Discover Weekly...</h3>
-        <p className="text-indigo-300 text-xs font-mono">{progress.msg} ({progress.pct}%)</p>
-        <div className="w-full max-w-xs h-1 bg-white/10 rounded-full mt-4 overflow-hidden">
-          <div className="h-full bg-indigo-500 transition-all duration-300" style={{ width: `${progress.pct}%` }} />
+      <div className="relative overflow-hidden rounded-[2rem] p-8 min-h-[300px] flex flex-col items-center justify-center bg-[#0a0a0a] border border-white/5 shadow-2xl">
+        {/* Animated Aura Orb */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-40 mix-blend-screen">
+          <div className="w-[400px] h-[400px] bg-indigo-500 rounded-full blur-[100px] animate-pulse" />
+          <div className="absolute w-[300px] h-[300px] bg-purple-500 rounded-full blur-[80px] animate-pulse" style={{ animationDelay: '1s' }} />
+          <div className="absolute w-[200px] h-[200px] bg-pink-500 rounded-full blur-[60px] animate-pulse" style={{ animationDelay: '2s' }} />
+        </div>
+        
+        <div className="relative z-10 flex flex-col items-center text-center max-w-md">
+          <div className="w-20 h-20 mb-6 rounded-full border-b-4 border-l-4 border-indigo-500 animate-spin flex items-center justify-center shadow-[0_0_30px_rgba(99,102,241,0.5)]">
+             <Sparkles className="w-8 h-8 text-indigo-400 animate-pulse" />
+          </div>
+          <h3 className="text-2xl font-black text-white tracking-widest uppercase mb-2">Analyzing Your Aura</h3>
+          <p className="text-zinc-400 text-sm font-mono mb-6">{progress.msg} ({progress.pct}%)</p>
+          <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-300" style={{ width: `${progress.pct}%` }} />
+          </div>
         </div>
       </div>
     );
@@ -83,49 +98,78 @@ const DiscoverWeeklyBanner: React.FC = () => {
 
   if (needsRefresh) {
     return (
-      <div className="relative overflow-hidden rounded-3xl p-6 bg-gradient-to-br from-blue-600/20 to-indigo-600/20 border border-blue-500/30 shadow-[0_10px_40px_rgba(59,130,246,0.15)] flex flex-col sm:flex-row items-center gap-6">
-        <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center shadow-[0_0_30px_rgba(59,130,246,0.4)] shrink-0 animate-pulse">
-          <Sparkles className="w-10 h-10 text-white" />
+      <div className="relative overflow-hidden rounded-[2rem] p-8 bg-[#0f0f11] border border-white/5 shadow-2xl flex flex-col md:flex-row items-center gap-8 group">
+        <div className="absolute inset-0 opacity-20 group-hover:opacity-30 transition-opacity duration-1000">
+           <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-600 rounded-full blur-[120px]" />
+           <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-purple-600 rounded-full blur-[120px]" />
         </div>
-        <div className="flex-1 text-center sm:text-left">
-          <h2 className="text-2xl font-black text-white tracking-tighter mb-1">Discover Weekly</h2>
-          <p className="text-zinc-400 text-sm mb-4">It's a new week! Your custom AI-curated 30-song playlist is ready to be generated based on your sonic vibe.</p>
+        
+        <div className="relative z-10 w-32 h-32 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center shadow-[0_0_50px_rgba(59,130,246,0.3)] shrink-0 group-hover:scale-105 transition-transform duration-500">
+          <div className="absolute inset-0 bg-white/20 rounded-full animate-ping" style={{ animationDuration: '3s' }} />
+          <Sparkles className="w-12 h-12 text-white" />
+        </div>
+        
+        <div className="relative z-10 flex-1 text-center md:text-left">
+          <h4 className="text-sm font-bold tracking-[0.3em] uppercase text-blue-400 mb-2">Monday Drop</h4>
+          <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter mb-4">Discover Weekly</h2>
+          <p className="text-zinc-400 text-base mb-6 max-w-lg">Your custom AI-curated sonic aura is ready. 30 fresh tracks based on your recent vibes.</p>
           <button 
             onClick={handleGenerate}
-            className="px-6 py-2.5 rounded-full bg-blue-500 text-white font-bold text-sm hover:bg-blue-400 active:scale-95 transition-all shadow-[0_0_20px_rgba(59,130,246,0.5)]"
+            className="px-8 py-4 rounded-full bg-blue-600 text-white font-black uppercase tracking-wider text-sm hover:bg-blue-500 hover:scale-105 active:scale-95 transition-all shadow-[0_0_30px_rgba(59,130,246,0.5)]"
           >
-            Generate Now
+            Analyze My Aura
           </button>
         </div>
       </div>
     );
   }
 
+  const auraColor = discoverWeekly.vibeColor || '#8B5CF6';
+
   return (
-    <div className="relative overflow-hidden rounded-3xl p-6 bg-gradient-to-br from-indigo-600/20 to-purple-600/20 border border-indigo-500/30 shadow-[0_10px_40px_rgba(79,70,229,0.15)] flex flex-col sm:flex-row items-center gap-6 group">
-      <div className="relative w-32 h-32 rounded-2xl overflow-hidden shadow-[0_0_30px_rgba(79,70,229,0.4)] shrink-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-purple-500 opacity-80" />
+    <div className="relative overflow-hidden rounded-[2rem] p-6 md:p-10 bg-[#0a0a0a] border border-white/10 shadow-2xl flex flex-col md:flex-row items-center gap-8 group min-h-[300px]">
+      {/* Dynamic Background Blob based on Aura Color */}
+      <div className="absolute inset-0 opacity-30 mix-blend-screen pointer-events-none transition-opacity duration-700 group-hover:opacity-50">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] blur-[120px] rounded-full animate-spin-slow" 
+             style={{ background: `radial-gradient(circle, ${auraColor} 0%, transparent 70%)` }} />
+      </div>
+      
+      {/* Dark overlay to keep text readable */}
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] pointer-events-none" />
+
+      <div className="relative z-10 w-40 h-40 md:w-56 md:h-56 rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] shrink-0 group-hover:scale-105 transition-transform duration-700">
+        <div className="absolute inset-0" style={{ backgroundColor: auraColor, opacity: 0.8 }} />
         <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 opacity-50 mix-blend-overlay">
           {discoverWeekly?.tracks.slice(0, 4).map((t, i) => (
             <img key={i} src={t.thumbnail} className="w-full h-full object-cover" alt="" />
           ))}
         </div>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-white font-black text-4xl opacity-50">DW</span>
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center bg-black/20 backdrop-blur-sm">
+          <span className="text-white/90 font-black text-xs uppercase tracking-widest mb-1">Weekly</span>
+          <span className="text-white font-black text-3xl leading-none shadow-black drop-shadow-lg">AURA</span>
         </div>
-        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all cursor-pointer backdrop-blur-sm" onClick={handlePlay}>
-          <Play className="w-12 h-12 text-white fill-current" />
+        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all cursor-pointer backdrop-blur-md" onClick={handlePlay}>
+          <Play className="w-16 h-16 text-white fill-current shadow-2xl drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]" />
         </div>
       </div>
-      <div className="flex-1 text-center sm:text-left">
-        <h2 className="text-sm font-bold tracking-[0.2em] uppercase text-indigo-400 mb-1">Made for you</h2>
-        <h1 className="text-3xl font-black text-white tracking-tighter mb-2">Discover Weekly</h1>
-        <p className="text-zinc-400 text-sm mb-4">30 fresh tracks curated specifically for your unique sonic footprint.</p>
+      
+      <div className="relative z-10 flex-1 text-center md:text-left flex flex-col justify-center">
+        <h2 className="text-xs font-black tracking-[0.3em] uppercase mb-3" style={{ color: auraColor }}>
+          Discover Weekly • {discoverWeekly.tracks.length} Tracks
+        </h2>
+        <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter mb-4 leading-tight">
+          {discoverWeekly.vibeTitle || 'AURA ANALYSIS'}
+        </h1>
+        <p className="text-zinc-300 text-sm md:text-base mb-8 max-w-xl leading-relaxed">
+          {discoverWeekly.vibeDescription || 'Fresh tracks curated specifically for your unique sonic footprint.'}
+        </p>
         <button 
           onClick={handlePlay}
-          className="px-8 py-3 rounded-full bg-indigo-500 text-white font-bold text-sm hover:bg-indigo-400 active:scale-95 transition-all shadow-[0_0_20px_rgba(79,70,229,0.5)] flex items-center gap-2 mx-auto sm:mx-0"
+          className="px-10 py-4 rounded-full text-white font-black uppercase tracking-widest text-sm hover:scale-105 active:scale-95 transition-all flex items-center gap-3 mx-auto md:mx-0 justify-center group/btn shadow-2xl"
+          style={{ backgroundColor: auraColor, boxShadow: `0 10px 40px ${auraColor}60` }}
         >
-          <Play className="w-4 h-4 fill-current" /> Play Now
+          <Play className="w-5 h-5 fill-current" /> 
+          <span>Play My Aura</span>
         </button>
       </div>
     </div>
