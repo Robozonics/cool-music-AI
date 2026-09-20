@@ -136,9 +136,11 @@ export const FullPlayer: React.FC = () => {
             />
             <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden pointer-events-none">
               <div 
-                className={`h-full rounded-full relative ${isPlaying ? 'bg-genz-zigzag' : 'bg-acid-lime'}`}
+                className="h-full rounded-full relative bg-acid-lime overflow-hidden"
                 style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
-              />
+              >
+                {isPlaying && <div className="absolute inset-0 bg-genz-zigzag" />}
+              </div>
             </div>
             {/* Glowing Slider Thumb on Hover */}
             <div

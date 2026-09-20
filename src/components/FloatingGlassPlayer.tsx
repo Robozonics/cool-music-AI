@@ -280,11 +280,11 @@ export const FloatingGlassPlayer: React.FC = () => {
               />
               <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden pointer-events-none">
                 <div
-                  className={`h-full rounded-full relative ${isPlaying ? 'bg-genz-zigzag' : 'bg-gradient-to-r from-purple-500 via-pink-500 to-lime-400'}`}
-                  style={{
-                    width: `${duration ? (currentTime / duration) * 100 : 0}%`,
-                  }}
-                />
+                  className="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-lime-400 rounded-full relative overflow-hidden"
+                  style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
+                >
+                  {isPlaying && <div className="absolute inset-0 bg-genz-zigzag" />}
+                </div>
               </div>
               {/* Glowing Slider Thumb on Hover */}
               <div
