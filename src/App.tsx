@@ -26,7 +26,9 @@ import { SoundFusionLayout } from './features/soundfusion/layout/SoundFusionLayo
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useWakeWord } from './hooks/useWakeWord';
 import { useAICommandProcessor } from './hooks/useAICommandProcessor';
-import { Mic } from 'lucide-react';
+import { Mic, Layers } from 'lucide-react';
+import { useMashupStore } from './store/useMashupStore';
+import { MashupStudioPanel } from './components/MashupStudioPanel';
 
 function App() {
   useAudioAnalyzer();
@@ -41,6 +43,8 @@ function App() {
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [isAiCommandOpen, setAiCommandOpen] = useState(false);
+  const isMashupOpen = useMashupStore(state => state.isOpen);
+  const setMashupOpen = useMashupStore(state => state.setIsOpen);
 
   const { processCommand } = useAICommandProcessor();
   const { isListening, toggleWakeWord } = useWakeWord((command) => {
@@ -138,6 +142,13 @@ function App() {
               <Sparkles className="w-6 h-6" />
             </button>
             <button 
+              onClick={() => setMashupOpen(!isMashupOpen)}
+              className={`p-2 transition rounded-full ${isMashupOpen ? 'text-acid-lime bg-acid-lime/10 shadow-[0_0_15px_rgba(204,255,0,0.4)]' : 'text-gray-400 hover:text-white'}`}
+              title="AI Mashup Studio"
+            >
+              <Layers className="w-6 h-6" />
+            </button>
+            <button 
               onClick={() => setApiKeyModalOpen(true)}
               className="p-2 text-gray-400 hover:text-white transition"
             >
@@ -161,6 +172,9 @@ function App() {
       {/* Global Hidden / Overlay Components */}
       <div className="md:hidden">
          <SyncedLyrics />
+         <div className="fixed inset-y-0 right-0 z-50 shadow-2xl pointer-events-auto">
+            <MashupStudioPanel />
+         </div>
       </div>
       <ApiKeyModal isOpen={isApiKeyModalOpen} onClose={() => setApiKeyModalOpen(false)} />
       <SpeedWheel />

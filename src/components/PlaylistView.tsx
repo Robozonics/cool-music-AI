@@ -1,15 +1,140 @@
 import React from 'react';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { Play, Shuffle, Clock, ChevronLeft, Download, Plus, CheckCircle2, Trash2, GripVertical, Layers } from 'lucide-react';
-import { Reorder } from 'framer-motion';
+import { Reorder, useDragControls } from 'framer-motion';
 import type { TabType } from './BottomNav';
 import { downloadTrack } from '../services/downloadService';
 import { useMashupStore } from '../store/useMashupStore';
+import type { Track } from '../types/music';
 
 interface PlaylistViewProps {
   playlistId: string;
   setActiveTab: (tab: TabType) => void;
 }
+
+const TrackItem = ({ track, playlist, idx, playlistId }: { track: Track, playlist: any, idx: number, playlistId: string }) => {
+  const controls = useDragControls();
+  const playTrack = usePlayerStore(state => state.playTrack);
+  const setQueue = usePlayerStore(state => state.setQueue);
+  const removeTrackFromPlaylist = usePlayerStore(state => state.removeTrackFromPlaylist);
+  const currentTrack = usePlayerStore(state => state.currentTrack);
+  const isPlayingThis = currentTrack?.id === track.id;
+
+  return (
+    <Reorder.Item 
+      value={track}
+      dragListener={false}
+      dragControls={controls}
+      className={`group flex items-center gap-3 md:gap-4 py-2 md:p-3 rounded-none md:rounded-xl transition-all ${
+        isPlayingThis ? 'bg-white/5 md:bg-white/10' : 'hover:bg-white/5 bg-transparent'
+      }`}
+    >
+      <div 
+        className="text-zinc-600 hover:text-white cursor-grab active:cursor-grabbing px-1 touch-none"
+        onPointerDown={(e) => controls.start(e)}
+      >
+        <GripVertical className="w-5 h-5 md:w-4 md:h-4" />
+      </div>
+      
+      <div 
+        className="flex flex-1 items-center gap-3 md:gap-4 min-w-0 cursor-pointer"
+        onClick={() => {
+          setQueue(playlist.tracks);
+          playTrack(track);
+        }}
+      >
+        <span className={`hidden md:block text-xs font-bold w-4 text-right ${isPlayingThis ? 'text-acid-lime' : 'text-zinc-500 group-hover:text-white'}`}>
+          {isPlayingThis ? <Play className="w-3 h-3 fill-acid-lime inline-block" /> : idx + 1}
+        </span>
+        
+        <div 
+          className="w-12 h-12 md:w-14 md:h-14 rounded-sm md:rounded-md overflow-hidden bg-white/10 shrink-0 relative"
+        >
+          <img src={track.thumbnail} alt={track.title} className="w-full h-full object-cover pointer-events-none" />
+          {isPlayingThis ? (
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center md:hidden pointer-events-none">
+               <Play className="w-5 h-5 fill-acid-lime text-acid-lime" />
+            </div>
+          ) : (
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+              <Play className="w-5 h-5 text-white fill-white" />
+            </div>
+          )}
+        </div>
+        
+        <div className="flex-1 min-w-0 pointer-events-none">
+          <p className={`text-base font-medium truncate ${isPlayingThis ? 'text-acid-lime' : 'text-white'}`}>
+            {track.title}
+          </p>
+          <p className="text-sm text-zinc-400 truncate">{track.artist}</p>
+        </div>
+        
+        {track.duration && (
+          <div className="hidden sm:flex items-center gap-1.5 text-xs text-zinc-500 font-mono shrink-0 mr-4 pointer-events-none">
+            <Clock className="w-3 h-3" />
+            {Math.floor(track.duration / 60)}:{(track.duration % 60).toString().padStart(2, '0')}
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-center gap-0 md:gap-2 shrink-0 relative z-10">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            usePlayerStore.getState().openAddToPlaylistModal(track);
+          }}
+          className="p-3 md:p-2 rounded-full hover:bg-white/10 transition text-zinc-400 hover:text-white"
+          title="Add to Playlist"
+        >
+          <Plus className="w-5 h-5 md:w-4 md:h-4" />
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            useMashupStore.getState().addTrack(track);
+          }}
+          className="p-3 md:p-2 rounded-full hover:bg-white/10 transition text-zinc-400 hover:text-electric-fuchsia"
+          title="Add to AI Mashup Studio"
+        >
+          <Layers className="w-5 h-5 md:w-4 md:h-4" />
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            removeTrackFromPlaylist(playlistId, track.id);
+          }}
+          className="p-3 md:p-2 rounded-full hover:bg-red-500/20 transition text-zinc-500 hover:text-red-400"
+          title="Remove from Playlist"
+        >
+          <Trash2 className="w-5 h-5 md:w-4 md:h-4" />
+        </button>
+        {track.source === 'saavn' && (
+          <button 
+            onClick={async (e) => {
+              e.stopPropagation();
+              if (!track.isOffline) {
+                 const success = await downloadTrack(track);
+                 if (success) {
+                   usePlayerStore.setState(state => ({
+                      savedPlaylists: state.savedPlaylists.map(p => 
+                        p.id === playlist.id 
+                          ? { ...p, tracks: p.tracks.map(t => t.id === track.id ? { ...t, isOffline: true } : t) }
+                          : p
+                      )
+                   }));
+                 }
+              }
+            }}
+            className={`p-3 md:p-2 rounded-full transition ${track.isOffline ? 'text-acid-lime hover:bg-acid-lime/10' : 'text-zinc-400 hover:text-white hover:bg-white/10'}`}
+            title="Download Offline"
+          >
+            {track.isOffline ? <CheckCircle2 className="w-5 h-5 md:w-4 md:h-4" /> : <Download className="w-5 h-5 md:w-4 md:h-4" />}
+          </button>
+        )}
+      </div>
+    </Reorder.Item>
+  );
+};
 
 export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiveTab }) => {
   const savedPlaylists = usePlayerStore(state => state.savedPlaylists);
@@ -172,116 +297,9 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
           </div>
         ) : (
         <Reorder.Group axis="y" values={playlist.tracks} onReorder={(newTracks) => reorderPlaylist(playlist.id, newTracks)} className="space-y-1 md:space-y-2">
-          {playlist.tracks.map((track, idx) => {
-            const isPlayingThis = currentTrack?.id === track.id;
-            
-            return (
-              <Reorder.Item 
-                key={`${track.id}-${idx}`}
-                value={track}
-                onTap={() => {
-                  setQueue(playlist.tracks);
-                  playTrack(track);
-                }}
-                className={`group flex items-center gap-3 md:gap-4 py-2 md:p-3 rounded-none md:rounded-xl transition-all cursor-pointer ${
-                  isPlayingThis ? 'bg-white/5 md:bg-white/10' : 'hover:bg-white/5 bg-transparent'
-                }`}
-              >
-                <div className="text-zinc-600 hover:text-white cursor-grab active:cursor-grabbing px-1 hidden md:block">
-                  <GripVertical className="w-4 h-4" />
-                </div>
-                
-                <span className={`hidden md:block text-xs font-bold w-4 text-right ${isPlayingThis ? 'text-acid-lime' : 'text-zinc-500 group-hover:text-white'}`}>
-                  {isPlayingThis ? <Play className="w-3 h-3 fill-acid-lime inline-block" /> : idx + 1}
-                </span>
-                
-                <div 
-                  className="w-12 h-12 md:w-14 md:h-14 rounded-sm md:rounded-md overflow-hidden bg-white/10 shrink-0 relative"
-                >
-                  <img src={track.thumbnail} alt={track.title} className="w-full h-full object-cover pointer-events-none" />
-                  {isPlayingThis ? (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center md:hidden">
-                       <Play className="w-5 h-5 fill-acid-lime text-acid-lime" />
-                    </div>
-                  ) : (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Play className="w-5 h-5 text-white fill-white" />
-                    </div>
-                  )}
-                </div>
-                
-                <div className="flex-1 min-w-0 pointer-events-none">
-                  <p className={`text-base font-medium truncate ${isPlayingThis ? 'text-acid-lime' : 'text-white'}`}>
-                    {track.title}
-                  </p>
-                  <p className="text-sm text-zinc-400 truncate">{track.artist}</p>
-                </div>
-                
-                {track.duration && (
-                  <div className="hidden sm:flex items-center gap-1.5 text-xs text-zinc-500 font-mono shrink-0 mr-4 pointer-events-none">
-                    <Clock className="w-3 h-3" />
-                    {Math.floor(track.duration / 60)}:{(track.duration % 60).toString().padStart(2, '0')}
-                  </div>
-                )}
-
-                <div className="flex items-center gap-0 md:gap-2 shrink-0 relative z-10">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      usePlayerStore.getState().openAddToPlaylistModal(track);
-                    }}
-                    className="p-3 md:p-2 rounded-full hover:bg-white/10 transition text-zinc-400 hover:text-white"
-                    title="Add to Playlist"
-                  >
-                    <Plus className="w-5 h-5 md:w-4 md:h-4" />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      useMashupStore.getState().addTrack(track);
-                    }}
-                    className="p-3 md:p-2 rounded-full hover:bg-white/10 transition text-zinc-400 hover:text-electric-fuchsia"
-                    title="Add to AI Mashup Studio"
-                  >
-                    <Layers className="w-5 h-5 md:w-4 md:h-4" />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeTrackFromPlaylist(playlistId, track.id);
-                    }}
-                    className="p-3 md:p-2 rounded-full hover:bg-red-500/20 transition text-zinc-500 hover:text-red-400"
-                    title="Remove from Playlist"
-                  >
-                    <Trash2 className="w-5 h-5 md:w-4 md:h-4" />
-                  </button>
-                  {track.source === 'saavn' && (
-                    <button 
-                      onClick={async (e) => {
-                        e.stopPropagation();
-                        if (!track.isOffline) {
-                           const success = await downloadTrack(track);
-                           if (success) {
-                             usePlayerStore.setState(state => ({
-                                savedPlaylists: state.savedPlaylists.map(p => 
-                                  p.id === playlist.id 
-                                    ? { ...p, tracks: p.tracks.map(t => t.id === track.id ? { ...t, isOffline: true } : t) }
-                                    : p
-                                )
-                             }));
-                           }
-                        }
-                      }}
-                      className={`p-3 md:p-2 rounded-full transition ${track.isOffline ? 'text-acid-lime hover:bg-acid-lime/10' : 'text-zinc-400 hover:text-white hover:bg-white/10'}`}
-                      title="Download Offline"
-                    >
-                      {track.isOffline ? <CheckCircle2 className="w-5 h-5 md:w-4 md:h-4" /> : <Download className="w-5 h-5 md:w-4 md:h-4" />}
-                    </button>
-                  )}
-                </div>
-              </Reorder.Item>
-            );
-          })}
+          {playlist.tracks.map((track, idx) => (
+            <TrackItem key={track.id} track={track} playlist={playlist} idx={idx} playlistId={playlistId} />
+          ))}
         </Reorder.Group>
         )}
       </div>
