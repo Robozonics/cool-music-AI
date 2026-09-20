@@ -1,4 +1,5 @@
-import { X, Play, Trash2 } from 'lucide-react';
+import { X, Play, Trash2, GripVertical } from 'lucide-react';
+import { Reorder } from 'framer-motion';
 import { usePlayerStore } from '../store/usePlayerStore';
 
 export const QueuePanel = () => {
@@ -7,6 +8,7 @@ export const QueuePanel = () => {
   const setQueueOpen = usePlayerStore(state => state.setQueueOpen);
   const playTrack = usePlayerStore(state => state.playTrack);
   const removeFromQueue = usePlayerStore(state => state.removeFromQueue);
+  const reorderQueue = usePlayerStore(state => state.reorderQueue);
 
   if (!isQueueOpen) return null;
 
@@ -25,29 +27,38 @@ export const QueuePanel = () => {
             <p>Queue is empty</p>
           </div>
         ) : (
-          queue.map((track, idx) => (
-            <div key={`${track.id}-${idx}`} className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 group transition-colors">
-              <div className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
-                <img src={track.thumbnail} alt={track.title} className="w-full h-full object-cover" />
-                <button 
-                  onClick={() => playTrack(track)}
-                  className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <Play className="w-6 h-6 text-white fill-current" />
-                </button>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-white truncate">{track.title}</p>
-                <p className="text-xs text-gray-400 truncate">{track.artist}</p>
-              </div>
-              <button 
-                onClick={() => removeFromQueue(idx)}
-                className="p-2 text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+          <Reorder.Group axis="y" values={queue} onReorder={reorderQueue} className="space-y-2">
+            {queue.map((track, idx) => (
+              <Reorder.Item 
+                key={`${track.id}-${idx}`} 
+                value={track}
+                className="flex items-center gap-3 p-2 rounded-xl bg-white/5 hover:bg-white/10 group transition-colors relative cursor-default"
               >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          ))
+                <div className="text-gray-500 hover:text-white cursor-grab active:cursor-grabbing px-1">
+                  <GripVertical className="w-4 h-4" />
+                </div>
+                <div className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
+                  <img src={track.thumbnail} alt={track.title} className="w-full h-full object-cover pointer-events-none" />
+                  <button 
+                    onClick={() => playTrack(track)}
+                    className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Play className="w-6 h-6 text-white fill-current" />
+                  </button>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-white truncate pointer-events-none">{track.title}</p>
+                  <p className="text-xs text-gray-400 truncate pointer-events-none">{track.artist}</p>
+                </div>
+                <button 
+                  onClick={() => removeFromQueue(idx)}
+                  className="p-2 text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </Reorder.Item>
+            ))}
+          </Reorder.Group>
         )}
       </div>
     </div>

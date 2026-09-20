@@ -1,6 +1,7 @@
 import React from 'react';
 import { usePlayerStore } from '../store/usePlayerStore';
-import { Play, Shuffle, Clock, ChevronLeft, Download, Plus, CheckCircle2, Trash2 } from 'lucide-react';
+import { Play, Shuffle, Clock, ChevronLeft, Download, Plus, CheckCircle2, Trash2, GripVertical } from 'lucide-react';
+import { Reorder } from 'framer-motion';
 import type { TabType } from './BottomNav';
 import { downloadTrack } from '../services/downloadService';
 
@@ -15,6 +16,7 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
   const setQueue = usePlayerStore(state => state.setQueue);
   const currentTrack = usePlayerStore(state => state.currentTrack);
   const removeTrackFromPlaylist = usePlayerStore(state => state.removeTrackFromPlaylist);
+  const reorderPlaylist = usePlayerStore(state => state.reorderPlaylist);
   const deletePlaylist = usePlayerStore(state => state.deletePlaylist);
   const [isDownloading, setIsDownloading] = React.useState(false);
   const [downloadProgress, setDownloadProgress] = React.useState(0);
@@ -168,35 +170,46 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
             <p className="text-sm">Search for songs and add them using the + button.</p>
           </div>
         ) : (
-        <div className="space-y-1 md:space-y-2">
+        <Reorder.Group axis="y" values={playlist.tracks} onReorder={(newTracks) => reorderPlaylist(playlist.id, newTracks)} className="space-y-1 md:space-y-2">
           {playlist.tracks.map((track, idx) => {
             const isPlayingThis = currentTrack?.id === track.id;
             
             return (
-              <div 
+              <Reorder.Item 
                 key={`${track.id}-${idx}`}
-                onClick={() => {
-                  setQueue(playlist.tracks);
-                  playTrack(track);
-                }}
-                className={`group flex items-center gap-3 md:gap-4 py-2 md:p-3 rounded-none md:rounded-xl transition-all cursor-pointer ${
-                  isPlayingThis ? 'bg-white/5 md:bg-white/10' : 'hover:bg-white/5'
+                value={track}
+                className={`group flex items-center gap-3 md:gap-4 py-2 md:p-3 rounded-none md:rounded-xl transition-all cursor-default ${
+                  isPlayingThis ? 'bg-white/5 md:bg-white/10' : 'hover:bg-white/5 bg-transparent'
                 }`}
               >
-                <span className={`hidden md:block text-xs font-bold w-6 text-right ${isPlayingThis ? 'text-acid-lime' : 'text-zinc-500 group-hover:text-white'}`}>
+                <div className="text-zinc-600 hover:text-white cursor-grab active:cursor-grabbing px-1 hidden md:block">
+                  <GripVertical className="w-4 h-4" />
+                </div>
+                
+                <span className={`hidden md:block text-xs font-bold w-4 text-right ${isPlayingThis ? 'text-acid-lime' : 'text-zinc-500 group-hover:text-white'}`}>
                   {isPlayingThis ? <Play className="w-3 h-3 fill-acid-lime inline-block" /> : idx + 1}
                 </span>
                 
-                <div className="w-12 h-12 md:w-14 md:h-14 rounded-sm md:rounded-md overflow-hidden bg-white/10 shrink-0 relative">
-                  <img src={track.thumbnail} alt={track.title} className="w-full h-full object-cover" />
-                  {isPlayingThis && (
+                <div 
+                  className="w-12 h-12 md:w-14 md:h-14 rounded-sm md:rounded-md overflow-hidden bg-white/10 shrink-0 relative cursor-pointer"
+                  onClick={() => {
+                    setQueue(playlist.tracks);
+                    playTrack(track);
+                  }}
+                >
+                  <img src={track.thumbnail} alt={track.title} className="w-full h-full object-cover pointer-events-none" />
+                  {isPlayingThis ? (
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center md:hidden">
                        <Play className="w-5 h-5 fill-acid-lime text-acid-lime" />
+                    </div>
+                  ) : (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Play className="w-5 h-5 text-white fill-white" />
                     </div>
                   )}
                 </div>
                 
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 pointer-events-none">
                   <p className={`text-base font-medium truncate ${isPlayingThis ? 'text-acid-lime' : 'text-white'}`}>
                     {track.title}
                   </p>
@@ -204,13 +217,13 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
                 </div>
                 
                 {track.duration && (
-                  <div className="hidden sm:flex items-center gap-1.5 text-xs text-zinc-500 font-mono shrink-0 mr-4">
+                  <div className="hidden sm:flex items-center gap-1.5 text-xs text-zinc-500 font-mono shrink-0 mr-4 pointer-events-none">
                     <Clock className="w-3 h-3" />
                     {Math.floor(track.duration / 60)}:{(track.duration % 60).toString().padStart(2, '0')}
                   </div>
                 )}
 
-                <div className="flex items-center gap-0 md:gap-2 shrink-0">
+                <div className="flex items-center gap-0 md:gap-2 shrink-0 relative z-10">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -255,10 +268,10 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
                     </button>
                   )}
                 </div>
-              </div>
+              </Reorder.Item>
             );
           })}
-        </div>
+        </Reorder.Group>
         )}
       </div>
     </div>

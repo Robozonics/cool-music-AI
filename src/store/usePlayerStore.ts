@@ -59,6 +59,7 @@ interface PlayerState {
   prevTrack: () => void;
   handleTrackEnd: () => void; // single entry-point that respects repeatMode
   setQueue: (tracks: Track[]) => void;
+  reorderQueue: (tracks: Track[]) => void;
   setLyricsOpen: (open: boolean) => void;
   setShareSnippetOpen: (open: boolean) => void;
   setConnectModalOpen: (open: boolean) => void;
@@ -83,6 +84,7 @@ interface PlayerState {
   savePlaylist: (name: string, tracks: Track[]) => string;
   addTrackToPlaylist: (playlistId: string, track: Track) => void;
   removeTrackFromPlaylist: (playlistId: string, trackId: string) => void;
+  reorderPlaylist: (playlistId: string, newTracks: Track[]) => void;
   deletePlaylist: (id: string) => void;
 
   // Add to Playlist Modal
@@ -403,6 +405,7 @@ export const usePlayerStore = create<PlayerState>()(
     },
 
     setQueue: (tracks: Track[]) => set({ queue: tracks }),
+    reorderQueue: (tracks: Track[]) => set({ queue: tracks }),
     setLyricsOpen: (open: boolean) => set({ isLyricsOpen: open }),
     setShareSnippetOpen: (open: boolean) => set({ isShareSnippetOpen: open }),
     setConnectModalOpen: (open: boolean) => set({ isConnectModalOpen: open }),
@@ -463,6 +466,14 @@ export const usePlayerStore = create<PlayerState>()(
       savedPlaylists: state.savedPlaylists.map(p =>
         p.id === playlistId
           ? { ...p, tracks: p.tracks.filter(t => t.id !== trackId) }
+          : p
+      )
+    })),
+
+    reorderPlaylist: (playlistId: string, newTracks: Track[]) => set(state => ({
+      savedPlaylists: state.savedPlaylists.map(p =>
+        p.id === playlistId
+          ? { ...p, tracks: newTracks }
           : p
       )
     })),
