@@ -14,7 +14,7 @@ const getKeys = () => [
   ...reversedKeys.map(k => k.split('').reverse().join(''))
 ].filter(Boolean) as string[];
 
-const REVERSED_GROQ_API_KEY = 'KlapevTwTqnaVhYCv2RLVFKFY3bydGWx1EQDpE7E1UcC27xkjez_ksg';
+const REVERSED_GROQ_API_KEY = 'KlapevwTKqnaVhYCv2RLVFDKYF3bydGWx1EQDpE7E1UcCJ27xkjz_ksg';
 const GROQ_MODEL = 'qwen/qwen3.8-27b';
 
 const callGroqFallback = async (promptText: string) => {
