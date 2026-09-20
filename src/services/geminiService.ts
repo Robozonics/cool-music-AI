@@ -267,7 +267,7 @@ No markdown, no commentary, no extra keys, no numbering. Pure JSON array only.`;
 };
 
 // ── NEW: AI Command Parser ──────────────────────────────────────────────────
-export const parseAICommand = async (command: string): Promise<{ action: 'play' | 'add_to_playlist' | 'create_playlist' | 'create_empty_playlist' | 'mood' | 'share' | 'unknown', query: string }> => {
+export const parseAICommand = async (command: string): Promise<{ action: 'play' | 'add_to_playlist' | 'create_playlist' | 'create_empty_playlist' | 'mood' | 'share' | 'smart_mix' | 'unknown', query: string }> => {
   const promptText = `You are an AI assistant in a music app. The user just gave the command: "${command}". 
 Parse this command into a JSON object with exactly two keys:
 1. "action": one of "play", "add_to_playlist", "create_playlist", "create_empty_playlist", "mood", "share"
@@ -277,7 +277,8 @@ Parse this command into a JSON object with exactly two keys:
    - use "share" if they ask to share the music
    - use "play" if they ask to play a specific song or artist
    - use "add_to_playlist" if they ask to add a specific song to a playlist
-2. "query": the name of the song, artist, mood, seed, or playlist name required to perform the action (e.g. "blinding lights", "relaxing beats", "My Summer Mix"). For share, it can be empty.
+   - use "smart_mix" if they ask to enable or turn on crossfade, smart mix, DJ mix, or professional transitions between tracks
+2. "query": the name of the song, artist, mood, seed, or playlist name required to perform the action (e.g. "blinding lights", "relaxing beats", "My Summer Mix"). For share or smart_mix, it can be empty.
 
 If you cannot understand the command, return [{"action": "unknown", "query": ""}].
 Output ONLY valid JSON ARRAY containing ONE object. Example: [{"action": "play", "query": "starboy"}]. No markdown, no extra text.`;

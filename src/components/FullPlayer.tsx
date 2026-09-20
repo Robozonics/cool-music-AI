@@ -150,7 +150,7 @@ export const FullPlayer: React.FC = () => {
             <button
               onClick={toggleCrossfade}
               className={`p-2 sm:p-3 rounded-full transition-colors ${isCrossfadeEnabled ? 'text-lime-400 shadow-[0_0_15px_rgba(163,230,53,0.3)]' : 'text-gray-400 hover:text-[#ff00ff]'}`}
-              title="Crossfade (Blend)"
+              title={isCrossfadeEnabled ? 'Smart Mix Transitions: ON (3s)' : 'Smart Mix Transitions: OFF'}
             >
               <Blend className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>

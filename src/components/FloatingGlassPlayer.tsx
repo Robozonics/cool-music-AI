@@ -369,7 +369,7 @@ export const FloatingGlassPlayer: React.FC = () => {
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={toggleCrossfade}
-            title={isCrossfadeEnabled ? 'Crossfade ON (3s)' : 'Crossfade OFF'}
+            title={isCrossfadeEnabled ? 'Smart Mix Transitions: ON (3s)' : 'Smart Mix Transitions: OFF'}
             className={`hidden lg:block p-1.5 lg:p-2 rounded-xl transition-all shrink-0 ${
               isCrossfadeEnabled
                 ? 'bg-lime-400/20 text-lime-400 border border-lime-400/40 shadow-[0_0_10px_rgba(163,230,53,0.2)]'

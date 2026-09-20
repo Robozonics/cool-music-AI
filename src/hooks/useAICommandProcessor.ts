@@ -102,6 +102,13 @@ export const useAICommandProcessor = () => {
           usePlayerStore.getState().savePlaylist(playlistName, []);
           break;
         }
+        case 'smart_mix': {
+          const state = usePlayerStore.getState();
+          if (!state.isCrossfadeEnabled) {
+            state.toggleCrossfade();
+          }
+          break;
+        }
         default:
           if (openAICommandBox) {
             // If unknown and wake word triggered, open the box to let the user see it
