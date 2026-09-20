@@ -82,10 +82,10 @@ export const FullPlayer: React.FC = () => {
             </div>
           </div>
           
-          <div className="w-full flex items-center justify-between gap-2 overflow-x-auto no-scrollbar py-2">
+          <div className="w-full flex items-center justify-around gap-2 py-4 border-b border-white/5">
             <button
               onClick={() => usePlayerStore.getState().openAddToPlaylistModal(currentTrack)}
-              className="p-3 shrink-0 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all hover:text-acid-lime"
+              className="p-3 rounded-full text-gray-400 hover:text-white transition-colors"
               title="Add to Playlist"
             >
               <Plus className="w-6 h-6" />
@@ -99,7 +99,8 @@ export const FullPlayer: React.FC = () => {
                     usePlayerStore.setState({ currentTrack: { ...currentTrack, isOffline: true } });
                   }
                 }}
-                className="p-3 shrink-0 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all hover:text-cyber-cyan"
+                className="p-3 rounded-full text-gray-400 hover:text-cyber-cyan transition-colors"
+                title="Download Offline"
               >
                 <Download className="w-6 h-6" />
               </button>
@@ -107,14 +108,14 @@ export const FullPlayer: React.FC = () => {
             
             <button
               onClick={() => setSpeedWheelOpen(true)}
-              className="flex items-center shrink-0 justify-center px-5 py-3 rounded-full font-bold text-sm bg-white/10 text-white hover:bg-white/20 transition-all"
+              className="p-3 flex items-center justify-center rounded-full font-bold text-sm text-gray-400 hover:text-white transition-colors"
             >
               {playbackRate}x
             </button>
             
             <button 
               onClick={() => setLyricsOpen(!isLyricsOpen)}
-              className={`p-3 shrink-0 rounded-full transition-all ${isLyricsOpen ? 'bg-acid-lime text-black shadow-[0_0_20px_rgba(204,255,0,0.6)]' : 'bg-white/10 text-white hover:bg-white/20'}`}
+              className={`p-3 rounded-full transition-colors ${isLyricsOpen ? 'text-acid-lime shadow-[0_0_15px_rgba(204,255,0,0.3)]' : 'text-gray-400 hover:text-white'}`}
               title="Lyrics"
             >
               <Mic2 className="w-6 h-6" />

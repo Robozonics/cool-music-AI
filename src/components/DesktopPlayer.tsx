@@ -30,39 +30,41 @@ export const DesktopPlayer: React.FC = () => {
   };
 
   return (
-    <div className="hidden md:flex fixed bottom-0 left-0 right-0 h-20 lg:h-24 bg-[#0a0a0c] border-t border-white/5 z-40 px-3 lg:px-6 items-center justify-between">
+    <div className="hidden md:grid fixed bottom-0 left-0 right-0 h-20 lg:h-24 bg-[#0a0a0c] border-t border-white/5 z-40 px-4 lg:px-6 grid-cols-[1fr_1.5fr_1fr] lg:grid-cols-3 items-center gap-4">
       {/* Left: Track Info */}
-      <div className="flex items-center w-[30%] lg:w-1/3 min-w-0">
-        <img src={currentTrack.thumbnail} alt={currentTrack.title} className="w-12 h-12 lg:w-14 lg:h-14 rounded-lg object-cover mr-3 lg:mr-4 shrink-0" />
-        <div className="min-w-0 pr-2 lg:pr-4 flex-1">
+      <div className="flex items-center min-w-0 overflow-hidden pr-2">
+        <img src={currentTrack.thumbnail} alt={currentTrack.title} className="w-12 h-12 lg:w-14 lg:h-14 rounded-lg object-cover mr-3 shrink-0" />
+        <div className="min-w-0 pr-2 flex-1">
           <h4 className="text-white font-bold truncate hover:underline cursor-pointer text-sm lg:text-base">{currentTrack.title}</h4>
           <p className="text-gray-400 text-xs lg:text-sm truncate">{currentTrack.artist}</p>
         </div>
-        <button
-          onClick={() => usePlayerStore.getState().openAddToPlaylistModal(currentTrack)}
-          className="p-1 lg:p-2 text-gray-400 hover:text-acid-lime transition shrink-0"
-          title="Add to Playlist"
-        >
-          <Plus className="w-4 h-4 lg:w-5 lg:h-5" />
-        </button>
-        {currentTrack.source === 'saavn' && !currentTrack.isOffline && (
-          <button 
-            onClick={async () => {
-              const success = await (await import('../services/downloadService')).downloadTrack(currentTrack);
-              if (success) {
-                usePlayerStore.setState({ currentTrack: { ...currentTrack, isOffline: true } });
-              }
-            }}
-            className="p-1 lg:p-2 text-gray-400 hover:text-cyber-cyan transition shrink-0"
-            title="Download Offline"
+        <div className="flex items-center shrink-0">
+          <button
+            onClick={() => usePlayerStore.getState().openAddToPlaylistModal(currentTrack)}
+            className="p-1 lg:p-2 text-gray-400 hover:text-acid-lime transition"
+            title="Add to Playlist"
           >
-            <Download className="w-4 h-4 lg:w-5 lg:h-5" />
+            <Plus className="w-4 h-4 lg:w-5 lg:h-5" />
           </button>
-        )}
+          {currentTrack.source === 'saavn' && !currentTrack.isOffline && (
+            <button 
+              onClick={async () => {
+                const success = await (await import('../services/downloadService')).downloadTrack(currentTrack);
+                if (success) {
+                  usePlayerStore.setState({ currentTrack: { ...currentTrack, isOffline: true } });
+                }
+              }}
+              className="p-1 lg:p-2 text-gray-400 hover:text-cyber-cyan transition"
+              title="Download Offline"
+            >
+              <Download className="w-4 h-4 lg:w-5 lg:h-5" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Center: Controls & Scrubber */}
-      <div className="flex flex-col items-center w-[40%] lg:w-1/3 max-w-[600px] px-2 lg:px-4">
+      <div className="flex flex-col items-center w-full max-w-[600px] justify-self-center">
         <div className="flex items-center space-x-4 lg:space-x-6 mb-1 lg:mb-2">
           <button onClick={prevTrack} className="text-gray-400 hover:text-white transition">
             <SkipBack className="w-4 h-4 lg:w-5 lg:h-5 fill-current" />
@@ -78,7 +80,7 @@ export const DesktopPlayer: React.FC = () => {
           </button>
         </div>
         <div className="flex items-center w-full space-x-2 lg:space-x-3 text-[10px] lg:text-xs text-gray-400 font-medium">
-          <span className="shrink-0">{formatTime(currentTime)}</span>
+          <span className="shrink-0 min-w-[32px] text-right">{formatTime(currentTime)}</span>
           <input 
             type="range"
             min="0"
@@ -87,12 +89,12 @@ export const DesktopPlayer: React.FC = () => {
             onChange={(e) => seek(parseFloat(e.target.value))}
             className="w-full h-1.5 rounded-full appearance-none bg-white/10 cursor-pointer accent-white hover:accent-acid-lime min-w-0"
           />
-          <span className="shrink-0">{formatTime(duration)}</span>
+          <span className="shrink-0 min-w-[32px]">{formatTime(duration)}</span>
         </div>
       </div>
 
       {/* Right: Extra Controls & Volume */}
-      <div className="flex items-center justify-end w-[30%] lg:w-1/3 space-x-2 lg:space-x-4">
+      <div className="flex items-center justify-end space-x-2 lg:space-x-4 min-w-0">
         <button 
           onClick={() => setLyricsOpen(!isLyricsOpen)}
           className={`hidden lg:flex items-center space-x-2 px-4 py-1.5 rounded-full font-bold uppercase tracking-widest text-xs transition-all duration-300 shrink-0 ${isLyricsOpen ? 'bg-acid-lime text-obsidian shadow-[0_0_15px_rgba(204,255,0,0.5)]' : 'bg-white/10 text-white hover:bg-white/20'}`}
