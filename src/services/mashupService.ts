@@ -46,7 +46,7 @@ export const generateAiMashup = async (tracks: Track[], anchorTrackId: string): 
     duration: anchorTrack.duration || 180,
     // Provide a real public stream URL returned from the backend (mocking with the anchor's audio for now)
     streamUrl: anchorTrack.streamUrl,
-    source: 'local',
+    source: 'saavn',
     sourceBadge: 'AI Generated',
   };
   

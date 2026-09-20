@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { motion, Reorder, AnimatePresence } from 'framer-motion';
-import { X, Play, Loader2, Music2, Cpu, Waves, Sparkles, Disc, Trash2, Crosshair } from 'lucide-react';
-import { useMashupStore, MashupStatus } from '../../store/useMashupStore';
-import { usePlayerStore } from '../../store/usePlayerStore';
-import { generateAiMashup } from '../../services/mashupService';
-import type { Track } from '../../types/music';
+import { Reorder, AnimatePresence } from 'framer-motion';
+import { X, Loader2, Cpu, Waves, Sparkles, Disc, Trash2, Crosshair } from 'lucide-react';
+import { useMashupStore } from '../store/useMashupStore';
+import { usePlayerStore } from '../store/usePlayerStore';
+import { generateAiMashup } from '../services/mashupService';
+import type { Track } from '../types/music';
 
 export const MashupStudioPanel: React.FC = () => {
   const { 
@@ -125,8 +125,8 @@ export const MashupStudioPanel: React.FC = () => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, height: 0 }}
                   onDragEnd={() => {
-                    const newIndex = localTracks.findIndex(t => t.id === track.id);
-                    const oldIndex = selectedTracks.findIndex(t => t.id === track.id);
+                    const newIndex = localTracks.findIndex((t: Track) => t.id === track.id);
+                    const oldIndex = selectedTracks.findIndex((t: Track) => t.id === track.id);
                     if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
                        reorderTracks(oldIndex, newIndex);
                     }
