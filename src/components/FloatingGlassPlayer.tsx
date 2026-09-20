@@ -127,14 +127,14 @@ export const FloatingGlassPlayer: React.FC = () => {
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: 'spring', damping: 20, stiffness: 100 }}
-        className="relative flex items-center justify-between h-22 px-6 rounded-2xl bg-black/60 backdrop-blur-2xl border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.8)] overflow-hidden py-4"
+        className="relative grid grid-cols-3 lg:grid-cols-[1fr_1.5fr_1fr] items-center h-22 px-4 lg:px-6 rounded-2xl bg-black/60 backdrop-blur-2xl border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.8)] py-4 gap-2 lg:gap-4"
       >
         {/* Glowing Ambient Mesh Overlay inside Player Bar */}
         <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 via-pink-500/10 to-cyan-500/10 opacity-50 blur-xl pointer-events-none" />
 
         {/* LEFT SECTION: Track Details & Album Art */}
-        <div className="flex items-center space-x-4 min-w-[240px] z-10 w-1/3">
-          <div className="relative group overflow-hidden rounded-xl h-16 w-16 shrink-0 shadow-2xl">
+        <div className="flex items-center space-x-3 min-w-0 z-10 pr-2">
+          <div className="relative group overflow-hidden rounded-xl h-14 w-14 lg:h-16 lg:w-16 shrink-0 shadow-2xl">
             <div className="w-full h-full" style={{ transform: `scale(calc(1 + var(--vibe-intensity, 0) * 0.15))`, transition: 'transform 0.1s ease-out' }}>
               <motion.div
                 animate={{ 
@@ -165,13 +165,13 @@ export const FloatingGlassPlayer: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex flex-col min-w-0 pr-2">
+          <div className="flex flex-col min-w-0 pr-2 flex-1">
             <div className="flex items-center space-x-2">
-              <span className="font-bold text-white text-sm tracking-wide truncate max-w-[160px]">
+              <span className="font-bold text-white text-xs lg:text-sm tracking-wide truncate">
                 {currentTrack.title}
               </span>
             </div>
-            <span className="text-xs text-zinc-400 truncate max-w-[160px] hover:underline cursor-pointer">
+            <span className="text-[10px] lg:text-xs text-zinc-400 truncate hover:underline cursor-pointer">
               {currentTrack.artist}
             </span>
           </div>
@@ -179,10 +179,10 @@ export const FloatingGlassPlayer: React.FC = () => {
           <motion.button
             whileTap={{ scale: 0.8 }}
             onClick={() => toggleLikeTrack(currentTrack.id)}
-            className="text-zinc-400 hover:text-pink-500 transition-colors ml-2 shrink-0"
+            className="text-zinc-400 hover:text-pink-500 transition-colors shrink-0 mr-2"
           >
             <Heart
-              className={`w-5 h-5 ${
+              className={`w-4 h-4 lg:w-5 lg:h-5 ${
                 likedTracks.includes(currentTrack.id) ? 'text-pink-500 fill-pink-500 drop-shadow-[0_0_8px_rgba(236,72,153,0.8)]' : ''
               }`}
             />
@@ -190,13 +190,13 @@ export const FloatingGlassPlayer: React.FC = () => {
         </div>
 
         {/* CENTER SECTION: Playback Controls & Interactive Seekbar */}
-        <div className="flex flex-col items-center max-w-md w-full mx-4 z-10 w-1/3">
+        <div className="flex flex-col items-center w-full max-w-[600px] justify-self-center z-10">
           {/* Controls */}
-          <div className="flex items-center space-x-6 mb-2">
+          <div className="flex items-center space-x-4 lg:space-x-6 mb-2">
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => setIsShuffle(!isShuffle)}
-              className={`relative transition-colors ${
+              className={`relative transition-colors hidden lg:block ${
                 isShuffle ? 'text-lime-400' : 'text-zinc-400 hover:text-white'
               }`}
             >
@@ -214,22 +214,21 @@ export const FloatingGlassPlayer: React.FC = () => {
               whileTap={{ scale: 0.85 }}
               className="text-zinc-300 hover:text-white transition-colors"
             >
-              <SkipBack className="w-5 h-5 fill-current" />
+              <SkipBack className="w-4 h-4 lg:w-5 lg:h-5 fill-current" />
             </motion.button>
 
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               onClick={togglePlay}
-              className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-500 via-pink-500 to-lime-400 flex items-center justify-center text-black shadow-[0_0_20px_rgba(163,230,53,0.4)] transition-all shrink-0"
+              className="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-gradient-to-tr from-purple-500 via-pink-500 to-lime-400 flex items-center justify-center text-black shadow-[0_0_20px_rgba(163,230,53,0.4)] transition-all shrink-0"
             >
-              {/* BUG FIX 3b: show spinner when buffering, not wrong play/pause state */}
               {isBuffering ? (
-                <Loader2 className="w-5 h-5 animate-spin text-black" />
+                <Loader2 className="w-4 h-4 lg:w-5 lg:h-5 animate-spin text-black" />
               ) : isPlaying ? (
-                <Pause className="w-5 h-5 fill-black" />
+                <Pause className="w-4 h-4 lg:w-5 lg:h-5 fill-black" />
               ) : (
-                <Play className="w-5 h-5 fill-black translate-x-0.5" />
+                <Play className="w-4 h-4 lg:w-5 lg:h-5 fill-black translate-x-0.5" />
               )}
             </motion.button>
 
@@ -238,7 +237,7 @@ export const FloatingGlassPlayer: React.FC = () => {
               whileTap={{ scale: 0.85 }}
               className="text-zinc-300 hover:text-white transition-colors"
             >
-              <SkipForward className="w-5 h-5 fill-current" />
+              <SkipForward className="w-4 h-4 lg:w-5 lg:h-5 fill-current" />
             </motion.button>
 
             <motion.button
@@ -248,7 +247,7 @@ export const FloatingGlassPlayer: React.FC = () => {
                 else if (repeatMode === 'all') setRepeatMode('one');
                 else setRepeatMode('off');
               }}
-              className={`relative transition-colors ${
+              className={`relative transition-colors hidden lg:block ${
                 repeatMode !== 'off' ? 'text-lime-400' : 'text-zinc-400 hover:text-white'
               }`}
             >
@@ -266,11 +265,11 @@ export const FloatingGlassPlayer: React.FC = () => {
           </div>
 
           {/* Seekbar Track */}
-          <div className="flex items-center space-x-3 w-full">
-            <span className="text-[11px] font-mono text-zinc-400 w-8 text-right">
+          <div className="flex items-center space-x-2 lg:space-x-3 w-full">
+            <span className="text-[10px] lg:text-[11px] font-mono text-zinc-400 min-w-[32px] text-right">
               {formatTime(currentTime)}
             </span>
-            <div className="relative flex-1 group cursor-pointer h-3 flex items-center">
+            <div className="relative flex-1 group cursor-pointer h-3 flex items-center min-w-0">
               <input
                 type="range"
                 min="0"
@@ -295,19 +294,19 @@ export const FloatingGlassPlayer: React.FC = () => {
                 }}
               />
             </div>
-            <span className="text-[11px] font-mono text-zinc-400 w-8">
+            <span className="text-[10px] lg:text-[11px] font-mono text-zinc-400 min-w-[32px]">
               {formatTime(duration)}
             </span>
           </div>
         </div>
 
         {/* RIGHT SECTION: Advanced Features & Volume Slider */}
-        <div className="flex items-center space-x-4 min-w-[240px] justify-end z-10 w-1/3">
+        <div className="flex items-center space-x-1 lg:space-x-2 justify-end z-10 min-w-0">
           {/* Playback Rate Toggle */}
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={() => setSpeedWheelOpen(true)}
-            className="flex items-center justify-center min-w-[40px] h-8 rounded-xl font-bold text-xs transition-all text-zinc-400 hover:text-white bg-white/5 border border-white/10"
+            className="hidden xl:flex items-center justify-center min-w-[36px] h-7 rounded-xl font-bold text-[10px] transition-all text-zinc-400 hover:text-white bg-white/5 border border-white/10 shrink-0"
           >
             {playbackRate}x
           </motion.button>
@@ -317,48 +316,48 @@ export const FloatingGlassPlayer: React.FC = () => {
             whileTap={{ scale: 0.9 }}
             onClick={toggleVideoMode}
             title={isVideoMode ? 'Hide Music Video' : 'Watch Music Video'}
-            className={`p-2 rounded-xl transition-all ${
+            className={`p-1.5 lg:p-2 rounded-xl transition-all shrink-0 ${
               isVideoMode
                 ? 'bg-acid-lime/20 text-acid-lime border border-acid-lime/40 shadow-[0_0_10px_rgba(163,230,53,0.2)]'
                 : 'text-zinc-400 hover:text-white'
             }`}
           >
-            <Video className="w-4 h-4" />
+            <Video className="w-3 h-3 lg:w-4 lg:h-4" />
           </motion.button>
           
           {/* Karaoke Lyrics Toggle */}
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={() => setLyricsOpen(!isLyricsOpen)}
-            className={`p-2 rounded-xl transition-all ${
+            className={`p-1.5 lg:p-2 rounded-xl transition-all shrink-0 ${
               isLyricsOpen
                 ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
                 : 'text-zinc-400 hover:text-white'
             }`}
           >
-            <Mic2 className="w-4 h-4" />
+            <Mic2 className="w-3 h-3 lg:w-4 lg:h-4" />
           </motion.button>
 
           {/* Queue Toggle */}
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={() => setShowQueue(!showQueue)}
-            className={`p-2 rounded-xl transition-all ${
+            className={`hidden lg:block p-1.5 lg:p-2 rounded-xl transition-all shrink-0 ${
               showQueue
                 ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
                 : 'text-zinc-400 hover:text-white'
             }`}
           >
-            <ListMusic className="w-4 h-4" />
+            <ListMusic className="w-3 h-3 lg:w-4 lg:h-4" />
           </motion.button>
 
           {/* Spotify Connect Toggle */}
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={() => setConnectModalOpen(true)}
-            className={`p-2 rounded-xl transition-all text-zinc-400 hover:text-white`}
+            className={`hidden xl:block p-1.5 lg:p-2 rounded-xl transition-all text-zinc-400 hover:text-white shrink-0`}
           >
-            <Laptop2 className="w-4 h-4" />
+            <Laptop2 className="w-3 h-3 lg:w-4 lg:h-4" />
           </motion.button>
 
           {/* Crossfade Toggle — Feature 3b */}
@@ -366,41 +365,41 @@ export const FloatingGlassPlayer: React.FC = () => {
             whileTap={{ scale: 0.9 }}
             onClick={toggleCrossfade}
             title={isCrossfadeEnabled ? 'Crossfade ON (3s)' : 'Crossfade OFF'}
-            className={`p-2 rounded-xl transition-all ${
+            className={`hidden lg:block p-1.5 lg:p-2 rounded-xl transition-all shrink-0 ${
               isCrossfadeEnabled
                 ? 'bg-lime-400/20 text-lime-400 border border-lime-400/40 shadow-[0_0_10px_rgba(163,230,53,0.2)]'
                 : 'text-zinc-400 hover:text-white'
             }`}
           >
-            <Blend className="w-4 h-4" />
+            <Blend className="w-3 h-3 lg:w-4 lg:h-4" />
           </motion.button>
 
           {/* Equalizer Popover Trigger */}
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={() => setShowEqualizer(!showEqualizer)}
-            className={`p-2 rounded-xl transition-all ${
+            className={`hidden xl:block p-1.5 lg:p-2 rounded-xl transition-all shrink-0 ${
               showEqualizer
                 ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
                 : 'text-zinc-400 hover:text-white'
             }`}
           >
-            <Sliders className="w-4 h-4" />
+            <Sliders className="w-3 h-3 lg:w-4 lg:h-4" />
           </motion.button>
 
           {/* Volume Control */}
-          <div className="flex items-center space-x-2 group">
+          <div className="flex items-center space-x-1 lg:space-x-2 group shrink-0 ml-2">
             <button
               onClick={() => setIsMuted(!isMuted)}
               className="text-zinc-400 hover:text-white transition-colors shrink-0"
             >
               {isMuted || volume === 0 ? (
-                <VolumeX className="w-4 h-4 text-red-400" />
+                <VolumeX className="w-3 h-3 lg:w-4 lg:h-4 text-red-400" />
               ) : (
-                <Volume2 className="w-4 h-4" />
+                <Volume2 className="w-3 h-3 lg:w-4 lg:h-4" />
               )}
             </button>
-            <div className="relative w-20 h-3 flex items-center cursor-pointer">
+            <div className="relative w-12 lg:w-20 h-3 flex items-center cursor-pointer">
               <input
                 type="range"
                 min="0"
@@ -430,9 +429,9 @@ export const FloatingGlassPlayer: React.FC = () => {
               closePlayer();
             }}
             title="Close Player"
-            className="p-2 ml-2 rounded-xl transition-all text-zinc-400 hover:text-red-500 hover:bg-white/5"
+            className="p-1.5 lg:p-2 ml-1 lg:ml-2 rounded-xl transition-all text-zinc-400 hover:text-red-500 hover:bg-white/5 shrink-0"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4 lg:w-5 lg:h-5" />
           </motion.button>
         </div>
       </motion.div>
