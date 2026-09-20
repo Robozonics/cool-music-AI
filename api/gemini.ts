@@ -135,6 +135,9 @@ Return the EXACT SAME JSON array structure, with a "translation" field added to 
 Schema: [{"time": number, "text": "original text", "translation": "translated text"}]
 Output ONLY valid JSON. No markdown, no commentary.`;
 
+    } else if (type === 'mashup') {
+      if (!prompt) return new Response(JSON.stringify({ error: 'Missing prompt' }), { status: 400 });
+      promptText = prompt;
     } else {
       return new Response(JSON.stringify({ error: `Unknown type: ${type}` }), { status: 400 });
     }
@@ -143,9 +146,9 @@ Output ONLY valid JSON. No markdown, no commentary.`;
     const payload = {
       contents: [{ parts: [{ text: promptText }] }],
       generationConfig: {
-        temperature: type === 'playlist' ? 0.7 : 0.9,
+        temperature: type === 'playlist' ? 0.7 : (type === 'mashup' ? 0.8 : 0.9),
         topP: 0.95,
-        maxOutputTokens: type === 'playlist' || type === 'translate' ? 8192 : 2048,
+        maxOutputTokens: (type === 'playlist' || type === 'translate' || type === 'mashup') ? 8192 : 2048,
       }
     };
 
@@ -187,8 +190,15 @@ Output ONLY valid JSON. No markdown, no commentary.`;
 
           // Strip markdown code blocks if Gemini wraps them
           text = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
-          const jsonStart = text.indexOf('[');
-          if (jsonStart > 0) text = text.slice(jsonStart);
+          
+          const isObj = type === 'mashup';
+          if (isObj) {
+            const jsonStart = text.indexOf('{');
+            if (jsonStart > 0) text = text.slice(jsonStart);
+          } else {
+            const jsonStart = text.indexOf('[');
+            if (jsonStart > 0) text = text.slice(jsonStart);
+          }
 
           const parsed = JSON.parse(text);
 
@@ -196,6 +206,7 @@ Output ONLY valid JSON. No markdown, no commentary.`;
             success: true,
             recommendations: Array.isArray(parsed) ? parsed : [],
             translated: type === 'translate' ? parsed : undefined,
+            blueprint: type === 'mashup' ? parsed : undefined,
           }), {
             status: 200,
             headers: { 'Content-Type': 'application/json' }

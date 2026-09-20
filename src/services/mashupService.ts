@@ -1,7 +1,5 @@
 import type { Track, DjEvent, MashupBlueprint } from '../types/music';
 import { useMashupStore } from '../store/useMashupStore';
-import { getGeminiKey } from './keyManager';
-import { usePlayerStore } from '../store/usePlayerStore';
 
 /**
  * Professional AI DJ Mashup Engine
@@ -232,35 +230,24 @@ Output ONLY the raw JSON, starting with { and ending with }.`;
   try {
     setStatus('syncing', 30);
 
-    const apiKey = await getGeminiKey();
-    if (!apiKey) {
-      usePlayerStore.getState().setApiKeyModalOpen(true);
-      throw new Error('Missing Gemini API Key');
+    const res = await fetch('/api/gemini', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'mashup', prompt: promptText }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`API error: ${res.statusText}`);
     }
 
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: promptText }] }],
-          generationConfig: { temperature: 0.8, maxOutputTokens: 8192 },
-        }),
-      }
-    );
-
     const data = await res.json();
-    let text: string = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+    if (data.error) throw new Error(data.error);
 
-    // Strip any markdown wrappers
-    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-
-    // Extract JSON object
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('No JSON object found in Gemini response');
-
-    blueprint = JSON.parse(jsonMatch[0]) as MashupBlueprint;
+    blueprint = data.blueprint as MashupBlueprint;
+    if (!blueprint || !blueprint.timeline_blocks) {
+       throw new Error('Invalid blueprint format received');
+    }
+    
     console.log('[Mashup] Blueprint received:', blueprint.mashup_metadata);
     console.log('[Mashup] Timeline blocks:', blueprint.timeline_blocks.length);
     setStatus('mastering', 75);

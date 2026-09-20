@@ -105,22 +105,21 @@ export const rampVolume = (
   requestAnimationFrame(tick);
 };
 
-const executeDjEvent = (evt: DjEvent, currentTrackId: string, volume: number) => {
+const executeDjEvent = (evt: DjEvent, volume: number) => {
   let targetAudio: HTMLAudioElement | null = null;
   let targetFilter: BiquadFilterNode | null = null;
   let targetBassFilter: BiquadFilterNode | null = null;
   
-  if (evt.trackId === currentTrackId) {
+  const isAux = auxContexts.find(x => x.trackId === evt.trackId);
+  if (isAux) {
+     targetAudio = isAux.audio;
+     targetFilter = isAux.filter;
+     targetBassFilter = isAux.bassFilter;
+  } else {
+     // If not an aux track, it must be the anchor/main track
      targetAudio = nativeAudio;
      targetFilter = nativeAudioFilter;
      targetBassFilter = nativeBassFilter;
-  } else {
-     const aux = auxContexts.find(x => x.trackId === evt.trackId);
-     if (aux) {
-       targetAudio = aux.audio;
-       targetFilter = aux.filter;
-       targetBassFilter = aux.bassFilter;
-     }
   }
   
   if (!targetAudio) return;
@@ -339,7 +338,7 @@ export const usePlayerStore = create<PlayerState>()(
         if (t >= evt.timestamp && !processedEvents.has(eventId)) {
           processedEvents.add(eventId);
           console.log(`[DJ] t=${t.toFixed(1)}s firing event:`, evt.type, 'track:', evt.trackId.slice(-8), evt.seekTo !== undefined ? `seekTo:${evt.seekTo}` : '');
-          executeDjEvent(evt, state.currentTrack!.id, state.volume);
+          executeDjEvent(evt, state.volume);
         }
       });
     }
@@ -408,11 +407,22 @@ export const usePlayerStore = create<PlayerState>()(
     nativeAudio.playbackRate = get().playbackRate;
     set({ isAutoplayBlocked: false });
     
-    // Sync auxiliary tracks
+    // Unlock auxiliary tracks for mobile autoplay policies
     auxContexts.forEach(a => {
        a.audio.playbackRate = get().playbackRate;
-       const p = a.audio.play();
-       if (p !== undefined) p.catch(() => {});
+       // We must play them to unlock, but we want them silent until the DJ event says so
+       if (a.audio.paused) {
+         const oldVol = a.audio.volume;
+         a.audio.volume = 0;
+         const p = a.audio.play();
+         if (p !== undefined) {
+           p.then(() => {
+             // Successfully unlocked, now pause and wait for DJ Event 'fade_in'
+             a.audio.pause();
+             a.audio.volume = oldVol;
+           }).catch(() => {});
+         }
+       }
     });
   });
 
@@ -575,6 +585,8 @@ export const usePlayerStore = create<PlayerState>()(
            
            auxContexts.push({ audio: aux, source, filter, bassFilter, trackId: item.id });
            // Preload but do NOT auto-play — DJ arrangement controls when each track starts
+           // Initialize silent so if the unlock strategy fails, it doesn't blast audio
+           aux.volume = 0;
            aux.load();
         });
       }
