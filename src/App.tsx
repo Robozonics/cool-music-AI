@@ -118,9 +118,9 @@ function App() {
         <div className={`absolute inset-0 transition-opacity duration-1000 pointer-events-none -z-20 opacity-20 ${isPlaying ? 'genz-playing-bg' : 'opacity-0'}`} />
         {theme === 'aura' && <div className="absolute inset-0 aura-animated-bg pointer-events-none -z-15" />}
         <div className="absolute inset-0 bg-obsidian/80 vibe-pulse pointer-events-none -z-10" />
-        <header className="px-6 py-4 flex justify-between items-center z-10 glass-panel sticky top-0 border-b border-white/5">
-          <h1 className="text-2xl font-black tracking-tighter text-white">
-            MUSI<span className="text-acid-lime">FY</span>
+        <header className="px-6 py-4 flex justify-between items-center z-10 bg-white/5 backdrop-blur-3xl sticky top-0 border-b border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.3)]">
+          <h1 className="text-2xl font-black tracking-tighter text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+            MUSI<span className="text-acid-lime drop-shadow-[0_0_15px_rgba(163,230,53,0.5)]">FY</span>
           </h1>
           <div className="flex items-center gap-2">
             <button 

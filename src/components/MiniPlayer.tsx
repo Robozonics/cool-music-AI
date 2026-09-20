@@ -13,15 +13,15 @@ export const MiniPlayer: React.FC = () => {
   if (!currentTrack) return null;
 
   return (
-    <div 
-      className="fixed left-2 right-2 z-40 md:hidden"
-      style={{ bottom: 'calc(72px + env(safe-area-inset-bottom) + 8px)' }}
-    >
       <div 
-        className="bg-[#2a2a2a]/95 backdrop-blur-xl border border-white/5 rounded-xl flex items-center p-2 cursor-pointer shadow-2xl" 
+        className="fixed left-4 right-4 z-40 md:hidden transition-transform"
+        style={{ bottom: 'calc(64px + 16px + env(safe-area-inset-bottom) + 12px)' }}
+      >
+      <div 
+        className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-2xl flex items-center p-2 cursor-pointer shadow-[0_15px_30px_rgba(0,0,0,0.5)] hover:bg-white/10 transition-colors" 
         onClick={() => setFullPlayerOpen(true)}
       >
-        <img src={currentTrack.thumbnail} alt={currentTrack.title} className="w-10 h-10 rounded-md object-cover" />
+        <img src={currentTrack.thumbnail} alt={currentTrack.title} className="w-10 h-10 rounded-xl object-cover shadow-lg" />
         
         <div className="ml-3 flex-1 min-w-0 pr-2">
           <h4 className="text-white font-bold truncate text-sm">{currentTrack.title}</h4>

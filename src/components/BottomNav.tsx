@@ -18,7 +18,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab })
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 h-[72px] bg-[#0a0a0c]/95 backdrop-blur-3xl border-t border-white/5 z-30 px-2 flex justify-between items-center pb-safe">
+    <div className="fixed bottom-4 left-4 right-4 h-16 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2rem] shadow-[0_10px_40px_rgba(0,0,0,0.5)] z-30 px-2 flex justify-between items-center pb-safe overflow-hidden">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = activeTab === tab.id;
@@ -27,8 +27,8 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab })
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as TabType)}
-            className={`flex flex-col items-center justify-center space-y-1 flex-1 h-full transition-colors ${
-              isActive ? 'text-white' : 'text-gray-500 hover:text-gray-300'
+            className={`flex flex-col items-center justify-center space-y-1 flex-1 h-full transition-all active:scale-90 ${
+              isActive ? 'text-white' : 'text-white/40 hover:text-white/70'
             }`}
           >
             {/* Samples tab gets a special glowing indicator */}
