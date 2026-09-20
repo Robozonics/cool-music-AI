@@ -134,6 +134,27 @@ export const SearchView: React.FC = () => {
         </div>
       )}
 
+      {searchMode === 'standard' && !isLoading && results.length === 0 && !query && (
+        <div className="mt-8">
+          <h3 className="text-xl font-bold mb-4 text-white">Trending Vibes 🚀</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {['The Weeknd', 'Travis Scott', 'Drake', 'Playboi Carti', 'Billie Eilish', 'Taylor Swift', 'Dua Lipa', 'Post Malone'].map(artist => (
+              <button
+                key={artist}
+                onClick={() => {
+                  setQuery(artist);
+                  executeSearch(artist);
+                }}
+                className="bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl p-4 flex flex-col items-start justify-center transition-all group"
+              >
+                <span className="text-sm text-gray-400 group-hover:text-white transition-colors">Artist</span>
+                <span className="text-lg font-bold text-white mt-1 group-hover:text-acid-lime transition-colors">{artist}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {isLoading && (
         <div className="flex flex-col justify-center items-center py-12 space-y-4">
           <Loader2 className={`w-8 h-8 animate-spin-slow ${searchMode === 'ai' ? 'text-acid-lime' : 'text-white'}`} />

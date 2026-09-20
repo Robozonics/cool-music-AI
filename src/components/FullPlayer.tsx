@@ -83,6 +83,11 @@ export const FullPlayer: React.FC = () => {
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center relative z-10 w-full max-w-sm mx-auto min-h-[500px]">
+        {/* Dynamic Background Blur */}
+        <div className="absolute inset-[-100%] -z-10 pointer-events-none opacity-40">
+          <img src={currentTrack.thumbnail} className="w-full h-full object-cover blur-[100px] saturate-200" alt="" />
+        </div>
+
         <div className="w-full aspect-square max-h-[40vh] md:max-h-none rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] mb-6 relative group" style={{ transform: `scale(calc(1 + var(--vibe-intensity, 0) * 0.1))`, transition: 'transform 0.1s ease-out' }}>
            <img src={currentTrack.thumbnail} alt={currentTrack.title} className="w-full h-full object-cover" />
         </div>

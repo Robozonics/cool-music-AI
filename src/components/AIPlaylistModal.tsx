@@ -78,10 +78,13 @@ export const AIPlaylistModal: React.FC<AIPlaylistModalProps> = ({ isOpen, onClos
     } catch (err: any) {
       setError(err.message || 'Generation failed. Please try again.');
       setPhase('input');
+      if (err.message && (err.message.includes('rate-limited') || err.message.includes('API key'))) {
+        usePlayerStore.getState().setApiKeyModalOpen(true);
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [seedArtist, seedSong]);
+  }, [seedArtist, seedSong, customPrompt]);
 
   const handleLoadAndPlay = () => {
     const tracksToPlay = generatedTracks.filter(t => selectedTrackIds.has(t.id));
