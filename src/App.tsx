@@ -169,6 +169,9 @@ function App() {
       <VisualCanvasEngine />
       <AddToPlaylistModal />
       <QueuePanel />
+      
+      {/* Premium Texture Overlay */}
+      <div className="noise-overlay" />
     </>
   );
 }
