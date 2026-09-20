@@ -137,8 +137,15 @@ export const VisualCanvasEngine = () => {
         className={`fixed inset-0 z-[90] bg-black overflow-hidden pointer-events-none transition-opacity duration-150 ${isVideoMode ? 'opacity-100' : 'opacity-0'}`}
         style={{ visibility: isVideoMode ? 'visible' : 'hidden' }}
       >
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140vw] h-[140vh] md:w-[120vw] md:h-[120vh]">
-          <div id="yt-visual-player" className="w-full h-full" />
+        <div 
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+          style={{
+            /* 16:9 Aspect Ratio cover calculation. Scaled by 1.3x to crop out YouTube logos */
+            width: 'max(130vw, 231.1vh)',
+            height: 'max(130vh, 73.12vw)'
+          }}
+        >
+          <div id="yt-visual-player" className="w-full h-full pointer-events-none" />
         </div>
         {/* Cinematic Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/30 z-[95]" />
