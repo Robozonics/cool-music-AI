@@ -1,6 +1,6 @@
 import React from 'react';
 import { usePlayerStore } from '../store/usePlayerStore';
-import { Play, Shuffle, Clock, ChevronLeft, Download, Plus, CheckCircle2 } from 'lucide-react';
+import { Play, Clock, ChevronLeft, Download, Plus, CheckCircle2 } from 'lucide-react';
 import type { TabType } from './BottomNav';
 import { downloadTrack } from '../services/downloadService';
 
