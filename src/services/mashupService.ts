@@ -24,13 +24,19 @@ Other Tracks:
 ${tracks.filter(t => t.id !== anchorTrack.id).map(t => `- ${t.title} by ${t.artist} (ID: ${t.id})`).join('\n')}
 
 Generate a JSON array of DJ events to control playback over a 60-second mashup.
-Valid event types: "play", "pause", "fade_in", "fade_out", "cut_vocals", "restore_vocals".
-Output ONLY raw valid JSON array, no markdown formatting or backticks.
+Valid event types: "play", "pause", "fade_in", "fade_out", "cut_vocals", "restore_vocals", "cut_bass", "restore_bass".
+
+CRITICAL DJ RULES TO PREVENT CLASHING:
+1. NEVER mix vocals together. If a secondary track plays, you MUST apply "cut_vocals" to the Anchor track so they don't clash.
+2. NEVER mix heavy backgrounds together. If a secondary track has a strong beat, apply "cut_bass" to it to let the Anchor track's beat dominate.
+3. Ensure smooth transitions using "fade_in" and "fade_out".
+4. Output ONLY raw valid JSON array, no markdown formatting or backticks.
 
 Example format:
 [
   { "timestamp": 0, "trackId": "${anchorTrack.id}", "type": "play" },
   { "timestamp": 15, "trackId": "other_id", "type": "fade_in" },
+  { "timestamp": 15, "trackId": "other_id", "type": "cut_bass" },
   { "timestamp": 30, "trackId": "${anchorTrack.id}", "type": "cut_vocals" }
 ]
   `;

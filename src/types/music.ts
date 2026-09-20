@@ -4,7 +4,7 @@ export type PlaylistSegment = 'foundation' | 'peak' | 'cooldown';
 export interface DjEvent {
   timestamp: number; // in seconds
   trackId: string;
-  type: 'play' | 'pause' | 'fade_in' | 'fade_out' | 'cut_vocals' | 'restore_vocals';
+  type: 'play' | 'pause' | 'fade_in' | 'fade_out' | 'cut_vocals' | 'restore_vocals' | 'cut_bass' | 'restore_bass';
 }
 
 export interface Track {

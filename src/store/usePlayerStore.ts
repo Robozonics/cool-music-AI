@@ -14,11 +14,13 @@ crossfadeAudio.crossOrigin = "anonymous";
 export let audioCtx: AudioContext | null = null;
 export let nativeAudioSource: MediaElementAudioSourceNode | null = null;
 export let nativeAudioFilter: BiquadFilterNode | null = null;
+export let nativeBassFilter: BiquadFilterNode | null = null;
 
 interface AuxContext {
   audio: HTMLAudioElement;
   source: MediaElementAudioSourceNode | null;
   filter: BiquadFilterNode | null;
+  bassFilter: BiquadFilterNode | null;
   trackId: string;
 }
 export let auxContexts: AuxContext[] = [];
@@ -30,13 +32,20 @@ const initAudioContext = () => {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
     nativeAudioSource = audioCtx.createMediaElementSource(nativeAudio);
+    
+    nativeBassFilter = audioCtx.createBiquadFilter();
+    nativeBassFilter.type = 'lowshelf';
+    nativeBassFilter.frequency.value = 200;
+    nativeBassFilter.gain.value = 0;
+
     nativeAudioFilter = audioCtx.createBiquadFilter();
     nativeAudioFilter.type = 'peaking';
     nativeAudioFilter.frequency.value = 1000;
     nativeAudioFilter.Q.value = 1.5;
     nativeAudioFilter.gain.value = 0; // 0 = no cut
     
-    nativeAudioSource.connect(nativeAudioFilter);
+    nativeAudioSource.connect(nativeBassFilter);
+    nativeBassFilter.connect(nativeAudioFilter);
     nativeAudioFilter.connect(audioCtx.destination);
   }
   if (audioCtx.state === 'suspended') {
@@ -69,15 +78,18 @@ export const rampVolume = (
 const executeDjEvent = (evt: DjEvent, currentTrackId: string, volume: number) => {
   let targetAudio: HTMLAudioElement | null = null;
   let targetFilter: BiquadFilterNode | null = null;
+  let targetBassFilter: BiquadFilterNode | null = null;
   
   if (evt.trackId === currentTrackId) {
      targetAudio = nativeAudio;
      targetFilter = nativeAudioFilter;
+     targetBassFilter = nativeBassFilter;
   } else {
      const aux = auxContexts.find(x => x.trackId === evt.trackId);
      if (aux) {
        targetAudio = aux.audio;
        targetFilter = aux.filter;
+       targetBassFilter = aux.bassFilter;
      }
   }
   
@@ -109,6 +121,16 @@ const executeDjEvent = (evt: DjEvent, currentTrackId: string, volume: number) =>
     case 'restore_vocals':
       if (targetFilter && audioCtx) {
         targetFilter.gain.setTargetAtTime(0, audioCtx.currentTime, 0.5);
+      }
+      break;
+    case 'cut_bass':
+      if (targetBassFilter && audioCtx) {
+        targetBassFilter.gain.setTargetAtTime(-24, audioCtx.currentTime, 0.5);
+      }
+      break;
+    case 'restore_bass':
+      if (targetBassFilter && audioCtx) {
+        targetBassFilter.gain.setTargetAtTime(0, audioCtx.currentTime, 0.5);
       }
       break;
   }
@@ -457,19 +479,28 @@ export const usePlayerStore = create<PlayerState>()(
            
            let source = null;
            let filter = null;
+           let bassFilter = null;
            
            if (audioCtx) {
              source = audioCtx.createMediaElementSource(aux);
+
+             bassFilter = audioCtx.createBiquadFilter();
+             bassFilter.type = 'lowshelf';
+             bassFilter.frequency.value = 200;
+             bassFilter.gain.value = 0;
+
              filter = audioCtx.createBiquadFilter();
              filter.type = 'peaking';
              filter.frequency.value = 1000;
              filter.Q.value = 1.5;
              filter.gain.value = 0;
-             source.connect(filter);
+
+             source.connect(bassFilter);
+             bassFilter.connect(filter);
              filter.connect(audioCtx.destination);
            }
            
-           auxContexts.push({ audio: aux, source, filter, trackId: item.id });
+           auxContexts.push({ audio: aux, source, filter, bassFilter, trackId: item.id });
         });
       }
 
