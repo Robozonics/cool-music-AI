@@ -184,8 +184,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     get().handleTrackEnd();
   });
 
-  nativeAudio.addEventListener('error', (e) => {
-    console.error('Native Audio playback error:', e);
+  nativeAudio.addEventListener('error', () => {
+    console.warn('Track playback failed (likely CORS or network error), skipping to next track.');
     get().nextTrack();
   });
 

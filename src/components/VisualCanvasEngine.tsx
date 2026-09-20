@@ -70,7 +70,8 @@ export const VisualCanvasEngine = () => {
           showinfo: 0,
           iv_load_policy: 3,
           mute: 1,
-          playsinline: 1
+          playsinline: 1,
+          origin: window.location.origin
         },
         events: {
           onReady: (e: any) => {
