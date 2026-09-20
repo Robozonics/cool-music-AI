@@ -278,7 +278,7 @@ Parse this command into a JSON object with exactly two keys:
    - use "play" if they ask to play a specific song or artist
    - use "add_to_playlist" if they ask to add a specific song to a playlist
    - use "smart_mix" if they ask to enable or turn on crossfade, smart mix, DJ mix, or professional transitions between tracks
-2. "query": the name of the song, artist, mood, seed, or playlist name required to perform the action (e.g. "blinding lights", "relaxing beats", "My Summer Mix"). For share or smart_mix, it can be empty.
+2. "query": the name of the song, artist, mood, or seed required. For "add_to_playlist", extract ONLY the song/artist name and EXCLUDE the destination playlist name (e.g. for "add starboy to my workout playlist", query must be "starboy"). If they just say "add this song", query can be "this". For share or smart_mix, it can be empty.
 
 If you cannot understand the command, return [{"action": "unknown", "query": ""}].
 Output ONLY valid JSON ARRAY containing ONE object. Example: [{"action": "play", "query": "starboy"}]. No markdown, no extra text.`;

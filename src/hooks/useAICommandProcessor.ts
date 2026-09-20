@@ -37,18 +37,15 @@ export const useAICommandProcessor = () => {
             const results = await searchSaavn(parsed.query);
             if (results && results.length > 0) track = results[0];
           }
-          
-          if (!track) {
-            track = usePlayerStore.getState().currentTrack;
-          }
 
           if (track) {
             const state = usePlayerStore.getState();
             const playlists = state.savedPlaylists;
             let playlistName = "My AI Playlist";
             if (playlists.length > 0) {
-              state.addTrackToPlaylist(playlists[0].id, track);
-              playlistName = playlists[0].name;
+              const latestPlaylist = playlists[playlists.length - 1];
+              state.addTrackToPlaylist(latestPlaylist.id, track);
+              playlistName = latestPlaylist.name;
             } else {
               state.savePlaylist(playlistName, [track]);
             }
