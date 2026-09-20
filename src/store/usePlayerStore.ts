@@ -15,6 +15,8 @@ export let audioCtx: AudioContext | null = null;
 export let nativeAudioSource: MediaElementAudioSourceNode | null = null;
 export let nativeAudioFilter: BiquadFilterNode | null = null;
 export let nativeBassFilter: BiquadFilterNode | null = null;
+export let normalGain: GainNode | null = null;
+export let karaokeGain: GainNode | null = null;
 
 interface AuxContext {
   audio: HTMLAudioElement;
@@ -46,7 +48,35 @@ const initAudioContext = () => {
     
     nativeAudioSource.connect(nativeBassFilter);
     nativeBassFilter.connect(nativeAudioFilter);
-    nativeAudioFilter.connect(audioCtx.destination);
+    
+    // Normal Mix
+    normalGain = audioCtx.createGain();
+    normalGain.gain.value = 1;
+    nativeAudioFilter.connect(normalGain);
+    normalGain.connect(audioCtx.destination);
+
+    // Karaoke Mix (Center Cancellation)
+    karaokeGain = audioCtx.createGain();
+    karaokeGain.gain.value = 0;
+    
+    const splitter = audioCtx.createChannelSplitter(2);
+    const merger = audioCtx.createChannelMerger(2);
+    const inverter = audioCtx.createGain();
+    inverter.gain.value = -1;
+
+    nativeAudioFilter.connect(splitter);
+    
+    // Left channel straight to merger's L and R
+    splitter.connect(merger, 0, 0);
+    splitter.connect(merger, 0, 1);
+    
+    // Right channel inverted then to merger's L and R
+    splitter.connect(inverter, 1, 0);
+    inverter.connect(merger, 0, 0);
+    inverter.connect(merger, 0, 1);
+    
+    merger.connect(karaokeGain);
+    karaokeGain.connect(audioCtx.destination);
   }
   if (audioCtx.state === 'suspended') {
     audioCtx.resume();
@@ -401,8 +431,9 @@ export const usePlayerStore = create<PlayerState>()(
        const state = get();
        const newMode = !state.isKaraokeMode;
        set({ isKaraokeMode: newMode });
-       if (nativeAudioFilter && audioCtx) {
-         nativeAudioFilter.gain.setTargetAtTime(newMode ? -24 : 0, audioCtx.currentTime, 0.5);
+       if (normalGain && karaokeGain && audioCtx) {
+         normalGain.gain.setTargetAtTime(newMode ? 0 : 1, audioCtx.currentTime, 0.1);
+         karaokeGain.gain.setTargetAtTime(newMode ? 1 : 0, audioCtx.currentTime, 0.1);
        }
     },
 
@@ -465,8 +496,10 @@ export const usePlayerStore = create<PlayerState>()(
       currentArrangement = track.arrangement || [];
       
       initAudioContext();
-      if (nativeAudioFilter && audioCtx) {
-         nativeAudioFilter.gain.value = get().isKaraokeMode ? -24 : 0;
+      if (normalGain && karaokeGain) {
+         const mode = get().isKaraokeMode;
+         normalGain.gain.value = mode ? 0 : 1;
+         karaokeGain.gain.value = mode ? 1 : 0;
       }
       
       // Setup new auxiliary audios for mashups
