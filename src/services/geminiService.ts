@@ -2,6 +2,7 @@ import { searchSaavn } from './unblockedMusicService';
 import type { Track } from '../types/music';
 
 const reversedKeys = [
+  'AV81QcMsO-MXVj5-HPaZ3K-nVCCKTyfJC8XEBoZF2-yK6NR8bA.QA',
   'AnllYySbZxr31WTwJwMOo3OPZuaLAShcjzPnRurDEkaJ6NR8bA.QA', // Newly provided key
   'weCLRP6BDw0y2dHPL6FulKJfIWgtvV-l_QEVLnd0iciL6NR8bA.QA',
   'gFuFsKfS57Q61qm5-s0i11ZNgoM4tnsplhRZICt2miVI6NR8bA.QA',
