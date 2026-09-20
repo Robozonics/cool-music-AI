@@ -73,18 +73,18 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
   };
 
   return (
-    <div className="flex flex-col min-h-full bg-obsidian">
+    <div className="flex flex-col min-h-full bg-obsidian pb-24">
       {/* Header */}
-      <div className="relative pt-16 pb-8 px-6 bg-gradient-to-b from-purple-900/40 to-obsidian">
+      <div className="relative pt-12 md:pt-16 pb-4 md:pb-8 px-4 md:px-6 bg-gradient-to-b from-purple-900/40 to-obsidian">
         <button 
           onClick={() => setActiveTab('home')}
-          className="absolute top-4 left-4 w-10 h-10 rounded-full bg-black/40 flex items-center justify-center text-white/80 hover:text-white hover:bg-black/60 transition-colors"
+          className="absolute top-2 left-2 md:top-4 md:left-4 w-10 h-10 rounded-full bg-black/40 flex items-center justify-center text-white/80 hover:text-white hover:bg-black/60 transition-colors"
         >
           <ChevronLeft className="w-6 h-6" />
         </button>
         
-        <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-center md:items-end mt-2 md:mt-4 text-center md:text-left">
-          <div className="relative w-40 h-40 md:w-64 md:h-64 shrink-0 rounded-md overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] bg-white/5 border border-white/10 flex items-center justify-center">
+        <div className="flex flex-row md:flex-row gap-4 md:gap-6 items-center md:items-end mt-8 md:mt-4 text-left">
+          <div className="relative w-28 h-28 md:w-64 md:h-64 shrink-0 rounded-md overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.5)] bg-white/5 border border-white/10 flex items-center justify-center">
             {playlist.tracks[0] ? (
               <img src={playlist.tracks[0].thumbnail} alt="Cover" className="w-full h-full object-cover blur-md scale-125 opacity-40" />
             ) : (
@@ -97,13 +97,13 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
             </div>
           </div>
           
-          <div className="flex-1 w-full mt-4 md:mt-0">
+          <div className="flex-1 w-full">
             <h4 className="hidden md:block text-xs font-bold uppercase tracking-widest text-zinc-400 mb-2">Playlist</h4>
-            <h1 className="text-3xl md:text-7xl font-black text-white tracking-tighter mb-2 md:mb-6 line-clamp-2">
+            <h1 className="text-2xl md:text-7xl font-black text-white tracking-tighter mb-1 md:mb-6 line-clamp-2 leading-tight">
               {playlist.name}
             </h1>
-            <p className="text-sm font-medium text-zinc-300 flex items-center justify-center md:justify-start gap-2">
-              <span className="font-bold">You</span> • {playlist.tracks.length} tracks • <span className="text-zinc-400">{formattedDuration}</span>
+            <p className="text-xs md:text-sm font-medium text-zinc-300 flex items-center justify-start gap-1 md:gap-2">
+              <span className="font-bold">You</span> • {playlist.tracks.length} tracks
             </p>
           </div>
         </div>
