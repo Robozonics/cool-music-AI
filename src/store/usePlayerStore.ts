@@ -139,6 +139,9 @@ interface PlayerState {
   isAutoplayBlocked: boolean;
   resolveAutoplayBlock: () => void;
 
+  isKaraokeMode: boolean;
+  toggleKaraokeMode: () => void;
+
   isQueueOpen: boolean;
   setQueueOpen: (open: boolean) => void;
 
@@ -368,8 +371,18 @@ export const usePlayerStore = create<PlayerState>()(
     toggleVideoMode: () => set(state => ({ isVideoMode: !state.isVideoMode })),
     isAutoplayBlocked: false,
     isApiKeyModalOpen: false,
+    isKaraokeMode: false,
 
     setApiKeyModalOpen: (open: boolean) => set({ isApiKeyModalOpen: open }),
+
+    toggleKaraokeMode: () => {
+       const state = get();
+       const newMode = !state.isKaraokeMode;
+       set({ isKaraokeMode: newMode });
+       if (nativeAudioFilter && audioCtx) {
+         nativeAudioFilter.gain.setTargetAtTime(newMode ? -24 : 0, audioCtx.currentTime, 0.5);
+       }
+    },
 
     discoverWeekly: null,
     setDiscoverWeekly: (tracks: Track[], generatedAt: number, vibeTitle?: string, vibeDescription?: string, vibeColor?: string) => 
@@ -431,7 +444,7 @@ export const usePlayerStore = create<PlayerState>()(
       
       initAudioContext();
       if (nativeAudioFilter && audioCtx) {
-         nativeAudioFilter.gain.value = 0; // reset cut
+         nativeAudioFilter.gain.value = get().isKaraokeMode ? -24 : 0;
       }
       
       // Setup new auxiliary audios for mashups

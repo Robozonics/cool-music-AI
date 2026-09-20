@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { X, Globe, ChevronDown, Loader2 } from 'lucide-react';
+import { X, Globe, ChevronDown, Loader2, Mic, MicOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { fetchLyrics, translateLyrics } from '../services/lyricsService';
@@ -23,6 +23,8 @@ export const SyncedLyrics: React.FC<{ inline?: boolean }> = ({ inline = false })
   const seek = usePlayerStore(state => state.seek);
   const isLyricsOpen = usePlayerStore(state => state.isLyricsOpen);
   const setLyricsOpen = usePlayerStore(state => state.setLyricsOpen);
+  const isKaraokeMode = usePlayerStore(state => state.isKaraokeMode);
+  const toggleKaraokeMode = usePlayerStore(state => state.toggleKaraokeMode);
 
   const [synced, setSynced] = useState<LyricLine[] | null>(null);
   const [plain, setPlain] = useState<string | null>(null);
@@ -121,6 +123,21 @@ export const SyncedLyrics: React.FC<{ inline?: boolean }> = ({ inline = false })
           )}
 
           <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+            
+            {/* Karaoke Toggle */}
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={toggleKaraokeMode}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all ${
+                isKaraokeMode
+                  ? 'bg-acid-lime/20 border-acid-lime/40 text-acid-lime'
+                  : 'bg-white/10 border-white/15 text-white hover:bg-white/15'
+              }`}
+            >
+              {isKaraokeMode ? <MicOff className="w-3 h-3" /> : <Mic className="w-3 h-3" />}
+              <span className="hidden sm:inline">{isKaraokeMode ? 'Karaoke On' : 'Karaoke'}</span>
+            </motion.button>
+
             {/* Translation Toolbar */}
             {synced && synced.length > 0 && !isLoading && (
               <div className="flex items-center gap-2 relative">
