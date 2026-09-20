@@ -28,6 +28,12 @@
     --color-bg: #1A0500; /* deep red-black */
     --color-panel: rgba(255, 77, 0, 0.05);
   }
+
+  [data-theme='aura'] {
+    --color-primary: #B200FF; /* intense purple */
+    --color-bg: #030008; /* dark void */
+    --color-panel: rgba(178, 0, 255, 0.08);
+  }
 }
 
 @layer components {
@@ -83,6 +89,24 @@
     background-position: 0% 50%;
     filter: hue-rotate(0deg);
   }
+}
+
+@keyframes float-ethereal {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-10px) scale(1.02); }
+}
+
+.aura-animated-bg {
+  background: radial-gradient(circle at 50% 50%, var(--color-primary) 0%, transparent 60%),
+              radial-gradient(circle at 80% 20%, #00ffff 0%, transparent 50%),
+              radial-gradient(circle at 20% 80%, #ff00ff 0%, transparent 50%);
+  background-size: 200% 200%;
+  animation: genz-aurora 8s ease infinite;
+  opacity: 0.15;
+}
+
+[data-theme='aura'] body {
+  animation: float-ethereal 6s ease-in-out infinite;
 }
 
 .genz-playing-bg {

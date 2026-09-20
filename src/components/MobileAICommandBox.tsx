@@ -81,7 +81,7 @@ export const MobileAICommandBox = ({ isOpen, onClose }: { isOpen: boolean, onClo
               type="text" 
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="e.g. Play Blinding Lights..."
+              placeholder="Drop some heat... (no cap) 🔥"
               className="flex-1 bg-transparent text-sm text-white placeholder-zinc-500 outline-none px-2 min-w-0"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleProcessCommand();

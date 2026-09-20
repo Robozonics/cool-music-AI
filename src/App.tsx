@@ -36,6 +36,7 @@ function App() {
   const isApiKeyModalOpen = usePlayerStore(state => state.isApiKeyModalOpen);
   const setApiKeyModalOpen = usePlayerStore(state => state.setApiKeyModalOpen);
   const isPlaying = usePlayerStore(state => state.isPlaying);
+  const theme = usePlayerStore(state => state.theme);
   
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
@@ -115,6 +116,7 @@ function App() {
         onClick={() => isAutoplayBlocked && resolveAutoplayBlock()}
       >
         <div className={`absolute inset-0 transition-opacity duration-1000 pointer-events-none -z-20 opacity-20 ${isPlaying ? 'genz-playing-bg' : 'opacity-0'}`} />
+        {theme === 'aura' && <div className="absolute inset-0 aura-animated-bg pointer-events-none -z-15" />}
         <div className="absolute inset-0 bg-obsidian/80 vibe-pulse pointer-events-none -z-10" />
         <header className="px-6 py-4 flex justify-between items-center z-10 glass-panel sticky top-0 border-b border-white/5">
           <h1 className="text-2xl font-black tracking-tighter text-white">

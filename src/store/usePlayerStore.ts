@@ -69,8 +69,8 @@ interface PlayerState {
   setAudioAnalyzer: (analyzer: any) => void;
   audioDataArray: Uint8Array | null;
   setAudioDataArray: (data: Uint8Array) => void;
-  theme: 'default' | 'cyberpunk' | 'midnight' | 'sunset';
-  setTheme: (theme: 'default' | 'cyberpunk' | 'midnight' | 'sunset') => void;
+  theme: 'default' | 'cyberpunk' | 'midnight' | 'sunset' | 'aura';
+  setTheme: (theme: 'default' | 'cyberpunk' | 'midnight' | 'sunset' | 'aura') => void;
   removeFromQueue: (index: number) => void;
   playNext: (track: Track) => void;
   setPlaybackRate: (rate: number) => void;

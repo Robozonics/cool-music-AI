@@ -18,6 +18,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose }) => 
     { id: 'cyberpunk', name: 'Cyberpunk', color: '#FF00FF', bg: '#090014' },
     { id: 'midnight', name: 'Midnight', color: '#00E5FF', bg: '#000B18' },
     { id: 'sunset', name: 'Sunset', color: '#FF4D00', bg: '#1A0500' },
+    { id: 'aura', name: 'Aura', color: '#B200FF', bg: '#030008' },
   ] as const;
 
   return (

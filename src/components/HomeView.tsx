@@ -21,8 +21,8 @@ interface Section {
 }
 
 const SECTIONS: Section[] = [
-  { title: "CURATED FOR YOU", query: "trending top hits" },
-  { title: "VIBE MATCH", query: "viral tiktok songs" }
+  { title: "W SONGS (NO CAP)", query: "trending top hits" },
+  { title: "SIGMA BEATS", query: "viral tiktok songs" }
 ];
 
 interface HomeViewProps {
@@ -73,7 +73,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab }) => {
       <div className="flex flex-col justify-center items-center h-full space-y-4">
         <Loader2 className="w-10 h-10 animate-spin-slow text-acid-lime" />
         <p className="text-gray-400 font-bold tracking-widest uppercase text-sm animate-pulse">
-          Loading the freshest vibes...
+          Loading that +1000 aura...
         </p>
       </div>
     );
@@ -98,8 +98,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab }) => {
             <Sparkles className="w-6 h-6 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="font-black text-white text-base">AI Playlist Generator</h3>
-            <p className="text-zinc-400 text-xs mt-0.5">Enter a seed track → get a perfectly sequenced 30-song journey</p>
+            <h3 className="font-black text-white text-base">AI Playlist Generator (W Rizz)</h3>
+            <p className="text-zinc-400 text-xs mt-0.5">Drop a seed track → get a skibidi 30-song journey</p>
           </div>
           <div className="shrink-0 px-3 py-1.5 rounded-full bg-purple-500/20 border border-purple-500/40 text-purple-300 text-xs font-bold">
             Try it
@@ -107,7 +107,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab }) => {
         </div>
       </div>
       <div>
-        <h2 className="text-sm font-bold tracking-[0.2em] uppercase text-zinc-500 mb-4">Mood Pills</h2>
+        <h2 className="text-sm font-bold tracking-[0.2em] uppercase text-zinc-500 mb-4">Aura Pills</h2>
         <div className="flex flex-wrap gap-3">
           {MOOD_PILLS.map(pill => (
             <button 
@@ -120,7 +120,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab }) => {
                   const results = await searchUnblocked(pill.query);
                   setSectionsData(prev => ({
                     ...prev,
-                    "CURATED FOR YOU": results.slice(0, 10)
+                    "W SONGS (NO CAP)": results.slice(0, 10)
                   }));
                 } finally {
                   setIsLoading(false);
@@ -165,7 +165,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab }) => {
                 return (
                   <div 
                     key={track.id}
-                    className="group relative flex items-center p-5 rounded-3xl bg-white/5 hover:bg-white/10 transition-all cursor-pointer overflow-hidden border border-white/10 hover:border-acid-lime/50 shadow-[0_10px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_15px_40px_rgba(163,230,53,0.15)]"
+                    className="group relative flex items-center p-5 rounded-3xl bg-white/5 hover:bg-white/10 transition-all cursor-pointer overflow-hidden border border-white/10 hover:border-acid-lime/50 hover:scale-[1.02] shadow-[0_10px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_15px_40px_rgba(163,230,53,0.15)]"
                     onClick={() => handlePlay(track, data)}
                   >
                     {/* Massive faded number in background */}
