@@ -16,30 +16,61 @@ export const generateAiMashup = async (tracks: Track[], anchorTrackId: string): 
   
   setStatus('extracting', 10);
   
-  // Create prompt for Gemini
-  const promptText = `
-You are an expert DJ creating a mashup arrangement. I am providing you a list of tracks.
-Anchor Track (Sets the main tempo/beat): ${anchorTrack.title} by ${anchorTrack.artist} (ID: ${anchorTrack.id})
-Other Tracks:
-${tracks.filter(t => t.id !== anchorTrack.id).map(t => `- ${t.title} by ${t.artist} (ID: ${t.id})`).join('\n')}
+  // Create a masterpiece mashup prompt for Gemini
+  const totalDuration = Math.min(anchorTrack.duration || 180, 120); // up to 2 min mashup
+  const secondaryTracks = tracks.filter(t => t.id !== anchorTrack.id);
 
-Generate a JSON array of DJ events to control playback over a 60-second mashup.
-Valid event types: "play", "pause", "fade_in", "fade_out", "cut_vocals", "restore_vocals", "cut_bass", "restore_bass".
+  const promptText = `You are a Grammy-winning music producer and DJ legend. Your task is to create a MASTERPIECE mashup arrangement that sounds professional and emotional — like a chart-topping remix.
 
-CRITICAL DJ RULES TO PREVENT CLASHING:
-1. NEVER mix vocals together. If a secondary track plays, you MUST apply "cut_vocals" to the Anchor track so they don't clash.
-2. NEVER mix heavy backgrounds together. If a secondary track has a strong beat, apply "cut_bass" to it to let the Anchor track's beat dominate.
-3. Ensure smooth transitions using "fade_in" and "fade_out".
-4. Output ONLY raw valid JSON array, no markdown formatting or backticks.
+=== TRACKS ===
+ANCHOR TRACK (backbone of the mashup, always controls the main beat):
+  Title: "${anchorTrack.title}" by ${anchorTrack.artist}
+  ID: ${anchorTrack.id}
+  Duration: ${anchorTrack.duration || 180}s
 
-Example format:
+SECONDARY TRACKS (layer these over the anchor for contrast and drama):
+${secondaryTracks.map((t, i) => `  ${i + 1}. "${t.title}" by ${t.artist} (ID: ${t.id}, Duration: ${t.duration || 180}s)`).join('\n')}
+
+=== TOTAL MASHUP DURATION: ${totalDuration} seconds ===
+
+=== YOUR DJ TOOLKIT (event types) ===
+- "play"        — play from current position at full volume
+- "pause"       — smooth fade out then pause
+- "fade_in"     — fade in over 3s (always use this when introducing a track)
+- "fade_out"    — fade out over 3s (always use this when removing a track)
+- "seek"        — jump a track to a specific time position (use seekTo: N seconds) — use BEFORE fade_in to pick the best hook/chorus
+- "set_volume"  — ramp volume to a level (use volume: 0.0–1.0)
+- "cut_vocals"  — mute midrange frequencies (vocals) on a track so two vocals don't clash
+- "restore_vocals" — restore vocals
+- "cut_bass"    — cut bass (below 200Hz) on a secondary track so only the anchor's beat dominates
+- "restore_bass" — restore bass
+
+=== MASTERPIECE ARRANGEMENT RULES ===
+1. INTRO (0–${Math.round(totalDuration * 0.15)}s): Start with the anchor alone. Build anticipation.
+2. FIRST DROP (${Math.round(totalDuration * 0.15)}s–${Math.round(totalDuration * 0.4)}s): Introduce the first secondary track. Always seek it to its CHORUS or best hook before fading it in. Cut its bass so the anchor's beat wins.
+3. CLIMAX (${Math.round(totalDuration * 0.4)}s–${Math.round(totalDuration * 0.75)}s): This is the emotional peak. Cut the anchor's vocals and bring in the secondary track's vocals for contrast. If multiple secondaries, swap them in/out with clean fades.
+4. BUILD DOWN (${Math.round(totalDuration * 0.75)}s–${Math.round(totalDuration * 0.9)}s): Start removing secondary tracks with fade_out, restore the anchor's vocals.
+5. OUTRO (${Math.round(totalDuration * 0.9)}s–${totalDuration}s): Only the anchor remains, fade it out beautifully.
+
+NEVER let two vocals play at the same time without first cutting one with cut_vocals.
+ALWAYS use seek before introducing a secondary track to find its best moment.
+Use set_volume to dynamically duck and swell tracks for emotional impact.
+
+Output ONLY a raw valid JSON array. No markdown, no explanation.
+
+Example (you should produce something much richer than this):
 [
   { "timestamp": 0, "trackId": "${anchorTrack.id}", "type": "play" },
-  { "timestamp": 15, "trackId": "other_id", "type": "fade_in" },
-  { "timestamp": 15, "trackId": "other_id", "type": "cut_bass" },
-  { "timestamp": 30, "trackId": "${anchorTrack.id}", "type": "cut_vocals" }
+  { "timestamp": 5, "trackId": "${secondaryTracks[0]?.id || anchorTrack.id}", "type": "seek", "seekTo": 45 },
+  { "timestamp": 5, "trackId": "${secondaryTracks[0]?.id || anchorTrack.id}", "type": "fade_in" },
+  { "timestamp": 5, "trackId": "${secondaryTracks[0]?.id || anchorTrack.id}", "type": "cut_bass" },
+  { "timestamp": 20, "trackId": "${anchorTrack.id}", "type": "cut_vocals" },
+  { "timestamp": 35, "trackId": "${secondaryTracks[0]?.id || anchorTrack.id}", "type": "fade_out" },
+  { "timestamp": 37, "trackId": "${anchorTrack.id}", "type": "restore_vocals" }
 ]
-  `;
+
+Now produce a FULL, DETAILED arrangement for ${totalDuration} seconds:`;
+
 
   let arrangement: any[] = [];
   try {
@@ -51,25 +82,52 @@ Example format:
       throw new Error("Missing Gemini API Key");
     }
 
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: promptText }] }],
-        generationConfig: { temperature: 0.7 }
+        generationConfig: { temperature: 1.0, maxOutputTokens: 4096 }
       })
     });
     const data = await res.json();
-    let text = data.candidates[0].content.parts[0].text;
+    let text = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
     
     // Clean up markdown if any
     text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    
+    // Extract JSON array if wrapped in text
+    const match = text.match(/\[.*\]/s);
+    if (match) text = match[0];
+    
     arrangement = JSON.parse(text);
     setStatus('mastering', 85);
   } catch (e) {
-    console.error("Gemini AI Arrangement failed, falling back to basic play:", e);
-    // Fallback arrangement if API fails
-    arrangement = tracks.map(t => ({ timestamp: 0, trackId: t.id, type: 'play' }));
+    console.error("Gemini AI Arrangement failed, using structured fallback:", e);
+    // Smart 3-act fallback arrangement
+    const fallbackSecondaries = tracks.filter(t => t.id !== anchorTrack.id);
+    const dur = Math.min(anchorTrack.duration || 180, 120);
+    arrangement = [
+      { timestamp: 0, trackId: anchorTrack.id, type: 'play' },
+      // Intro with anchor
+      ...(fallbackSecondaries.length > 0 ? [
+        { timestamp: Math.round(dur * 0.15), trackId: fallbackSecondaries[0].id, type: 'seek', seekTo: 30 },
+        { timestamp: Math.round(dur * 0.15), trackId: fallbackSecondaries[0].id, type: 'fade_in' },
+        { timestamp: Math.round(dur * 0.15), trackId: fallbackSecondaries[0].id, type: 'cut_bass' },
+        { timestamp: Math.round(dur * 0.4), trackId: anchorTrack.id, type: 'cut_vocals' },
+        { timestamp: Math.round(dur * 0.75), trackId: fallbackSecondaries[0].id, type: 'fade_out' },
+        { timestamp: Math.round(dur * 0.77), trackId: anchorTrack.id, type: 'restore_vocals' },
+      ] : []),
+      // Second secondary if available
+      ...(fallbackSecondaries.length > 1 ? [
+        { timestamp: Math.round(dur * 0.45), trackId: fallbackSecondaries[1].id, type: 'seek', seekTo: 45 },
+        { timestamp: Math.round(dur * 0.45), trackId: fallbackSecondaries[1].id, type: 'fade_in' },
+        { timestamp: Math.round(dur * 0.45), trackId: fallbackSecondaries[1].id, type: 'cut_bass' },
+        { timestamp: Math.round(dur * 0.7), trackId: fallbackSecondaries[1].id, type: 'fade_out' },
+      ] : []),
+      // Outro
+      { timestamp: Math.round(dur * 0.9), trackId: anchorTrack.id, type: 'fade_out' },
+    ];
   }
   
   setStatus('complete', 100);

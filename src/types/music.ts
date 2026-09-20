@@ -2,9 +2,11 @@ export type MusicSource = 'saavn' | 'audius' | 'invidious';
 export type PlaylistSegment = 'foundation' | 'peak' | 'cooldown';
 
 export interface DjEvent {
-  timestamp: number; // in seconds
+  timestamp: number; // in seconds - when this event fires in the mashup timeline
   trackId: string;
-  type: 'play' | 'pause' | 'fade_in' | 'fade_out' | 'cut_vocals' | 'restore_vocals' | 'cut_bass' | 'restore_bass';
+  type: 'play' | 'pause' | 'fade_in' | 'fade_out' | 'cut_vocals' | 'restore_vocals' | 'cut_bass' | 'restore_bass' | 'seek' | 'set_volume';
+  seekTo?: number;  // only for 'seek' - seek the track to this position (seconds) before playing
+  volume?: number;  // only for 'set_volume' - 0.0 to 1.0
 }
 
 export interface Track {

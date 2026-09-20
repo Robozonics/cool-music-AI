@@ -126,20 +126,32 @@ const executeDjEvent = (evt: DjEvent, currentTrackId: string, volume: number) =>
   if (!targetAudio) return;
   
   switch (evt.type) {
+    case 'seek':
+      if (evt.seekTo !== undefined) {
+        targetAudio.currentTime = evt.seekTo;
+      }
+      break;
+    case 'set_volume':
+      if (evt.volume !== undefined) {
+        rampVolume(targetAudio, targetAudio.volume, evt.volume * volume, 500);
+      }
+      break;
     case 'play':
       targetAudio.volume = volume;
       targetAudio.play().catch(() => {});
       break;
     case 'pause':
-      targetAudio.pause();
+      rampVolume(targetAudio, targetAudio.volume, 0, 800, () => {
+        targetAudio!.pause();
+      });
       break;
     case 'fade_in':
       targetAudio.volume = 0;
       targetAudio.play().catch(() => {});
-      rampVolume(targetAudio, 0, volume, 2000);
+      rampVolume(targetAudio, 0, volume, 3000);
       break;
     case 'fade_out':
-      rampVolume(targetAudio, targetAudio.volume, 0, 2000, () => {
+      rampVolume(targetAudio, targetAudio.volume, 0, 3000, () => {
          targetAudio!.pause();
       });
       break;
