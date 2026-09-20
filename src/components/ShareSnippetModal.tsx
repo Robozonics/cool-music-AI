@@ -276,7 +276,8 @@ export const ShareSnippetModal: React.FC = () => {
                   onChange={e => {
                     const s = Number(e.target.value);
                     setSnippetStart(s);
-                    setSnippetEnd(Math.min(s + 15, duration));
+                    // Keep the current snippet length if possible
+                    setSnippetEnd(Math.min(s + snippetLength, duration));
                   }}
                   className="w-full h-2 appearance-none bg-white/10 rounded-full cursor-pointer accent-purple-500"
                 />
@@ -288,7 +289,7 @@ export const ShareSnippetModal: React.FC = () => {
                 <input
                   type="range"
                   min={5}
-                  max={Math.min(30, duration - snippetStart)}
+                  max={Math.max(5, duration - snippetStart)}
                   step={1}
                   value={snippetLength}
                   onChange={e => setSnippetEnd(snippetStart + Number(e.target.value))}

@@ -2,6 +2,7 @@ import { searchSaavn } from './unblockedMusicService';
 import type { Track } from '../types/music';
 
 const reversedKeys = [
+  'wGdX9A1YBS4wABYpKZ3IqX09Q3jIugS378GYwxiPLxI6NR8bA.QA', // User provided key reversed
   'AV81QcMsO-MXVj5-HPaZ3K-nVCCKTyfJC8XEBoZF2-yK6NR8bA.QA',
   'AnllYySbZxr31WTwJwMOo3OPZuaLAShcjzPnRurDEkaJ6NR8bA.QA', // Newly provided key
   'weCLRP6BDw0y2dHPL6FulKJfIWgtvV-l_QEVLnd0iciL6NR8bA.QA',
@@ -265,3 +266,28 @@ No markdown, no commentary, no extra keys, no numbering. Pure JSON array only.`;
   return resolved;
 };
 
+// ── NEW: AI Command Parser ──────────────────────────────────────────────────
+export const parseAICommand = async (command: string): Promise<{ action: 'play' | 'add_to_playlist' | 'create_playlist' | 'mood' | 'share' | 'unknown', query: string }> => {
+  const promptText = `You are an AI assistant in a music app. The user just gave the command: "${command}". 
+Parse this command into a JSON object with exactly two keys:
+1. "action": one of "play", "add_to_playlist", "create_playlist", "mood", "share"
+   - use "create_playlist" if they ask to make/build a playlist
+   - use "mood" if they ask for relaxing, focus, sad, happy, or mood-based music
+   - use "share" if they ask to share the music
+   - use "play" if they ask to play a specific song or artist
+   - use "add_to_playlist" if they ask to add a specific song to a playlist
+2. "query": the name of the song, artist, mood, or seed required to perform the action (e.g. "blinding lights", "relaxing beats"). For share, it can be empty.
+
+If you cannot understand the command, return {"action": "unknown", "query": ""}.
+Output ONLY valid JSON ARRAY containing ONE object. Example: [{"action": "play", "query": "starboy"}]. No markdown, no extra text.`;
+
+  try {
+    const result = await callGeminiDirectly(promptText, 'search');
+    if (result && result.length > 0) {
+      return result[0];
+    }
+  } catch (e) {
+    console.error('Command parsing failed', e);
+  }
+  return { action: 'unknown', query: '' };
+};

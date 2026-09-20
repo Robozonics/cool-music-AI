@@ -17,12 +17,16 @@ import { AddToPlaylistModal } from './components/AddToPlaylistModal';
 import { ConnectDeviceModal } from './components/ConnectDeviceModal';
 import { SamplesFeed } from './components/SamplesFeed';
 import { QueuePanel } from './components/QueuePanel';
+import { MobileAICommandBox } from './components/MobileAICommandBox';
 import { usePlayerStore } from './store/usePlayerStore';
-import { WifiOff, AlertTriangle, Settings } from 'lucide-react';
+import { WifiOff, AlertTriangle, Settings, Sparkles } from 'lucide-react';
 
 import { useAudioAnalyzer } from './store/useAudioAnalyzer';
 import { SoundFusionLayout } from './features/soundfusion/layout/SoundFusionLayout';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { useWakeWord } from './hooks/useWakeWord';
+import { useAICommandProcessor } from './hooks/useAICommandProcessor';
+import { Mic } from 'lucide-react';
 
 function App() {
   useAudioAnalyzer();
@@ -35,6 +39,16 @@ function App() {
   
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [isAiCommandOpen, setAiCommandOpen] = useState(false);
+
+  const { processCommand } = useAICommandProcessor();
+  const { isListening, toggleWakeWord } = useWakeWord((command) => {
+    if (command) {
+      processCommand(command, () => setAiCommandOpen(true));
+    } else {
+      setAiCommandOpen(true);
+    }
+  });
 
   useEffect(() => {
     const handleOnline = () => setIsOffline(false);
@@ -106,13 +120,32 @@ function App() {
           <h1 className="text-2xl font-black tracking-tighter text-white">
             MUSI<span className="text-acid-lime">FY</span>
           </h1>
-          <button 
-            onClick={() => setApiKeyModalOpen(true)}
-            className="p-2 text-gray-400 hover:text-white transition"
-          >
-            <Settings className="w-6 h-6" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={toggleWakeWord}
+              className={`p-2 transition rounded-full ${isListening ? 'bg-red-500/20 text-red-400 animate-pulse' : 'text-zinc-500 hover:text-zinc-300'}`}
+              title="Hey Musify (Continuous Listening)"
+            >
+              <Mic className="w-5 h-5" />
+            </button>
+            <button 
+              onClick={() => setAiCommandOpen(!isAiCommandOpen)}
+              className="p-2 text-purple-400 hover:text-purple-300 transition"
+              title="AI Command Box"
+            >
+              <Sparkles className="w-6 h-6" />
+            </button>
+            <button 
+              onClick={() => setApiKeyModalOpen(true)}
+              className="p-2 text-gray-400 hover:text-white transition"
+            >
+              <Settings className="w-6 h-6" />
+            </button>
+          </div>
         </header>
+        <div className="relative z-10">
+          <MobileAICommandBox isOpen={isAiCommandOpen} onClose={() => setAiCommandOpen(false)} />
+        </div>
 
         <main className="flex-1 overflow-y-auto overflow-x-hidden relative z-0 pb-40">
           {renderContent()}

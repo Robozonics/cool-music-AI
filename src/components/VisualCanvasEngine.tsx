@@ -19,6 +19,17 @@ export const VisualCanvasEngine = () => {
   const playerRef = useRef<any>(null);
   const [isReady, setIsReady] = useState(false);
   const [videoId, setVideoId] = useState<string | null>(null);
+  const [showInfo, setShowInfo] = useState(false);
+
+  useEffect(() => {
+    if (isVideoMode && currentTrack) {
+      setShowInfo(true);
+      const timer = setTimeout(() => setShowInfo(false), 5000);
+      return () => clearTimeout(timer);
+    } else {
+      setShowInfo(false);
+    }
+  }, [isVideoMode, currentTrack?.id]);
 
   // 1. Load YT API
   useEffect(() => {
@@ -169,24 +180,32 @@ export const VisualCanvasEngine = () => {
             </button>
             
             {/* Track Info — gradient name overlay */}
-            {currentTrack && (
-              <div className="absolute bottom-32 left-0 right-0 px-8 z-[110]">
-                <p className="text-xs font-bold uppercase tracking-[0.3em] text-white/50 mb-1">Now Playing</p>
-                <h2
-                  className="text-4xl md:text-6xl font-black tracking-tight leading-none mb-2"
-                  style={{
-                    background: 'linear-gradient(90deg, #CCFF00 0%, #ff00ff 50%, #00ffff 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                    filter: 'drop-shadow(0 0 20px rgba(204,255,0,0.4))'
-                  }}
+            <AnimatePresence>
+              {currentTrack && showInfo && (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.5 }}
+                  className="absolute bottom-32 left-0 right-0 px-8 z-[110]"
                 >
-                  {currentTrack.title}
-                </h2>
-                <p className="text-lg font-medium text-white/70">{currentTrack.artist}</p>
-              </div>
-            )}
+                  <p className="text-xs font-bold uppercase tracking-[0.3em] text-white/50 mb-1">Now Playing</p>
+                  <h2
+                    className="text-4xl md:text-6xl font-black tracking-tight leading-none mb-2"
+                    style={{
+                      background: 'linear-gradient(90deg, #CCFF00 0%, #ff00ff 50%, #00ffff 100%)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                      filter: 'drop-shadow(0 0 20px rgba(204,255,0,0.4))'
+                    }}
+                  >
+                    {currentTrack.title}
+                  </h2>
+                  <p className="text-lg font-medium text-white/70">{currentTrack.artist}</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         )}
       </AnimatePresence>
