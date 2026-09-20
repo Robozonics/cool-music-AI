@@ -117,7 +117,12 @@ html, body {
 
 @keyframes zigzag-move {
   0% { background-position: 0px 50%; }
-  100% { background-position: -40px 50%; }
+  100% { background-position: -50px 50%; }
+}
+
+@keyframes rainbow-hue {
+  0% { filter: drop-shadow(0 0 8px rgba(204, 255, 0, 0.9)) hue-rotate(0deg); }
+  100% { filter: drop-shadow(0 0 8px rgba(204, 255, 0, 0.9)) hue-rotate(360deg); }
 }
 
 .genz-waveform {
@@ -125,8 +130,7 @@ html, body {
   background-size: 50px 20px;
   background-repeat: repeat-x;
   background-position: 0px 50%;
-  animation: zigzag-move 0.8s linear infinite;
-  filter: drop-shadow(0 0 6px rgba(204, 255, 0, 0.8));
+  animation: zigzag-move 0.8s linear infinite, rainbow-hue 1s linear infinite;
 }
 
 .genz-waveform-bg {
