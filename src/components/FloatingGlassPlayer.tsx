@@ -278,14 +278,19 @@ export const FloatingGlassPlayer: React.FC = () => {
                 onChange={(e) => seek(parseFloat(e.target.value))}
                 className="absolute inset-0 w-full h-1 opacity-0 z-10 cursor-pointer"
               />
-              <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden pointer-events-none">
-                <div
-                  className="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-lime-400 rounded-full relative overflow-hidden"
-                  style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
-                >
-                  {isPlaying && <div className="absolute inset-0 bg-genz-zigzag" />}
-                </div>
-              </div>
+            {/* The Wavy ZigZag Track */}
+            <div className="absolute inset-x-0 h-4 pointer-events-none genz-waveform-bg" />
+            
+            {/* The Filled Wavy ZigZag Track */}
+            <div 
+              className="absolute left-0 h-4 pointer-events-none overflow-hidden"
+              style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
+            >
+              <div 
+                className={`absolute inset-0 w-[100vw] h-full ${isPlaying ? 'genz-waveform' : 'genz-waveform'} ${!isPlaying && 'opacity-70'}`}
+                style={{ animationPlayState: isPlaying ? 'running' : 'paused' }}
+              />
+            </div>
               {/* Glowing Slider Thumb on Hover */}
               <div
                 className="absolute w-3 h-3 bg-white rounded-full shadow-[0_0_10px_#ffffff] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none -translate-x-1/2"

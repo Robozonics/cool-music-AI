@@ -33,7 +33,7 @@ export const FullPlayer: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-40 bg-obsidian flex flex-col pt-12 pb-8 px-6 transition-transform duration-500">
+    <div className="fixed inset-0 z-40 bg-obsidian flex flex-col pt-12 pb-8 px-6 transition-transform duration-500 overflow-y-auto">
       {/* Background glow based on thumbnail (simplified for now) */}
       <div className="absolute inset-0 opacity-20 blur-3xl pointer-events-none" style={{ backgroundImage: `url(${currentTrack.thumbnail})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
 
@@ -69,8 +69,8 @@ export const FullPlayer: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center relative z-10 w-full max-w-sm mx-auto">
-        <div className="w-full aspect-square rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] mb-8 relative group" style={{ transform: `scale(calc(1 + var(--vibe-intensity, 0) * 0.1))`, transition: 'transform 0.1s ease-out' }}>
+      <div className="flex-1 flex flex-col items-center justify-center relative z-10 w-full max-w-sm mx-auto min-h-[500px]">
+        <div className="w-full aspect-square max-h-[40vh] md:max-h-none rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] mb-6 relative group" style={{ transform: `scale(calc(1 + var(--vibe-intensity, 0) * 0.1))`, transition: 'transform 0.1s ease-out' }}>
            <img src={currentTrack.thumbnail} alt={currentTrack.title} className="w-full h-full object-cover" />
         </div>
 
@@ -123,9 +123,9 @@ export const FullPlayer: React.FC = () => {
           </div>
         </div>
 
-        {/* Progress Bar */}
-        <div className="w-full mb-8">
-          <div className="relative group cursor-pointer h-6 flex items-center w-full">
+        {/* Progress Bar (GenZ Waveform) */}
+        <div className="w-full mb-6">
+          <div className="relative group cursor-pointer h-8 flex items-center w-full">
             <input 
               type="range"
               min="0"
@@ -134,23 +134,30 @@ export const FullPlayer: React.FC = () => {
               onChange={(e) => seek(parseFloat(e.target.value))}
               className="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer"
             />
-            <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden pointer-events-none">
+            
+            {/* The Wavy ZigZag Track */}
+            <div className="absolute inset-x-0 h-4 pointer-events-none genz-waveform-bg" />
+            
+            {/* The Filled Wavy ZigZag Track */}
+            <div 
+              className="absolute left-0 h-4 pointer-events-none overflow-hidden"
+              style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
+            >
               <div 
-                className="h-full rounded-full relative bg-acid-lime overflow-hidden"
-                style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
-              >
-                {isPlaying && <div className="absolute inset-0 bg-genz-zigzag" />}
-              </div>
+                className={`absolute inset-0 w-[100vw] h-full ${isPlaying ? 'genz-waveform' : 'genz-waveform'} ${!isPlaying && 'opacity-70'}`}
+                style={{ animationPlayState: isPlaying ? 'running' : 'paused' }}
+              />
             </div>
+            
             {/* Glowing Slider Thumb on Hover */}
             <div
-              className="absolute w-4 h-4 bg-white rounded-full shadow-[0_0_15px_#ffffff] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none -translate-x-1/2"
+              className={`absolute w-4 h-4 bg-white rounded-full shadow-[0_0_15px_#ffffff] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none -translate-x-1/2 ${isPlaying ? 'animate-bounce' : ''}`}
               style={{
                 left: `${duration ? (currentTime / duration) * 100 : 0}%`,
               }}
             />
           </div>
-          <div className="flex justify-between text-xs text-gray-400 mt-2 font-medium">
+          <div className="flex justify-between text-xs text-gray-400 mt-1 font-medium">
             <span>{formatTime(currentTime)}</span>
             <span>{formatTime(duration)}</span>
           </div>
