@@ -50,19 +50,28 @@ export const OfflineVault: React.FC<OfflineVaultProps> = ({ setActiveTab }) => {
       {savedPlaylists.length > 0 && (
         <div className="mb-10">
           <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4 pl-2">Your Playlists</h3>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col space-y-2">
             {savedPlaylists.map(playlist => (
               <div 
                 key={playlist.id} 
                 onClick={() => setActiveTab?.(`playlist:${playlist.id}`)}
-                className="bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col justify-between aspect-square cursor-pointer hover:bg-white/10 transition group shadow-[0_10px_20px_rgba(0,0,0,0.3)]"
+                className="flex items-center gap-4 p-2 md:p-3 bg-transparent hover:bg-white/5 rounded-xl transition cursor-pointer group"
               >
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                  <ListMusic className="w-5 h-5 text-white" />
+                <div className="w-16 h-16 md:w-20 md:h-20 rounded-md overflow-hidden bg-white/10 shrink-0 flex items-center justify-center relative shadow-md">
+                   {playlist.tracks[0] ? (
+                     <div className="absolute inset-0" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr' }}>
+                        {playlist.tracks.slice(0, 4).map((t, i) => (
+                          <img key={i} src={t.thumbnail} className="w-full h-full object-cover" alt="" />
+                        ))}
+                     </div>
+                   ) : (
+                     <ListMusic className="w-8 h-8 text-white/50" />
+                   )}
+                   <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors" />
                 </div>
-                <div>
-                  <h4 className="font-bold text-white text-lg truncate mb-1">{playlist.name}</h4>
-                  <p className="text-gray-400 text-xs font-medium uppercase tracking-wider">{playlist.tracks.length} Tracks</p>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-bold text-white text-base md:text-lg truncate mb-1">{playlist.name}</h4>
+                  <p className="text-gray-400 text-sm font-medium">Playlist • {playlist.tracks.length} tracks</p>
                 </div>
               </div>
             ))}
