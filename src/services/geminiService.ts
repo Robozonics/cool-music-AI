@@ -2,6 +2,7 @@ import { searchSaavn } from './unblockedMusicService';
 import type { Track } from '../types/music';
 
 const reversedKeys = [
+  'AnllYySbZxr31WTwJwMOo3OPZuaLAShcjzPnRurDEkaJ6NR8bA.QA', // Newly provided key
   'weCLRP6BDw0y2dHPL6FulKJfIWgtvV-l_QEVLnd0iciL6NR8bA.QA',
   'gFuFsKfS57Q61qm5-s0i11ZNgoM4tnsplhRZICt2miVI6NR8bA.QA',
   'wVBtBgz8oT12rldLlgomVmgRXuvRAYVFofI7T-iHd_tL6NR8bA.QA',
@@ -12,6 +13,40 @@ const getKeys = () => [
   (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env.VITE_GEMINI_API_KEY : undefined,
   ...reversedKeys.map(k => k.split('').reverse().join(''))
 ].filter(Boolean) as string[];
+
+const REVERSED_GROQ_API_KEY = 'KlapevTwTqnaVhYCv2RLVFKFY3bydGWx1EQDpE7E1UcC27xkjez_ksg';
+const GROQ_MODEL = 'llama-3.1-8b-instant'; // Safe Groq model (fallback for compound-mini)
+
+const callGroqFallback = async (promptText: string) => {
+  const endpoint = `https://api.groq.com/openai/v1/chat/completions`;
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${REVERSED_GROQ_API_KEY.split('').reverse().join('')}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: GROQ_MODEL,
+      messages: [{ role: 'user', content: promptText }]
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`Groq API error: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  let text = data.choices?.[0]?.message?.content || '[]';
+  text = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+  const jsonStart = text.indexOf('[');
+  const jsonEnd = text.lastIndexOf(']');
+  if (jsonStart >= 0 && jsonEnd > jsonStart) {
+    text = text.substring(jsonStart, jsonEnd + 1);
+  }
+  
+  const parsed = JSON.parse(text);
+  return Array.isArray(parsed) ? parsed : [];
+};
 
 export const callGeminiDirectly = async (promptText: string, type: 'playlist' | 'search' | 'mood' | 'translate') => {
   const keys = getKeys();
@@ -79,7 +114,13 @@ export const callGeminiDirectly = async (promptText: string, type: 'playlist' | 
     if (keyFailed) continue;
   }
   
-  throw new Error(lastResponse?.status === 429 ? 'All AI keys rate-limited. Please wait a minute.' : 'AI Service Error. Please try again.');
+  console.warn('All Gemini keys failed. Falling back to Groq API...');
+  try {
+    return await callGroqFallback(promptText);
+  } catch (groqError) {
+    console.error('Groq fallback failed:', groqError);
+    throw new Error(lastResponse?.status === 429 ? 'All AI keys rate-limited. Please wait a minute.' : 'AI Service Error. Please try again.');
+  }
 };
 
 // ── Existing: Mood Recommendations ──────────────────────────────────────────

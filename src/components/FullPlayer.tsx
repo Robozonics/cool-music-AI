@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, SkipForward, SkipBack, ChevronDown, Mic2, Download, Plus, X, Repeat } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, ChevronDown, Mic2, Download, Plus, X, Repeat, Share2, Video, Blend } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
 
 export const FullPlayer: React.FC = () => {
@@ -24,6 +24,9 @@ export const FullPlayer: React.FC = () => {
   
   const isVideoMode = usePlayerStore(state => state.isVideoMode);
   const toggleVideoMode = usePlayerStore(state => state.toggleVideoMode);
+  const isCrossfadeEnabled = usePlayerStore(state => state.isCrossfadeEnabled);
+  const toggleCrossfade = usePlayerStore(state => state.toggleCrossfade);
+  const setShareSnippetOpen = usePlayerStore(state => state.setShareSnippetOpen);
 
   const toggleRepeat = () => {
     if (repeatMode === 'off') setRepeatMode('all');
@@ -92,13 +95,13 @@ export const FullPlayer: React.FC = () => {
             </div>
           </div>
           
-          <div className="w-full flex items-center justify-around gap-2 py-4 border-b border-white/5">
+          <div className="w-full flex flex-wrap items-center justify-center gap-3 sm:gap-6 py-4 border-b border-white/5">
             <button
               onClick={() => usePlayerStore.getState().openAddToPlaylistModal(currentTrack)}
-              className="p-3 rounded-full text-gray-400 hover:text-white transition-colors"
+              className="p-2 sm:p-3 rounded-full text-gray-400 hover:text-white transition-colors"
               title="Add to Playlist"
             >
-              <Plus className="w-6 h-6" />
+              <Plus className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
             
             {currentTrack.source === 'saavn' && !currentTrack.isOffline && (
@@ -109,26 +112,50 @@ export const FullPlayer: React.FC = () => {
                     usePlayerStore.setState({ currentTrack: { ...currentTrack, isOffline: true } });
                   }
                 }}
-                className="p-3 rounded-full text-gray-400 hover:text-cyber-cyan transition-colors"
+                className="p-2 sm:p-3 rounded-full text-gray-400 hover:text-cyber-cyan transition-colors"
                 title="Download Offline"
               >
-                <Download className="w-6 h-6" />
+                <Download className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             )}
             
             <button
               onClick={() => setSpeedWheelOpen(true)}
-              className="p-3 flex items-center justify-center rounded-full font-bold text-sm text-gray-400 hover:text-white transition-colors"
+              className="p-2 sm:p-3 flex items-center justify-center rounded-full font-bold text-xs sm:text-sm text-gray-400 hover:text-white transition-colors"
             >
               {playbackRate}x
             </button>
             
             <button 
+              onClick={() => setShareSnippetOpen(true)}
+              className="p-2 sm:p-3 rounded-full text-gray-400 hover:text-white transition-colors"
+              title="Share Snippet"
+            >
+              <Share2 className="w-5 h-5 sm:w-6 sm:h-6" />
+            </button>
+
+            <button
+              onClick={toggleVideoMode}
+              className={`p-2 sm:p-3 rounded-full transition-colors ${isVideoMode ? 'text-cyber-cyan shadow-[0_0_15px_rgba(0,255,255,0.3)]' : 'text-gray-400 hover:text-white'}`}
+              title="Video Mode"
+            >
+              <Video className="w-5 h-5 sm:w-6 sm:h-6" />
+            </button>
+
+            <button
+              onClick={toggleCrossfade}
+              className={`p-2 sm:p-3 rounded-full transition-colors ${isCrossfadeEnabled ? 'text-lime-400 shadow-[0_0_15px_rgba(163,230,53,0.3)]' : 'text-gray-400 hover:text-[#ff00ff]'}`}
+              title="Crossfade (Blend)"
+            >
+              <Blend className="w-5 h-5 sm:w-6 sm:h-6" />
+            </button>
+
+            <button 
               onClick={() => setLyricsOpen(!isLyricsOpen)}
-              className={`p-3 rounded-full transition-colors ${isLyricsOpen ? 'text-acid-lime shadow-[0_0_15px_rgba(204,255,0,0.3)]' : 'text-gray-400 hover:text-white'}`}
+              className={`p-2 sm:p-3 rounded-full transition-colors ${isLyricsOpen ? 'text-acid-lime shadow-[0_0_15px_rgba(204,255,0,0.3)]' : 'text-gray-400 hover:text-white'}`}
               title="Lyrics"
             >
-              <Mic2 className="w-6 h-6" />
+              <Mic2 className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
           </div>
         </div>
