@@ -30,11 +30,16 @@ export const useAICommandProcessor = () => {
         case 'add_to_playlist': {
           let track = null;
           const q = parsed.query?.toLowerCase() || '';
-          if (q.includes('this song') || q.includes('this track') || q.includes('current song')) {
+          
+          if (!q || q.includes('this') || q.includes('current') || q.includes('playing') || q === 'it') {
             track = usePlayerStore.getState().currentTrack;
-          } else if (parsed.query) {
+          } else {
             const results = await searchSaavn(parsed.query);
             if (results && results.length > 0) track = results[0];
+          }
+          
+          if (!track) {
+            track = usePlayerStore.getState().currentTrack;
           }
 
           if (track) {
@@ -85,6 +90,8 @@ export const useAICommandProcessor = () => {
           }
           const tracks = await generateAIPlaylist({ artist: seedArtist, song: seedTitle });
           if (tracks.length > 0) {
+            const playlistName = `AI Mix: ${seedTitle}`;
+            usePlayerStore.getState().savePlaylist(playlistName, tracks);
             usePlayerStore.getState().setQueue(tracks);
             usePlayerStore.getState().playTrack(tracks[0]);
           }

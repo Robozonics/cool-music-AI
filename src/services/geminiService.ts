@@ -47,7 +47,7 @@ const callGroqFallback = async (promptText: string) => {
   }
   
   const parsed = JSON.parse(text);
-  return Array.isArray(parsed) ? parsed : [];
+  return Array.isArray(parsed) ? parsed : (parsed ? [parsed] : []);
 };
 
 export const callGeminiDirectly = async (promptText: string, type: 'playlist' | 'search' | 'mood' | 'translate') => {
@@ -104,7 +104,7 @@ export const callGeminiDirectly = async (promptText: string, type: 'playlist' | 
         }
         
         const parsed = JSON.parse(text);
-        return Array.isArray(parsed) ? parsed : [];
+        return Array.isArray(parsed) ? parsed : (parsed ? [parsed] : []);
       } catch (error) {
         if (attempt < MAX_RETRIES) {
           await new Promise(resolve => setTimeout(resolve, attempt * 1000));
@@ -279,7 +279,7 @@ Parse this command into a JSON object with exactly two keys:
    - use "add_to_playlist" if they ask to add a specific song to a playlist
 2. "query": the name of the song, artist, mood, seed, or playlist name required to perform the action (e.g. "blinding lights", "relaxing beats", "My Summer Mix"). For share, it can be empty.
 
-If you cannot understand the command, return {"action": "unknown", "query": ""}.
+If you cannot understand the command, return [{"action": "unknown", "query": ""}].
 Output ONLY valid JSON ARRAY containing ONE object. Example: [{"action": "play", "query": "starboy"}]. No markdown, no extra text.`;
 
   try {
