@@ -6,6 +6,7 @@ import { fetchLyrics, translateLyrics } from '../services/lyricsService';
 import type { LyricLine, TranslatedLyricLine } from '../types/music';
 
 const LANGUAGE_OPTIONS = [
+  { code: 'English', label: 'English', flag: '🇬🇧' },
   { code: 'Hindi', label: 'हिन्दी', flag: '🇮🇳' },
   { code: 'Spanish', label: 'Español', flag: '🇪🇸' },
   { code: 'French', label: 'Français', flag: '🇫🇷' },
