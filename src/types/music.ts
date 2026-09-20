@@ -4,9 +4,39 @@ export type PlaylistSegment = 'foundation' | 'peak' | 'cooldown';
 export interface DjEvent {
   timestamp: number; // in seconds - when this event fires in the mashup timeline
   trackId: string;
-  type: 'play' | 'pause' | 'fade_in' | 'fade_out' | 'cut_vocals' | 'restore_vocals' | 'cut_bass' | 'restore_bass' | 'seek' | 'set_volume';
-  seekTo?: number;  // only for 'seek' - seek the track to this position (seconds) before playing
-  volume?: number;  // only for 'set_volume' - 0.0 to 1.0
+  type: 'play' | 'pause' | 'fade_in' | 'fade_out' | 'cut_vocals' | 'restore_vocals' | 'cut_bass' | 'restore_bass' | 'seek' | 'set_volume' | 'highpass' | 'lowpass' | 'filter_reset';
+  seekTo?: number;
+  volume?: number;
+  filterHz?: number;   // for highpass/lowpass events
+}
+
+// ── Professional DJ Blueprint (Camelot / Bar-based) ──────────────────────────
+
+export interface ActiveStem {
+  track_id: string;
+  stem_type: 'drums' | 'bass' | 'vocals' | 'other' | 'full';
+  volume_db: number;
+  pitch_shift_semitones: number;
+}
+
+export interface TimelineBlock {
+  bar_start: number;
+  bar_end: number;
+  active_stems: ActiveStem[];
+  effects: {
+    transition_type: 'none' | 'crossfade' | 'high_pass_sweep' | 'low_pass_sweep' | 'cut';
+    filter_cutoff_hz?: number;
+    filter_sweep?: string | null;
+  };
+}
+
+export interface MashupBlueprint {
+  mashup_metadata: {
+    final_bpm: number;
+    total_duration_bars: number;
+    target_key?: string;
+  };
+  timeline_blocks: TimelineBlock[];
 }
 
 export interface Track {

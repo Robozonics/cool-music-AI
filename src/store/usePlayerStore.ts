@@ -175,6 +175,36 @@ const executeDjEvent = (evt: DjEvent, currentTrackId: string, volume: number) =>
         targetBassFilter.gain.setTargetAtTime(0, audioCtx.currentTime, 0.5);
       }
       break;
+    case 'highpass':
+      if (audioCtx) {
+        // Apply a high-pass filter sweep to cut low-end on entry
+        const hpFilter = audioCtx.createBiquadFilter();
+        hpFilter.type = 'highpass';
+        hpFilter.frequency.value = evt.filterHz ?? 800;
+        hpFilter.Q.value = 0.5;
+        // Sweep: ramp frequency from filterHz down to 20Hz over 4s
+        hpFilter.frequency.setTargetAtTime(20, audioCtx.currentTime, 2.0);
+      }
+      break;
+    case 'lowpass':
+      if (audioCtx) {
+        const lpFilter = audioCtx.createBiquadFilter();
+        lpFilter.type = 'lowpass';
+        lpFilter.frequency.value = evt.filterHz ?? 1200;
+        lpFilter.Q.value = 0.5;
+        // Sweep: ramp frequency from filterHz up to 20000Hz over 4s
+        lpFilter.frequency.setTargetAtTime(20000, audioCtx.currentTime, 2.0);
+      }
+      break;
+    case 'filter_reset':
+      // Restore filters to neutral
+      if (targetFilter && audioCtx) {
+        targetFilter.gain.setTargetAtTime(0, audioCtx.currentTime, 0.3);
+      }
+      if (targetBassFilter && audioCtx) {
+        targetBassFilter.gain.setTargetAtTime(0, audioCtx.currentTime, 0.3);
+      }
+      break;
   }
 };
 
