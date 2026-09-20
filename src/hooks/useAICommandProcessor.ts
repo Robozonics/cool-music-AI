@@ -6,12 +6,7 @@ import { usePlayerStore } from '../store/usePlayerStore';
 export const useAICommandProcessor = () => {
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const speakFeedback = (text: string) => {
-    if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(text);
-      window.speechSynthesis.speak(utterance);
-    }
-  };
+  // feedback removed at user request
 
   const processCommand = async (command: string, openAICommandBox?: () => void) => {
     if (!command.trim()) return;
@@ -28,9 +23,6 @@ export const useAICommandProcessor = () => {
               const track = results[0];
               usePlayerStore.getState().setQueue([track]);
               usePlayerStore.getState().playTrack(track);
-              speakFeedback(`Playing ${track.title} by ${track.artist}`);
-            } else {
-              speakFeedback(`I couldn't find ${parsed.query}`);
             }
           }
           break;
@@ -39,17 +31,20 @@ export const useAICommandProcessor = () => {
           if (parsed.query) {
             const results = await searchSaavn(parsed.query);
             if (results && results.length > 0) {
-              usePlayerStore.getState().openAddToPlaylistModal(results[0]);
-              speakFeedback(`Opened add to playlist for ${results[0].title}`);
-            } else {
-              speakFeedback(`I couldn't find ${parsed.query}`);
+              const track = results[0];
+              const state = usePlayerStore.getState();
+              const playlists = state.savedPlaylists;
+              if (playlists.length > 0) {
+                state.addTrackToPlaylist(playlists[0].id, track);
+              } else {
+                state.savePlaylist("My AI Playlist", [track]);
+              }
             }
           }
           break;
         }
         case 'share': {
           usePlayerStore.getState().setShareSnippetOpen(true);
-          speakFeedback(`Opening share options`);
           break;
         }
         case 'mood': {
@@ -66,10 +61,7 @@ export const useAICommandProcessor = () => {
               if (validTracks.length > 0) {
                 usePlayerStore.getState().setQueue(validTracks);
                 usePlayerStore.getState().playTrack(validTracks[0]);
-                speakFeedback(`Playing some mood music for you.`);
               }
-            } else {
-              speakFeedback(`I couldn't find any mood music for ${parsed.query}`);
             }
           }
           break;
@@ -88,16 +80,12 @@ export const useAICommandProcessor = () => {
           if (tracks.length > 0) {
             usePlayerStore.getState().setQueue(tracks);
             usePlayerStore.getState().playTrack(tracks[0]);
-            speakFeedback(`I created an AI playlist based on ${seedTitle}. Playing it now.`);
-          } else {
-            speakFeedback(`I couldn't generate a playlist for ${seedTitle}.`);
           }
           break;
         }
         case 'create_empty_playlist': {
           const playlistName = parsed.query || 'New AI Playlist';
           usePlayerStore.getState().savePlaylist(playlistName, []);
-          speakFeedback(`Empty playlist ${playlistName} is successfully created.`);
           break;
         }
         default:
