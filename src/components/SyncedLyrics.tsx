@@ -65,8 +65,13 @@ export const SyncedLyrics: React.FC<{ inline?: boolean }> = ({ inline = false })
       const result = await translateLyrics(synced, selectedLang.code, currentTrack.id);
       setTranslatedLines(result);
       setShowTranslation(true);
-    } catch {
-      // fail silently — original lyrics remain
+    } catch (e: any) {
+      console.error(e);
+      if (e.message && e.message.toLowerCase().includes('api key')) {
+        usePlayerStore.getState().setApiKeyModalOpen(true);
+      } else {
+        alert(e.message || "Translation failed. Please try again.");
+      }
     } finally {
       setIsTranslating(false);
     }

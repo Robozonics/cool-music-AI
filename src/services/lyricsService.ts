@@ -120,9 +120,8 @@ ${JSON.stringify(nonEmpty.map(l => ({ time: l.time, text: l.text })))}
 
     translationCache.set(cacheKey, merged);
     return merged;
-  } catch (error) {
+  } catch (error: any) {
     console.error('translateLyrics error:', error);
-    // Return original lines without translation on failure
-    return lines.map(l => ({ ...l }));
+    throw new Error(error?.message || 'Translation failed. Please try again.');
   }
 };

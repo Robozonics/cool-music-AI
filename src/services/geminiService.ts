@@ -61,7 +61,10 @@ export const callGeminiDirectly = async (promptText: string, type: 'playlist' | 
         let text = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
         text = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
         const jsonStart = text.indexOf('[');
-        if (jsonStart > 0) text = text.slice(jsonStart);
+        const jsonEnd = text.lastIndexOf(']');
+        if (jsonStart >= 0 && jsonEnd > jsonStart) {
+          text = text.substring(jsonStart, jsonEnd + 1);
+        }
         
         const parsed = JSON.parse(text);
         return Array.isArray(parsed) ? parsed : [];
