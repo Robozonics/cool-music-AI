@@ -59,6 +59,7 @@ export const SoundFusionLayout: React.FC<LayoutProps> = ({ children, activeTab, 
       <div className={`absolute -bottom-48 -right-32 w-[500px] h-[500px] ${currentColors[5]} rounded-full blur-[100px] opacity-20 pointer-events-none mix-blend-screen transition-colors duration-1000 ${isPlaying ? 'animate-bass-thump' : ''}`} style={{ animationDelay: '4s' }} />
 
       {/* Animated Background Mesh */}
+      <div className={`absolute inset-0 transition-opacity duration-1000 pointer-events-none mix-blend-screen ${isPlaying ? 'genz-playing-bg opacity-15' : 'opacity-0'}`} />
       <div className={`absolute inset-0 ${isDark ? 'bg-mesh-gradient opacity-20' : 'bg-gradient-to-br from-purple-100 to-lime-100 opacity-50'} mix-blend-screen pointer-events-none transition-all duration-1000`} />
       {/* 
         1. Header Bar (Sticky Top - 64px Height) 

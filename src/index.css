@@ -70,6 +70,33 @@
   transition: box-shadow 0.1s ease-out;
 }
 
+@keyframes genz-aurora {
+  0% {
+    background-position: 0% 50%;
+    filter: hue-rotate(0deg);
+  }
+  50% {
+    background-position: 100% 50%;
+    filter: hue-rotate(60deg);
+  }
+  100% {
+    background-position: 0% 50%;
+    filter: hue-rotate(0deg);
+  }
+}
+
+.genz-playing-bg {
+  background: linear-gradient(
+    45deg, 
+    var(--color-primary), 
+    #ff00ff, 
+    #00ffff, 
+    var(--color-bg)
+  );
+  background-size: 300% 300%;
+  animation: genz-aurora 10s ease infinite;
+}
+
 html, body {
   @apply bg-[#050505] text-white overflow-hidden font-sans m-0 p-0 w-full h-full;
 }

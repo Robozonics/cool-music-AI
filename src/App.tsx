@@ -31,6 +31,7 @@ function App() {
   const resolveAutoplayBlock = usePlayerStore(state => state.resolveAutoplayBlock);
   const isApiKeyModalOpen = usePlayerStore(state => state.isApiKeyModalOpen);
   const setApiKeyModalOpen = usePlayerStore(state => state.setApiKeyModalOpen);
+  const isPlaying = usePlayerStore(state => state.isPlaying);
   
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
@@ -99,7 +100,8 @@ function App() {
         className="md:hidden h-screen w-full flex flex-col bg-obsidian text-white overflow-hidden relative font-sans"
         onClick={() => isAutoplayBlocked && resolveAutoplayBlock()}
       >
-        <div className="absolute inset-0 bg-obsidian vibe-pulse pointer-events-none -z-10" />
+        <div className={`absolute inset-0 transition-opacity duration-1000 pointer-events-none -z-20 opacity-20 ${isPlaying ? 'genz-playing-bg' : 'opacity-0'}`} />
+        <div className="absolute inset-0 bg-obsidian/80 vibe-pulse pointer-events-none -z-10" />
         <header className="px-6 py-4 flex justify-between items-center z-10 glass-panel sticky top-0 border-b border-white/5">
           <h1 className="text-2xl font-black tracking-tighter text-white">
             MUSI<span className="text-acid-lime">FY</span>
