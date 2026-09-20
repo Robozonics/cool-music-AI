@@ -123,7 +123,7 @@ export const AIPlaylistModal: React.FC<AIPlaylistModalProps> = ({ isOpen, onClos
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center sm:p-4">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -133,11 +133,21 @@ export const AIPlaylistModal: React.FC<AIPlaylistModalProps> = ({ isOpen, onClos
           />
 
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 30 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 30 }}
-            transition={{ type: 'spring', stiffness: 260, damping: 28 }}
-            className="relative w-full max-w-lg bg-gradient-to-b from-[#0e0920] via-[#0a0615] to-[#060210] border border-purple-500/20 rounded-3xl shadow-[0_0_80px_rgba(139,92,246,0.35)] overflow-hidden max-h-[90vh] flex flex-col"
+            initial={{ opacity: 0, y: '100%' }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: '100%' }}
+            transition={{ type: 'spring', stiffness: 300, damping: 32 }}
+            className="
+              relative w-full sm:max-w-lg
+              bg-gradient-to-b from-[#0e0920] via-[#0a0615] to-[#060210]
+              border border-purple-500/20
+              rounded-t-3xl sm:rounded-3xl
+              shadow-[0_-20px_60px_rgba(139,92,246,0.25)] sm:shadow-[0_0_80px_rgba(139,92,246,0.35)]
+              overflow-hidden
+              max-h-[92dvh] sm:max-h-[90vh]
+              flex flex-col
+              pb-[env(safe-area-inset-bottom,0px)]
+            "
           >
             {/* Header */}
             <div className="px-6 pt-6 pb-4 border-b border-white/5 shrink-0">

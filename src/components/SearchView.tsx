@@ -161,42 +161,56 @@ export const SearchView: React.FC = () => {
   }, [query, searchMode]);
 
   return (
-    <div className="p-4 pt-8 w-full max-w-2xl mx-auto h-full flex flex-col">
-      {/* Toggle */}
-      <div className="flex bg-white/5 rounded-full p-1 mb-6 border border-white/10 mx-auto w-max">
+    <div className="p-3 pt-6 w-full max-w-2xl mx-auto h-full flex flex-col">
+      {/* Search Mode Toggle — responsive pill switcher */}
+      <div className="flex bg-white/5 rounded-2xl p-1 mb-4 border border-white/10 w-full gap-1">
         <button
           onClick={() => setSearchMode('standard')}
-          className={`flex items-center px-6 py-2 rounded-full transition-all text-sm font-bold tracking-wide ${searchMode === 'standard' ? 'bg-white text-obsidian' : 'text-gray-400 hover:text-white'}`}
+          className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl transition-all text-xs sm:text-sm font-bold tracking-wide min-w-0 ${
+            searchMode === 'standard' ? 'bg-white text-obsidian shadow-sm' : 'text-gray-400 hover:text-white'
+          }`}
         >
-          <Search className="w-4 h-4 mr-2" />
-          Standard Search
+          <Search className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate">Search</span>
         </button>
         <button
           onClick={() => setSearchMode('ai')}
-          className={`flex items-center px-6 py-2 rounded-full transition-all text-sm font-bold tracking-wide ${searchMode === 'ai' ? 'bg-acid-lime text-obsidian shadow-[0_0_20px_rgba(204,255,0,0.3)]' : 'text-gray-400 hover:text-white'}`}
+          className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl transition-all text-xs sm:text-sm font-bold tracking-wide min-w-0 ${
+            searchMode === 'ai'
+              ? 'bg-acid-lime text-obsidian shadow-[0_0_15px_rgba(204,255,0,0.3)]'
+              : 'text-gray-400 hover:text-white'
+          }`}
         >
-          <Sparkles className="w-4 h-4 mr-2" />
-          AI Best Music Search
+          <Sparkles className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate">AI Search</span>
         </button>
       </div>
 
-      <form onSubmit={handleSearch} className="relative mb-6 flex items-center group">
+      <form onSubmit={handleSearch} className="relative mb-4 flex items-center group">
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder={searchMode === 'ai' ? "e.g. 🏎️🔥💨 or #lateNightVibes or Hum..." : "Search for any song, artist, or vibe..."}
-          className={`w-full bg-white/5 border rounded-full py-4 pl-12 pr-16 text-white placeholder-gray-400 focus:outline-none transition-all glass-panel ${searchMode === 'ai' ? 'border-acid-lime/50 focus:border-acid-lime focus:ring-1 focus:ring-acid-lime' : 'border-white/10 focus:border-white'}`}
+          placeholder={
+            searchMode === 'ai'
+              ? '🏎️🔥 Vibe, emoji, or #hashtag...'
+              : 'Song, artist, or mood...'
+          }
+          className={`w-full bg-white/5 border rounded-2xl py-3.5 pl-11 pr-14 text-sm text-white placeholder-gray-500 focus:outline-none transition-all ${
+            searchMode === 'ai'
+              ? 'border-acid-lime/40 focus:border-acid-lime focus:ring-1 focus:ring-acid-lime'
+              : 'border-white/10 focus:border-white/40'
+          }`}
         />
         {searchMode === 'ai' ? (
-           <Sparkles className="absolute left-4 top-1/2 -translate-y-1/2 text-acid-lime w-5 h-5" />
+           <Sparkles className="absolute left-3.5 top-1/2 -translate-y-1/2 text-acid-lime w-4 h-4" />
         ) : (
-           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
         )}
         {query.trim().length > 0 ? (
           <button
             type="submit"
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-acid-lime text-obsidian shadow-[0_0_15px_rgba(204,255,0,0.5)] transition-all hover:scale-105"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-acid-lime text-obsidian shadow-[0_0_12px_rgba(204,255,0,0.4)] transition-all hover:scale-105"
           >
             <Search className="w-4 h-4" />
           </button>
@@ -204,12 +218,12 @@ export const SearchView: React.FC = () => {
           <button
             type="button"
             onClick={toggleListening}
-            className={`absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full transition-all flex items-center justify-center ${
-              isListening 
-                ? 'bg-red-500 text-white animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.6)]' 
+            className={`absolute right-2.5 top-1/2 -translate-y-1/2 p-2 rounded-xl transition-all flex items-center justify-center ${
+              isListening
+                ? 'bg-red-500 text-white animate-pulse shadow-[0_0_12px_rgba(239,68,68,0.5)]'
                 : 'bg-white/10 text-gray-400 hover:text-white hover:bg-white/20'
             }`}
-            title="Sound Search: Hum or Sing"
+            title="Hum or sing to search"
           >
             {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
           </button>

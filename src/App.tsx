@@ -172,9 +172,7 @@ function App() {
       {/* Global Hidden / Overlay Components */}
       <div className="md:hidden">
          <SyncedLyrics />
-         <div className="fixed inset-y-0 right-0 z-50 shadow-2xl pointer-events-auto">
-            <MashupStudioPanel />
-         </div>
+         <MashupStudioPanel />
       </div>
       <ApiKeyModal isOpen={isApiKeyModalOpen} onClose={() => setApiKeyModalOpen(false)} />
       <SpeedWheel />

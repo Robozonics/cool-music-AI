@@ -320,8 +320,17 @@ export const MashupStudioPanel: React.FC = () => {
   );
 
   return (
-    <aside className="w-[340px] shrink-0 h-full border-l border-white/10 flex flex-col transition-all duration-300 z-10 pb-24 bg-[#0a0a0c]/95 md:bg-[#0a0a0c]/80 backdrop-blur-2xl">
-      <div className="p-4 border-b border-white/10 flex items-center justify-between shrink-0 bg-black/20">
+    <aside className="
+      /* Mobile: full-screen sheet sliding from right */
+      fixed inset-0 z-50 flex flex-col
+      bg-[#0a0a0c]/98 backdrop-blur-2xl
+      /* Desktop: sidebar panel */
+      md:static md:inset-auto md:w-[340px] md:shrink-0 md:h-full
+      md:border-l md:border-white/10 md:bg-[#0a0a0c]/80
+      transition-all duration-300
+    ">
+      {/* Header */}
+      <div className="px-4 pt-[env(safe-area-inset-top,12px)] pb-3 border-b border-white/10 flex items-center justify-between shrink-0 bg-black/30 mt-[44px] md:mt-0">
         <div className="flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-acid-lime" />
           <h2 className="font-display font-black tracking-wide text-lg text-white">Mashup Studio</h2>
@@ -339,9 +348,12 @@ export const MashupStudioPanel: React.FC = () => {
         </div>
       </div>
       
-      {step === 'select_count' && renderSelectCount()}
-      {step === 'search_tracks' && renderSearchTracks()}
-      {step === 'ready' && renderReady()}
+      {/* Scrollable Content — takes all remaining height */}
+      <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+        {step === 'select_count' && renderSelectCount()}
+        {step === 'search_tracks' && renderSearchTracks()}
+        {step === 'ready' && renderReady()}
+      </div>
 
       <input 
         type="file" 
