@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Reorder, AnimatePresence } from 'framer-motion';
-import { X, Loader2, Cpu, Waves, Sparkles, Disc, Trash2, Crosshair } from 'lucide-react';
+import { X, Loader2, Cpu, Waves, Sparkles, Disc, Trash2, Crosshair, Upload } from 'lucide-react';
 import { useMashupStore } from '../store/useMashupStore';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { generateAiMashup } from '../services/mashupService';
@@ -24,6 +24,36 @@ export const MashupStudioPanel: React.FC = () => {
   
   const isGenerating = status !== 'idle' && status !== 'complete' && status !== 'error';
   const canGenerate = selectedTracks.length >= 2 && selectedTracks.length <= 7;
+  
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    
+    let added = 0;
+    files.forEach(file => {
+      if (useMashupStore.getState().selectedTracks.length + added >= 7) return;
+      
+      const tempUrl = URL.createObjectURL(file);
+      const newTrack: Track = {
+        id: `local-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+        title: file.name.replace(/\.[^/.]+$/, ""),
+        artist: 'Local Upload',
+        thumbnail: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=500&auto=format&fit=crop',
+        duration: 180, 
+        streamUrl: tempUrl,
+        source: 'saavn', 
+        sourceBadge: 'Upload',
+      };
+      useMashupStore.getState().addTrack(newTrack);
+      added++;
+    });
+    
+    if (e.target) {
+      e.target.value = '';
+    }
+  };
   
   const handleGenerate = async () => {
     if (!canGenerate || !anchorTrackId) return;
@@ -101,10 +131,35 @@ export const MashupStudioPanel: React.FC = () => {
         </div>
         
         {selectedTracks.length === 0 && (
-          <div className="text-center py-8 text-sm text-gray-500 border border-dashed border-white/10 rounded-xl">
-            Select 2 to 7 tracks from your library or search to create an AI Mashup.
+          <div className="text-center py-8 px-4 text-sm text-gray-500 border border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center space-y-4">
+            <p>Select 2 to 7 tracks from your library or search to create an AI Mashup.</p>
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg flex items-center gap-2 transition"
+            >
+              <Upload className="w-4 h-4" />
+              Upload Audio
+            </button>
           </div>
         )}
+        
+        {selectedTracks.length > 0 && selectedTracks.length < 7 && (
+           <button 
+             onClick={() => fileInputRef.current?.click()}
+             className="w-full mt-2 py-2 border border-dashed border-white/20 text-gray-400 hover:text-white hover:border-white/40 rounded-xl flex items-center justify-center gap-2 transition text-xs font-bold uppercase tracking-wider"
+           >
+             <Upload className="w-3 h-3" />
+             Upload Track
+           </button>
+        )}
+        <input 
+          type="file" 
+          multiple 
+          accept="audio/*" 
+          className="hidden" 
+          ref={fileInputRef} 
+          onChange={handleFileUpload} 
+        />
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 pb-4">
