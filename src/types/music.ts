@@ -13,6 +13,7 @@ export interface Track {
   isOffline?: boolean;
   reason?: string; // AI reason
   segment?: PlaylistSegment; // AI playlist segment
+  mashupStreamUrls?: string[]; // Used to play multiple tracks concurrently
 }
 
 export interface LyricLine {

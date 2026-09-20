@@ -11,6 +11,9 @@ nativeAudio.crossOrigin = "anonymous";
 export const crossfadeAudio = new Audio();
 crossfadeAudio.crossOrigin = "anonymous";
 
+// Auxiliary audio instances for AI Mashup Studio (playing multiple tracks simultaneously)
+export let auxAudios: HTMLAudioElement[] = [];
+
 interface PlayerState {
   currentTrack: Track | null;
   isPlaying: boolean;
@@ -117,6 +120,12 @@ export const usePlayerStore = create<PlayerState>()(
         }
       });
     }
+    
+    // Attempt to play all auxiliary mashup tracks
+    auxAudios.forEach(a => {
+       const p = a.play();
+       if (p !== undefined) p.catch(() => {}); // Ignore aux autoplay errors
+    });
   };
 
   // Smooth volume ramp via requestAnimationFrame
@@ -214,6 +223,13 @@ export const usePlayerStore = create<PlayerState>()(
   nativeAudio.addEventListener('play', () => {
     nativeAudio.playbackRate = get().playbackRate;
     set({ isAutoplayBlocked: false });
+    
+    // Sync auxiliary tracks
+    auxAudios.forEach(a => {
+       a.playbackRate = get().playbackRate;
+       const p = a.play();
+       if (p !== undefined) p.catch(() => {});
+    });
   });
 
   nativeAudio.addEventListener('playing', () => {
@@ -228,7 +244,10 @@ export const usePlayerStore = create<PlayerState>()(
     set({ isBuffering: false });
   });
 
-  nativeAudio.addEventListener('pause', () => set({ isPlaying: false, isBuffering: false }));
+  nativeAudio.addEventListener('pause', () => {
+    set({ isPlaying: false, isBuffering: false });
+    auxAudios.forEach(a => a.pause());
+  });
 
   // ─────────────────────────────────────────────
   // Store
@@ -314,6 +333,21 @@ export const usePlayerStore = create<PlayerState>()(
       // Abort any in-progress crossfade
       crossfadeAudio.pause();
       crossfadeAudio.src = '';
+      
+      // Clear previous auxiliary audios
+      auxAudios.forEach(a => { a.pause(); a.src = ''; });
+      auxAudios = [];
+      
+      // Setup new auxiliary audios for mashups
+      if (track.mashupStreamUrls && track.mashupStreamUrls.length > 0) {
+        track.mashupStreamUrls.forEach(url => {
+           const aux = new Audio(url);
+           aux.crossOrigin = "anonymous";
+           aux.volume = get().volume;
+           aux.playbackRate = get().playbackRate;
+           auxAudios.push(aux);
+        });
+      }
 
       nativeAudio.src = track.streamUrl;
       nativeAudio.volume = get().volume;
@@ -359,6 +393,8 @@ export const usePlayerStore = create<PlayerState>()(
       nativeAudio.src = '';
       crossfadeAudio.pause();
       crossfadeAudio.src = '';
+      auxAudios.forEach(a => { a.pause(); a.src = ''; });
+      auxAudios = [];
       set({ 
         currentTrack: null, 
         isPlaying: false, 
@@ -373,6 +409,7 @@ export const usePlayerStore = create<PlayerState>()(
       const { currentTrack } = get();
       if (!currentTrack) return;
       nativeAudio.currentTime = seconds;
+      auxAudios.forEach(a => a.currentTime = seconds);
       set({ currentTime: seconds });
     },
 
@@ -429,12 +466,14 @@ export const usePlayerStore = create<PlayerState>()(
     setVolume: (vol: number) => {
       const newVol = Math.max(0, Math.min(1, vol));
       nativeAudio.volume = newVol;
+      auxAudios.forEach(a => a.volume = newVol);
       set({ volume: newVol });
     },
 
     setPlaybackRate: (rate: number) => {
       const newRate = Math.max(0.5, Math.min(3, rate));
       nativeAudio.playbackRate = newRate;
+      auxAudios.forEach(a => a.playbackRate = newRate);
       set({ playbackRate: newRate });
     },
 
