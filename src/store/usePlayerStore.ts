@@ -288,11 +288,8 @@ export const usePlayerStore = create<PlayerState>()(
       });
     }
     
-    // Attempt to play all auxiliary mashup tracks
-    auxContexts.forEach(a => {
-       const p = a.audio.play();
-       if (p !== undefined) p.catch(() => {}); // Ignore aux autoplay errors
-    });
+    // Do NOT auto-play aux tracks — the DJ arrangement events control them
+    // (Aux tracks are preloaded but start paused, waiting for their cue)
   };
 
 
@@ -311,6 +308,7 @@ export const usePlayerStore = create<PlayerState>()(
         const eventId = `${idx}-${evt.timestamp}-${evt.type}-${evt.trackId}`;
         if (t >= evt.timestamp && !processedEvents.has(eventId)) {
           processedEvents.add(eventId);
+          console.log(`[DJ] t=${t.toFixed(1)}s firing event:`, evt.type, 'track:', evt.trackId.slice(-8), evt.seekTo !== undefined ? `seekTo:${evt.seekTo}` : '');
           executeDjEvent(evt, state.currentTrack!.id, state.volume);
         }
       });
@@ -546,8 +544,13 @@ export const usePlayerStore = create<PlayerState>()(
            }
            
            auxContexts.push({ audio: aux, source, filter, bassFilter, trackId: item.id });
+           // Preload but do NOT auto-play — DJ arrangement controls when each track starts
+           aux.load();
         });
       }
+
+      // If no arrangement or arrangement doesn't start secondaries, don't auto-play them
+      // The DJ arrangement must contain explicit 'play' or 'fade_in' events for each track
 
       nativeAudio.src = track.streamUrl;
       nativeAudio.volume = get().volume;
