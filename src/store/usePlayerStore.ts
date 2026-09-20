@@ -20,7 +20,6 @@ interface PlayerState {
   volume: number;
   playbackRate: number;
   queue: Track[];
-  isFullPlayerOpen: boolean;
   isLyricsOpen: boolean;
   isShareSnippetOpen: boolean;
   isConnectModalOpen: boolean;
@@ -39,6 +38,7 @@ interface PlayerState {
 
   isQueueOpen: boolean;
   setQueueOpen: (open: boolean) => void;
+
   isFullPlayerOpen: boolean;
   setFullPlayerOpen: (open: boolean) => void;
 
@@ -63,7 +63,6 @@ interface PlayerState {
   setShareSnippetOpen: (open: boolean) => void;
   setConnectModalOpen: (open: boolean) => void;
   setSearchQuery: (query: string) => void;
-  setFullPlayerOpen: (open: boolean) => void;
   setSpeedWheelOpen: (open: boolean) => void;
   setVolume: (volume: number) => void;
   audioAnalyzer: any;
@@ -239,6 +238,7 @@ export const usePlayerStore = create<PlayerState>()(
     isQueueOpen: false,
     setQueueOpen: (open: boolean) => set({ isQueueOpen: open }),
     isFullPlayerOpen: false,
+    setFullPlayerOpen: (open: boolean) => set({ isFullPlayerOpen: open }),
     isLyricsOpen: false,
     isShareSnippetOpen: false,
     isConnectModalOpen: false,
@@ -396,7 +396,6 @@ export const usePlayerStore = create<PlayerState>()(
     setShareSnippetOpen: (open: boolean) => set({ isShareSnippetOpen: open }),
     setConnectModalOpen: (open: boolean) => set({ isConnectModalOpen: open }),
     setSearchQuery: (query: string) => set({ searchQuery: query }),
-    setFullPlayerOpen: (open: boolean) => set({ isFullPlayerOpen: open }),
     setSpeedWheelOpen: (open: boolean) => set({ isSpeedWheelOpen: open }),
 
     toggleLikeTrack: (trackId: string) => set((state) => ({

@@ -1,4 +1,3 @@
-import React from 'react';
 import { X, Play, Trash2 } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
 

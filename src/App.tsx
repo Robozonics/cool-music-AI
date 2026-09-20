@@ -16,6 +16,7 @@ import { VisualCanvasEngine } from './components/VisualCanvasEngine';
 import { AddToPlaylistModal } from './components/AddToPlaylistModal';
 import { ConnectDeviceModal } from './components/ConnectDeviceModal';
 import { SamplesFeed } from './components/SamplesFeed';
+import { QueuePanel } from './components/QueuePanel';
 import { usePlayerStore } from './store/usePlayerStore';
 import { WifiOff, AlertTriangle, Settings } from 'lucide-react';
 

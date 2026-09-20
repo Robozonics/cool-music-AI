@@ -1,6 +1,6 @@
 import React from 'react';
-import { X, Palette, Keyboard, AlertCircle } from 'lucide-react';
-import { usePlayerStore } from './store/usePlayerStore';
+import { X, Palette, Keyboard } from 'lucide-react';
+import { usePlayerStore } from '../store/usePlayerStore';
 
 interface ApiKeyModalProps {
   isOpen: boolean;

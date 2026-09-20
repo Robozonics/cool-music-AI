@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { usePlayerStore } from '../store/usePlayerStore';
+import { usePlayerStore, nativeAudio } from '../store/usePlayerStore';
 
 export const useKeyboardShortcuts = () => {
   useEffect(() => {
@@ -8,7 +8,7 @@ export const useKeyboardShortcuts = () => {
       if (
         document.activeElement instanceof HTMLInputElement ||
         document.activeElement instanceof HTMLTextAreaElement ||
-        document.activeElement?.isContentEditable
+        (document.activeElement as HTMLElement)?.isContentEditable
       ) {
         return;
       }
@@ -31,13 +31,13 @@ export const useKeyboardShortcuts = () => {
         case 'KeyM':
           e.preventDefault();
           // We need to implement mute toggling. The nativeAudio is accessible via usePlayerStore.getState().nativeAudio
-          if (store.nativeAudio) {
-            store.nativeAudio.muted = !store.nativeAudio.muted;
+          if (nativeAudio) {
+            nativeAudio.muted = !nativeAudio.muted;
           }
           break;
         case 'KeyF':
           e.preventDefault();
-          store.setVideoMode(!store.isVideoMode);
+          store.toggleVideoMode();
           break;
         case 'KeyL':
           e.preventDefault();
