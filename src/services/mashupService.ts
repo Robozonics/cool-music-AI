@@ -34,7 +34,7 @@ const dbToLinear = (db: number): number => Math.pow(10, db / 20);
 // ── Blueprint → DjEvent[] converter ──────────────────────────────────────────
 export const blueprintToDjEvents = (
   blueprint: MashupBlueprint,
-  _anchorTrackId: string
+  allTracks: Track[]
 ): DjEvent[] => {
   const { final_bpm } = blueprint.mashup_metadata;
   const events: DjEvent[] = [];
@@ -48,7 +48,15 @@ export const blueprintToDjEvents = (
     const blockEndSec   = barToSeconds(block.bar_end + 1, final_bpm);
 
     // Collect which tracks are active in this block
-    const blockTrackIds = new Set(block.active_stems.map(s => s.track_id));
+    const blockTrackIds = new Set(
+      block.active_stems.map(s => {
+        // AI might hallucinate IDs, try to match by ID first, then by title
+        const matched = allTracks.find(t => t.id === s.track_id) 
+                     || allTracks.find(t => t.title.toLowerCase().includes(s.track_id.toLowerCase()))
+                     || allTracks[0];
+        return matched.id;
+      })
+    );
 
     // Fade out tracks that are leaving
     for (const tid of activeTrackIds) {
@@ -66,30 +74,32 @@ export const blueprintToDjEvents = (
     // Process transition effects at block boundary
     if (block.effects?.transition_type === 'high_pass_sweep' && block.effects.filter_cutoff_hz) {
       for (const stem of block.active_stems) {
+        const matched = allTracks.find(t => t.id === stem.track_id) || allTracks.find(t => t.title.toLowerCase().includes(stem.track_id.toLowerCase())) || allTracks[0];
         events.push({
           timestamp: blockStartSec,
-          trackId: stem.track_id,
+          trackId: matched.id,
           type: 'highpass',
           filterHz: block.effects.filter_cutoff_hz,
         });
         // Clear filter halfway through block
         events.push({
           timestamp: (blockStartSec + blockEndSec) / 2,
-          trackId: stem.track_id,
+          trackId: matched.id,
           type: 'filter_reset',
         });
       }
     } else if (block.effects?.transition_type === 'low_pass_sweep' && block.effects.filter_cutoff_hz) {
       for (const stem of block.active_stems) {
+        const matched = allTracks.find(t => t.id === stem.track_id) || allTracks.find(t => t.title.toLowerCase().includes(stem.track_id.toLowerCase())) || allTracks[0];
         events.push({
           timestamp: blockStartSec,
-          trackId: stem.track_id,
+          trackId: matched.id,
           type: 'lowpass',
           filterHz: block.effects.filter_cutoff_hz,
         });
         events.push({
           timestamp: (blockStartSec + blockEndSec) / 2,
-          trackId: stem.track_id,
+          trackId: matched.id,
           type: 'filter_reset',
         });
       }
@@ -97,17 +107,26 @@ export const blueprintToDjEvents = (
 
     // Process stems in this block
     for (const stem of block.active_stems) {
-      const tid = stem.track_id;
-      const linearVol = Math.min(1, Math.max(0, dbToLinear(stem.volume_db)));
+      const matched = allTracks.find(t => t.id === stem.track_id) || allTracks.find(t => t.title.toLowerCase().includes(stem.track_id.toLowerCase())) || allTracks[0];
+      const tid = matched.id;
+      const linearVol = Math.min(1, Math.max(0, dbToLinear(stem.volume_db ?? 0)));
 
       if (!activeTrackIds.has(tid)) {
-        // New track entering — fade it in
-        events.push({
-          timestamp: Math.max(0, blockStartSec - 0.1),
-          trackId: tid,
-          type: 'seek',
-          seekTo: 0,
-        });
+        // New track entering
+        
+        // Find if this track has EVER played before in the timeline
+        const hasPlayedBefore = events.some(e => e.trackId === tid && (e.type === 'play' || e.type === 'fade_in'));
+        
+        if (!hasPlayedBefore) {
+          // Absolute first time it enters, seek to 0
+          events.push({
+            timestamp: Math.max(0, blockStartSec - 0.1),
+            trackId: tid,
+            type: 'seek',
+            seekTo: 0,
+          });
+        }
+        
         events.push({
           timestamp: blockStartSec,
           trackId: tid,
@@ -137,8 +156,8 @@ export const blueprintToDjEvents = (
       }
 
       // Stem-role based vocal/bass ducking
-      const hasVocals = block.active_stems.some(s => s.stem_type === 'vocals' && s.track_id !== tid);
-      const hasBass   = block.active_stems.some(s => s.stem_type === 'bass' && s.track_id !== tid);
+      const hasVocals = block.active_stems.some(s => s.stem_type === 'vocals' && (allTracks.find(t => t.id === s.track_id) || allTracks.find(t => t.title.toLowerCase().includes(s.track_id.toLowerCase())) || allTracks[0]).id !== tid);
+      const hasBass   = block.active_stems.some(s => s.stem_type === 'bass' && (allTracks.find(t => t.id === s.track_id) || allTracks.find(t => t.title.toLowerCase().includes(s.track_id.toLowerCase())) || allTracks[0]).id !== tid);
 
       if (stem.stem_type === 'vocals' && hasVocals) {
         // Another track also has vocals — cut this track's mids to avoid clash
@@ -287,10 +306,11 @@ Output ONLY the raw JSON, starting with { and ending with }.`;
   }
 
   let arrangement: DjEvent[] = [];
+  const allTracks = [anchorTrack, ...secondaryTracks];
   const combinedDur = (anchorTrack.duration || 180) + secondaryTracks.reduce((sum, t) => sum + (t.duration || 180), 0);
 
   if (blueprint && blueprint.timeline_blocks && blueprint.timeline_blocks.length > 0) {
-    arrangement = blueprintToDjEvents(blueprint, anchorTrack.id);
+    arrangement = blueprintToDjEvents(blueprint, allTracks);
   } else {
     // ── Strict Alternating Logic Fallback ───────────────────────────────────────
     const chunkDuration = 25;
