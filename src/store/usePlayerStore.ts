@@ -55,27 +55,38 @@ const initAudioContext = () => {
     nativeAudioFilter.connect(normalGain);
     normalGain.connect(audioCtx.destination);
 
-    // Karaoke Mix (Center Cancellation)
+    // Karaoke Mix (Advanced Center Cancellation with Bass Preservation)
     karaokeGain = audioCtx.createGain();
     karaokeGain.gain.value = 0;
     
+    const lowpass = audioCtx.createBiquadFilter();
+    lowpass.type = 'lowpass';
+    lowpass.frequency.value = 300; // Keep bass below 300Hz
+    
+    const highpass = audioCtx.createBiquadFilter();
+    highpass.type = 'highpass';
+    highpass.frequency.value = 300; // Vocals and mids above 300Hz
+
+    nativeAudioFilter.connect(lowpass);
+    nativeAudioFilter.connect(highpass);
+
     const splitter = audioCtx.createChannelSplitter(2);
     const merger = audioCtx.createChannelMerger(2);
     const inverter = audioCtx.createGain();
     inverter.gain.value = -1;
 
-    nativeAudioFilter.connect(splitter);
+    highpass.connect(splitter);
     
-    // Left channel straight to merger's L and R
+    // Center cancellation on mids/highs (L - R)
     splitter.connect(merger, 0, 0);
     splitter.connect(merger, 0, 1);
-    
-    // Right channel inverted then to merger's L and R
     splitter.connect(inverter, 1, 0);
     inverter.connect(merger, 0, 0);
     inverter.connect(merger, 0, 1);
     
+    // Recombine preserved bass and cancelled mids
     merger.connect(karaokeGain);
+    lowpass.connect(karaokeGain);
     karaokeGain.connect(audioCtx.destination);
   }
   if (audioCtx.state === 'suspended') {

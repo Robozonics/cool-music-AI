@@ -29,7 +29,10 @@ export const fetchLyrics = async (
       data = searchData[0];
     }
 
-    if (!data) return { synced: null, plain: null };
+    if (!data || (!data.syncedLyrics && !data.plainLyrics)) {
+      // AI Fallback for generating lyrics
+      return await generateLyricsWithAI(title, artist);
+    }
 
     if (data.syncedLyrics) {
       const synced = parseSyncedLyrics(data.syncedLyrics);
@@ -38,7 +41,33 @@ export const fetchLyrics = async (
 
     return { synced: null, plain: data.plainLyrics || null };
   } catch (error) {
-    console.error('Error fetching lyrics:', error);
+    console.error('Error fetching lyrics, attempting AI fallback:', error);
+    return await generateLyricsWithAI(title, artist);
+  }
+};
+
+const generateLyricsWithAI = async (title: string, artist: string): Promise<{ synced: LyricLine[] | null; plain: string | null }> => {
+  try {
+    const promptText = `You are a music expert. The user requested lyrics for the song "${title}" by ${artist}. 
+Please provide the full, accurate plain text lyrics for this song. 
+Return a STRICT JSON array containing exactly ONE object with a "lyrics" property.
+Example: [{"lyrics": "Line 1\\nLine 2\\n..."}]. 
+If you absolutely do not know the song, return [{"lyrics": ""}]`;
+
+    const result = await callGeminiDirectly(promptText, 'search');
+    let plainLyrics = '';
+    
+    if (result && Array.isArray(result) && result.length > 0) {
+      plainLyrics = result[0]?.lyrics || '';
+    }
+
+    if (!plainLyrics || plainLyrics.trim() === '') {
+      return { synced: null, plain: null };
+    }
+
+    return { synced: null, plain: plainLyrics };
+  } catch (error) {
+    console.error('Error generating AI lyrics:', error);
     return { synced: null, plain: null };
   }
 };
