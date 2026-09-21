@@ -22,10 +22,10 @@ export const fetchLyrics = async (
       // Fallback search
       const fallbackUrl = `https://lrclib.net/api/search?q=${encodeURIComponent(title + ' ' + artist)}`;
       const searchRes = await fetch(fallbackUrl);
-      if (!searchRes.ok) return { synced: null, plain: null };
+      if (!searchRes.ok) return await generateLyricsWithAI(title, artist);
 
       const searchData = await searchRes.json();
-      if (!searchData || searchData.length === 0) return { synced: null, plain: null };
+      if (!searchData || searchData.length === 0) return await generateLyricsWithAI(title, artist);
 
       data = searchData[0];
     }
