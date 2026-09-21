@@ -286,58 +286,62 @@ Output ONLY the raw JSON, starting with { and ending with }.`;
     console.error('[Mashup] Gemini blueprint failed, using smart fallback:', e);
   }
 
-  // ── Strict 10-Second Alternating Logic ───────────────────────────────────────
-  // Bypassing blueprint completely to perfectly follow user logic
-  const arrangement: DjEvent[] = [];
+  let arrangement: DjEvent[] = [];
   const combinedDur = (anchorTrack.duration || 180) + secondaryTracks.reduce((sum, t) => sum + (t.duration || 180), 0);
-  const chunkDuration = 25;
-  
-  let currentSec = 0;
-  let isPrimary = true;
-  const primaryId = anchorTrack.id;
-  const secondaryId = secondaryTracks[0]?.id || anchorTrack.id;
-  
-  let primaryAccumulated = 0;
-  let secondaryAccumulated = 0;
 
-  // Initial state: start primary at full, mute secondary
-  arrangement.push({ timestamp: 0, trackId: primaryId, type: 'set_volume', volume: 1 });
-  if (primaryId !== secondaryId) {
-    arrangement.push({ timestamp: 0, trackId: secondaryId, type: 'pause' });
-  }
-
-  while (currentSec < combinedDur) {
-    const nextSec = currentSec + chunkDuration;
-    if (nextSec >= combinedDur) break; // Reached the end
-
-    // Swap tracks
-    isPrimary = !isPrimary;
-    const enteringTrack = isPrimary ? primaryId : secondaryId;
-    const exitingTrack = isPrimary ? secondaryId : primaryId;
+  if (blueprint && blueprint.timeline_blocks && blueprint.timeline_blocks.length > 0) {
+    arrangement = blueprintToDjEvents(blueprint, anchorTrack.id);
+  } else {
+    // ── Strict Alternating Logic Fallback ───────────────────────────────────────
+    const chunkDuration = 25;
     
-    // Accumulate time for the track that just finished playing
-    if (!isPrimary) {
-      primaryAccumulated += chunkDuration;
-    } else {
-      secondaryAccumulated += chunkDuration;
+    let currentSec = 0;
+    let isPrimary = true;
+    const primaryId = anchorTrack.id;
+    const secondaryId = secondaryTracks[0]?.id || anchorTrack.id;
+    
+    let primaryAccumulated = 0;
+    let secondaryAccumulated = 0;
+
+    // Initial state: start primary at full, mute secondary
+    arrangement.push({ timestamp: 0, trackId: primaryId, type: 'set_volume', volume: 1 });
+    if (primaryId !== secondaryId) {
+      arrangement.push({ timestamp: 0, trackId: secondaryId, type: 'pause' });
     }
-    
-    const enteringAccumulatedTime = isPrimary ? primaryAccumulated : secondaryAccumulated;
 
-    arrangement.push({ timestamp: nextSec, trackId: enteringTrack, type: 'fade_in', volume: 1, seekTo: enteringAccumulatedTime });
-    arrangement.push({ timestamp: nextSec, trackId: exitingTrack, type: 'pause' });
+    while (currentSec < combinedDur) {
+      const nextSec = currentSec + chunkDuration;
+      if (nextSec >= combinedDur) break; // Reached the end
 
-    currentSec = nextSec;
+      // Swap tracks
+      isPrimary = !isPrimary;
+      const enteringTrack = isPrimary ? primaryId : secondaryId;
+      const exitingTrack = isPrimary ? secondaryId : primaryId;
+      
+      // Accumulate time for the track that just finished playing
+      if (!isPrimary) {
+        primaryAccumulated += chunkDuration;
+      } else {
+        secondaryAccumulated += chunkDuration;
+      }
+      
+      const enteringAccumulatedTime = isPrimary ? primaryAccumulated : secondaryAccumulated;
+
+      arrangement.push({ timestamp: nextSec, trackId: enteringTrack, type: 'fade_in', volume: 1, seekTo: enteringAccumulatedTime });
+      arrangement.push({ timestamp: nextSec, trackId: exitingTrack, type: 'pause' });
+
+      currentSec = nextSec;
+    }
+
+    // Final fade out for whoever is playing
+    arrangement.push({ timestamp: combinedDur - 3, trackId: isPrimary ? primaryId : secondaryId, type: 'pause' });
+
+    // Update blueprint mock for metadata
+    blueprint = {
+      mashup_metadata: { final_bpm: 120, total_duration_bars: Math.ceil(combinedDur / 2), target_key: '1A' },
+      timeline_blocks: [],
+    };
   }
-
-  // Final fade out for whoever is playing
-  arrangement.push({ timestamp: combinedDur - 3, trackId: isPrimary ? primaryId : secondaryId, type: 'pause' });
-
-  // Update blueprint mock for metadata
-  blueprint = {
-    mashup_metadata: { final_bpm: 120, total_duration_bars: Math.ceil(combinedDur / 2), target_key: '1A' },
-    timeline_blocks: [],
-  };
 
   setStatus('mastering', 90);
 
