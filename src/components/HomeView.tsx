@@ -197,8 +197,6 @@ const DiscoverWeeklyBanner: React.FC = () => {
   );
 };
 
-};
-
 const GeoDiscoveryBanner: React.FC = () => {
   const [localTracks, setLocalTracks] = useState<Track[]>([]);
   const [locationName, setLocationName] = useState<string>('');
