@@ -776,15 +776,13 @@ export const usePlayerStore = create<PlayerState>()(
       savedPlaylists: state.savedPlaylists.filter(p => p.id !== id)
     })),
   };
-    },
-    {
-      name: 'musify-storage',
-      partialize: (state) => ({ 
-        savedPlaylists: state.savedPlaylists,
-        likedTracks: state.likedTracks,
-        theme: state.theme,
-        discoverWeekly: state.discoverWeekly
-      }),
-    }
-  )
-);
+}, {
+  name: 'musify-storage',
+  partialize: (state) => ({
+    savedPlaylists: state.savedPlaylists,
+    likedTracks: state.likedTracks,
+    likedTrackDetails: state.likedTrackDetails,
+    theme: state.theme,
+    discoverWeekly: state.discoverWeekly
+  }),
+}));

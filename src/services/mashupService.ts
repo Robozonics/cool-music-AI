@@ -259,7 +259,7 @@ Output ONLY the raw JSON, starting with { and ending with }.`;
   // ── Strict 10-Second Alternating Logic ───────────────────────────────────────
   // Bypassing blueprint completely to perfectly follow user logic
   const arrangement: DjEvent[] = [];
-  const combinedDur = (anchorTrack.duration || 180) + (secondaryTracks[0]?.duration || 180);
+  const combinedDur = (anchorTrack.duration || 180) + secondaryTracks.reduce((sum, t) => sum + (t.duration || 180), 0);
   const chunkDuration = 10;
   
   let currentSec = 0;

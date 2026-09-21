@@ -90,7 +90,7 @@ export const FullPlayer: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center relative z-10 w-full max-w-sm mx-auto min-h-[500px]">
+      <div className="flex-1 flex flex-col items-center justify-center relative z-10 w-full max-w-sm mx-auto min-h-0 overflow-y-auto pb-4">
         {/* Dynamic Background Blur */}
         <div className="absolute inset-[-100%] -z-10 pointer-events-none opacity-40">
           <img src={currentTrack.thumbnail} className="w-full h-full object-cover blur-[100px] saturate-200" alt="" />

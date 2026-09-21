@@ -1,5 +1,6 @@
 import type { LyricLine, TranslatedLyricLine } from '../types/music';
 import { callGeminiDirectly } from './geminiService';
+import { usePlayerStore } from '../store/usePlayerStore';
 
 export const fetchLyrics = async (
   title: string,
@@ -66,8 +67,11 @@ If you absolutely do not know the song, return [{"lyrics": ""}]`;
     }
 
     return { synced: null, plain: plainLyrics };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating AI lyrics:', error);
+    if (error.message && error.message.toLowerCase().includes('api key')) {
+      usePlayerStore.getState().setApiKeyModalOpen(true);
+    }
     return { synced: null, plain: null };
   }
 };
