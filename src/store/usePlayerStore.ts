@@ -148,7 +148,12 @@ const executeDjEvent = (evt: DjEvent, volume: number) => {
       break;
     case 'play':
       targetAudio.volume = volume;
-      targetAudio.play().catch(() => {});
+      targetAudio.play().catch((err) => {
+        if (err.name === 'NotAllowedError') {
+          usePlayerStore.setState({ isAutoplayBlocked: true });
+          nativeAudio.pause();
+        }
+      });
       break;
     case 'pause':
       rampVolume(targetAudio, targetAudio.volume, 0, 3000, () => {
@@ -160,7 +165,12 @@ const executeDjEvent = (evt: DjEvent, volume: number) => {
         targetAudio.currentTime = evt.seekTo;
       }
       targetAudio.volume = 0;
-      targetAudio.play().catch(() => {});
+      targetAudio.play().catch((err) => {
+        if (err.name === 'NotAllowedError') {
+          usePlayerStore.setState({ isAutoplayBlocked: true });
+          nativeAudio.pause();
+        }
+      });
       rampVolume(targetAudio, 0, volume, 3000);
       break;
     case 'fade_out':
@@ -501,6 +511,14 @@ export const usePlayerStore = create<PlayerState>()(
        const { isAutoplayBlocked } = get();
        if (isAutoplayBlocked) {
          set({ isAutoplayBlocked: false });
+         
+         // Bless auxiliary audio elements for Mashups
+         auxContexts.forEach(a => {
+           a.audio.play().then(() => {
+             if (a.audio.volume === 0) a.audio.pause();
+           }).catch(e => console.warn('Aux bless failed', e));
+         });
+
          attemptPlay();
        }
     },
@@ -594,6 +612,7 @@ export const usePlayerStore = create<PlayerState>()(
            // Initialize silent so if the unlock strategy fails, it doesn't blast audio
            aux.volume = 0;
            aux.load();
+           aux.play().then(() => aux.pause()).catch(() => {});
         });
       }
 
@@ -634,7 +653,16 @@ export const usePlayerStore = create<PlayerState>()(
       if (!currentTrack) return;
       if (isPlaying) {
         nativeAudio.pause();
+        auxContexts.forEach(a => a.audio.pause());
       } else {
+        // Resume any aux tracks that were actively playing, and bless the rest
+        auxContexts.forEach(a => {
+           if (a.audio.volume > 0) {
+              a.audio.play().catch(() => {});
+           } else {
+              a.audio.play().then(() => a.audio.pause()).catch(() => {});
+           }
+        });
         attemptPlay();
       }
     },

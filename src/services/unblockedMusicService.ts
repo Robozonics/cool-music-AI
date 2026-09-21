@@ -84,9 +84,12 @@ export const searchSaavn = async (query: string): Promise<Track[]> => {
         streamUrl = decryptSaavnUrl(song.encrypted_media_url);
       }
       
-      // Proxy the streamUrl if it's from aac.saavncdn.com to bypass CORS for Web Audio API
-      if (streamUrl && streamUrl.includes('aac.saavncdn.com')) {
-        streamUrl = streamUrl.replace('https://aac.saavncdn.com', '/api/saavncdn');
+      // Proxy ALL streamUrls to bypass CORS for Web Audio API
+      if (streamUrl && streamUrl.startsWith('http')) {
+        try {
+           const urlObj = new URL(streamUrl);
+           streamUrl = '/api/saavncdn' + urlObj.pathname + urlObj.search;
+        } catch (e) {}
       }
       
       const trackId = song.id || key;

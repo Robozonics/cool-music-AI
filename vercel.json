@@ -23,7 +23,7 @@
   ],
   "headers": [
     {
-      "source": "/api/saavncdn/(.*)",
+      "source": "/api/saavncdn/:match*",
       "headers": [
         { "key": "Access-Control-Allow-Origin", "value": "*" }
       ]
