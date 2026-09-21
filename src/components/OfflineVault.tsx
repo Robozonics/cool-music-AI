@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Play, Trash2, HardDrive, Plus, ListMusic } from 'lucide-react';
+import { Play, Trash2, HardDrive, Plus, ListMusic, Heart } from 'lucide-react';
 import { getOfflineTracks, deleteOfflineTrack } from '../services/downloadService';
 import type { Track } from '../types/music';
 import { usePlayerStore } from '../store/usePlayerStore';
@@ -14,6 +14,8 @@ export const OfflineVault: React.FC<OfflineVaultProps> = ({ setActiveTab }) => {
   const deletePlaylist = usePlayerStore(state => state.deletePlaylist);
   const playTrack = usePlayerStore(state => state.playTrack);
   const setQueue = usePlayerStore(state => state.setQueue);
+  const likedTrackDetails = usePlayerStore(state => state.likedTrackDetails || []);
+  const toggleLikeTrack = usePlayerStore(state => state.toggleLikeTrack);
 
   useEffect(() => {
     loadTracks();
@@ -47,6 +49,42 @@ export const OfflineVault: React.FC<OfflineVaultProps> = ({ setActiveTab }) => {
           <p className="text-gray-400">Your saved playlists and offline tracks.</p>
         </div>
       </div>
+
+      {likedTrackDetails.length > 0 && (
+        <div className="mb-10">
+          <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4 pl-2">Liked Tracks</h3>
+          <div className="flex flex-col space-y-2">
+            {likedTrackDetails.map((track) => (
+              <div 
+                key={track.id} 
+                onClick={() => handlePlay(track)}
+                className="flex items-center gap-4 p-2 md:p-3 bg-transparent hover:bg-white/5 rounded-xl transition cursor-pointer group"
+              >
+                <div className="w-12 h-12 rounded-md overflow-hidden shrink-0 relative">
+                  <img src={track.thumbnail} className="w-full h-full object-cover" alt="" />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                    <Play className="w-5 h-5 text-white" />
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-bold text-white text-base truncate">{track.title}</h4>
+                  <p className="text-gray-400 text-sm truncate">{track.artist}</p>
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleLikeTrack(track);
+                  }}
+                  className="p-2 text-pink-500 hover:text-white transition-colors"
+                  title="Remove from Liked Tracks"
+                >
+                  <Heart className="w-5 h-5 fill-pink-500" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {savedPlaylists.length > 0 && (
         <div className="mb-10">

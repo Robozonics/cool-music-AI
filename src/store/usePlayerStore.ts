@@ -233,6 +233,7 @@ interface PlayerState {
   searchQuery: string;
   isSpeedWheelOpen: boolean;
   likedTracks: string[];
+  likedTrackDetails: Track[];
   repeatMode: 'off' | 'all' | 'one';
   isCrossfadeEnabled: boolean;
   isCrossfading: boolean; // actively crossfading right now
@@ -285,7 +286,7 @@ interface PlayerState {
   removeFromQueue: (index: number) => void;
   playNext: (track: Track) => void;
   setPlaybackRate: (rate: number) => void;
-  toggleLikeTrack: (trackId: string) => void;
+  toggleLikeTrack: (track: Track) => void;
   setRepeatMode: (mode: 'off' | 'all' | 'one') => void;
   toggleCrossfade: () => void;
   
@@ -476,6 +477,7 @@ export const usePlayerStore = create<PlayerState>()(
     searchQuery: '',
     isSpeedWheelOpen: false,
     likedTracks: [],
+    likedTrackDetails: [],
     savedPlaylists: [],
     repeatMode: 'off',
     isCrossfadeEnabled: false,
@@ -707,11 +709,17 @@ export const usePlayerStore = create<PlayerState>()(
     setSearchQuery: (query: string) => set({ searchQuery: query }),
     setSpeedWheelOpen: (open: boolean) => set({ isSpeedWheelOpen: open }),
 
-    toggleLikeTrack: (trackId: string) => set((state) => ({
-      likedTracks: state.likedTracks.includes(trackId)
-        ? state.likedTracks.filter(id => id !== trackId)
-        : [...state.likedTracks, trackId]
-    })),
+    toggleLikeTrack: (track: Track) => set((state) => {
+      const isLiked = state.likedTracks.includes(track.id);
+      return {
+        likedTracks: isLiked
+          ? state.likedTracks.filter(id => id !== track.id)
+          : [...state.likedTracks, track.id],
+        likedTrackDetails: isLiked
+          ? (state.likedTrackDetails || []).filter(t => t.id !== track.id)
+          : [...(state.likedTrackDetails || []), track]
+      };
+    }),
 
     setRepeatMode: (mode: 'off' | 'all' | 'one') => {
       nativeAudio.loop = (mode === 'one');

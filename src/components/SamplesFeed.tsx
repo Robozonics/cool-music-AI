@@ -18,7 +18,7 @@ interface SampleCardProps {
   isActive: boolean;
   isMuted: boolean;
   onAddToQueue: (track: Track) => void;
-  onLike: (trackId: string) => void;
+  onLike: (track: Track) => void;
   isLiked: boolean;
 }
 
@@ -127,7 +127,7 @@ const SampleCard: React.FC<SampleCardProps> = ({ track, isActive, isMuted, onAdd
       <div className="absolute right-4 bottom-32 flex flex-col items-center gap-5 z-20">
         <motion.button
           whileTap={{ scale: 0.85 }}
-          onClick={() => onLike(track.id)}
+          onClick={() => onLike(track)}
           className="flex flex-col items-center gap-1"
         >
           <div className={`w-11 h-11 rounded-full flex items-center justify-center border transition-all ${isLiked ? 'bg-pink-500/20 border-pink-500/50' : 'bg-white/10 border-white/20'}`}>

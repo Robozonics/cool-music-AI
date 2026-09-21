@@ -178,7 +178,7 @@ export const FloatingGlassPlayer: React.FC = () => {
 
           <motion.button
             whileTap={{ scale: 0.8 }}
-            onClick={() => toggleLikeTrack(currentTrack.id)}
+            onClick={() => toggleLikeTrack(currentTrack)}
             className="text-zinc-400 hover:text-pink-500 transition-colors shrink-0 mr-2"
           >
             <Heart
