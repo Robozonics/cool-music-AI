@@ -56,6 +56,11 @@ export default defineConfig({
         target: 'https://suggestqueries.google.com',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/youtube/, '')
+      },
+      '/api/saavncdn': {
+        target: 'https://aac.saavncdn.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/saavncdn/, '')
       }
     }
   }
