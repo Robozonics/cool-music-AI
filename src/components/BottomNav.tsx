@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Sparkles, Search, HardDrive, Zap } from 'lucide-react';
+import { Home, Sparkles, Search, Library, Zap } from 'lucide-react';
 
 export type TabType = string;
 
@@ -14,7 +14,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab })
     { id: 'mood', icon: Sparkles, label: 'Mood AI' },
     { id: 'samples', icon: Zap, label: 'Samples' },
     { id: 'search', icon: Search, label: 'Search' },
-    { id: 'vault', icon: HardDrive, label: 'Vault' },
+    { id: 'vault', icon: Library, label: 'Library' },
   ];
 
   return (

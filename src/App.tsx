@@ -116,7 +116,7 @@ function App() {
 
       {/* --- MOBILE UI (ORIGINAL VIBESTREAM) --- */}
       <div 
-        className="md:hidden h-screen w-full flex flex-col bg-obsidian text-white overflow-hidden relative font-sans"
+        className="md:hidden h-[100dvh] w-full flex flex-col bg-obsidian text-white overflow-hidden relative font-sans"
         onClick={() => isAutoplayBlocked && resolveAutoplayBlock()}
       >
         <div className={`absolute inset-0 transition-opacity duration-1000 pointer-events-none -z-20 opacity-20 ${isPlaying ? 'genz-playing-bg' : 'opacity-0'}`} />

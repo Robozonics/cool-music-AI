@@ -45,46 +45,36 @@ export const OfflineVault: React.FC<OfflineVaultProps> = ({ setActiveTab }) => {
           <HardDrive className="w-6 h-6 text-cyber-cyan" />
         </div>
         <div>
-          <h2 className="text-3xl font-black text-white tracking-tight">Library & Vault</h2>
-          <p className="text-gray-400">Your saved playlists and offline tracks.</p>
+          <h2 className="text-3xl font-black text-white tracking-tight">Your Library</h2>
+          <p className="text-gray-400">Playlists, likes, and offline tracks.</p>
         </div>
       </div>
 
-      {likedTrackDetails.length > 0 && (
-        <div className="mb-10">
-          <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4 pl-2">Liked Tracks</h3>
-          <div className="flex flex-col space-y-2">
-            {likedTrackDetails.map((track) => (
-              <div 
-                key={track.id} 
-                onClick={() => handlePlay(track)}
-                className="flex items-center gap-4 p-2 md:p-3 bg-transparent hover:bg-white/5 rounded-xl transition cursor-pointer group"
-              >
-                <div className="w-12 h-12 rounded-md overflow-hidden shrink-0 relative">
-                  <img src={track.thumbnail} className="w-full h-full object-cover" alt="" />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                    <Play className="w-5 h-5 text-white" />
-                  </div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-bold text-white text-base truncate">{track.title}</h4>
-                  <p className="text-gray-400 text-sm truncate">{track.artist}</p>
-                </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleLikeTrack(track);
-                  }}
-                  className="p-2 text-pink-500 hover:text-white transition-colors"
-                  title="Remove from Liked Tracks"
-                >
-                  <Heart className="w-5 h-5 fill-pink-500" />
-                </button>
-              </div>
-            ))}
+      <div className="mb-10">
+        <div 
+          onClick={() => setActiveTab?.('playlist:liked_songs')}
+          className="relative w-full aspect-[2/1] md:aspect-[3/1] rounded-2xl overflow-hidden cursor-pointer group mb-6 shadow-lg shadow-pink-500/10 hover:shadow-pink-500/20 transition-all duration-300"
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-700 via-purple-600 to-pink-500 opacity-90 group-hover:opacity-100 transition-opacity" />
+          
+          {/* Subtle noise texture overlay */}
+          <div className="absolute inset-0 opacity-20 mix-blend-overlay pointer-events-none" 
+               style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }} 
+          />
+
+          <div className="absolute inset-0 p-6 flex flex-col justify-end">
+            <Heart className="w-10 h-10 md:w-12 md:h-12 text-white fill-white mb-auto mt-2 drop-shadow-md" />
+            <h3 className="text-3xl md:text-4xl font-black text-white tracking-tighter drop-shadow-md">Liked Songs</h3>
+            <p className="text-white/80 font-medium text-sm md:text-base mt-1 drop-shadow-md">
+              {likedTrackDetails.length} {likedTrackDetails.length === 1 ? 'song' : 'songs'}
+            </p>
+          </div>
+          
+          <div className="absolute bottom-6 right-6 w-12 h-12 md:w-14 md:h-14 bg-acid-lime rounded-full shadow-[0_4px_15px_rgba(163,230,53,0.4)] flex items-center justify-center translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+            <Play className="w-6 h-6 fill-obsidian text-obsidian ml-1" />
           </div>
         </div>
-      )}
+      </div>
 
       {savedPlaylists.length > 0 && (
         <div className="mb-10">

@@ -1,6 +1,6 @@
 import React from 'react';
 import { usePlayerStore } from '../store/usePlayerStore';
-import { Play, Shuffle, Clock, ChevronLeft, Download, Plus, CheckCircle2, Trash2, GripVertical, Layers } from 'lucide-react';
+import { Play, Shuffle, Clock, ChevronLeft, Download, Plus, CheckCircle2, Trash2, GripVertical, Layers, Heart } from 'lucide-react';
 import { Reorder, useDragControls } from 'framer-motion';
 import type { TabType } from './BottomNav';
 import { downloadTrack } from '../services/downloadService';
@@ -29,12 +29,16 @@ const TrackItem = ({ track, playlist, idx, playlistId }: { track: Track, playlis
         isPlayingThis ? 'bg-white/5 md:bg-white/10' : 'hover:bg-white/5 bg-transparent'
       }`}
     >
-      <div 
-        className="text-zinc-600 hover:text-white cursor-grab active:cursor-grabbing px-1 touch-none"
-        onPointerDown={(e) => controls.start(e)}
-      >
-        <GripVertical className="w-5 h-5 md:w-4 md:h-4" />
-      </div>
+      {playlistId !== 'liked_songs' ? (
+        <div 
+          className="text-zinc-600 hover:text-white cursor-grab active:cursor-grabbing px-1 touch-none"
+          onPointerDown={(e) => controls.start(e)}
+        >
+          <GripVertical className="w-5 h-5 md:w-4 md:h-4" />
+        </div>
+      ) : (
+        <div className="w-5 h-5 md:w-4 md:h-4 px-1" />
+      )}
       
       <button 
         type="button"
@@ -105,16 +109,29 @@ const TrackItem = ({ track, playlist, idx, playlistId }: { track: Track, playlis
         >
           <Layers className="w-5 h-5 md:w-4 md:h-4" />
         </button>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            removeTrackFromPlaylist(playlistId, track.id);
-          }}
-          className="p-3 md:p-2 rounded-full hover:bg-red-500/20 transition text-zinc-500 hover:text-red-400"
-          title="Remove from Playlist"
-        >
-          <Trash2 className="w-5 h-5 md:w-4 md:h-4" />
-        </button>
+        {playlistId !== 'liked_songs' ? (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              removeTrackFromPlaylist(playlistId, track.id);
+            }}
+            className="p-3 md:p-2 rounded-full hover:bg-red-500/20 transition text-zinc-500 hover:text-red-400"
+            title="Remove from Playlist"
+          >
+            <Trash2 className="w-5 h-5 md:w-4 md:h-4" />
+          </button>
+        ) : (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              usePlayerStore.getState().toggleLikeTrack(track);
+            }}
+            className="p-3 md:p-2 rounded-full transition hover:scale-110"
+            title="Remove from Liked Songs"
+          >
+            <Heart className="w-5 h-5 md:w-4 md:h-4 fill-pink-500 text-pink-500" />
+          </button>
+        )}
         {track.source === 'saavn' && (
           <button 
             onClick={async (e) => {
@@ -152,7 +169,17 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
   const [isDownloading, setIsDownloading] = React.useState(false);
   const [downloadProgress, setDownloadProgress] = React.useState(0);
 
-  const playlist = savedPlaylists.find(p => p.id === playlistId);
+  const likedTrackDetails = usePlayerStore(state => state.likedTrackDetails || []);
+
+  let playlist = savedPlaylists.find(p => p.id === playlistId);
+  
+  if (playlistId === 'liked_songs') {
+    playlist = {
+      id: 'liked_songs',
+      name: 'Liked Songs',
+      tracks: likedTrackDetails
+    };
+  }
 
   if (!playlist) {
     return (
@@ -259,18 +286,20 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
                <Download className="w-6 h-6" />
             )}
           </button>
-          <button
-            onClick={() => {
-              if (confirm(`Delete playlist "${playlist.name}"? This cannot be undone.`)) {
-                deletePlaylist(playlistId);
-                setActiveTab('vault');
-              }
-            }}
-            className="p-2 rounded-full text-zinc-400 hover:text-red-400 transition-all"
-            title="Delete playlist"
-          >
-            <Trash2 className="w-6 h-6" />
-          </button>
+          {playlistId !== 'liked_songs' && (
+            <button
+              onClick={() => {
+                if (confirm(`Delete playlist "${playlist.name}"? This cannot be undone.`)) {
+                  deletePlaylist(playlistId);
+                  setActiveTab('vault');
+                }
+              }}
+              className="p-2 rounded-full text-zinc-400 hover:text-red-400 transition-all"
+              title="Delete playlist"
+            >
+              <Trash2 className="w-6 h-6" />
+            </button>
+          )}
         </div>
         
         <div className="flex items-center gap-3">
@@ -301,7 +330,16 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
             <p className="text-sm">Search for songs and add them using the + button.</p>
           </div>
         ) : (
-        <Reorder.Group axis="y" values={playlist.tracks} onReorder={(newTracks) => reorderPlaylist(playlist.id, newTracks)} className="space-y-1 md:space-y-2">
+        <Reorder.Group 
+          axis="y" 
+          values={playlist.tracks} 
+          onReorder={(newTracks) => {
+            if (playlistId !== 'liked_songs') {
+              reorderPlaylist(playlist.id, newTracks);
+            }
+          }} 
+          className="space-y-1 md:space-y-2"
+        >
           {playlist.tracks.map((track, idx) => (
             <TrackItem key={track.id} track={track} playlist={playlist} idx={idx} playlistId={playlistId} />
           ))}
