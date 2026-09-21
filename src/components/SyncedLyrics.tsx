@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { X, Globe, ChevronDown, Loader2, Mic, MicOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePlayerStore } from '../store/usePlayerStore';
-import { fetchLyrics, translateLyrics } from '../services/lyricsService';
+import { fetchLyrics, translateLyrics, translatePlainLyrics } from '../services/lyricsService';
 import type { LyricLine, TranslatedLyricLine } from '../types/music';
 
 const LANGUAGE_OPTIONS = [
@@ -35,6 +35,7 @@ export const SyncedLyrics: React.FC<{ inline?: boolean }> = ({ inline = false })
   const [selectedLang, setSelectedLang] = useState(LANGUAGE_OPTIONS[0]);
   const [isTranslating, setIsTranslating] = useState(false);
   const [translatedLines, setTranslatedLines] = useState<TranslatedLyricLine[] | null>(null);
+  const [translatedPlain, setTranslatedPlain] = useState<string | null>(null);
   const [showLangPicker, setShowLangPicker] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -49,6 +50,7 @@ export const SyncedLyrics: React.FC<{ inline?: boolean }> = ({ inline = false })
       setSynced(null);
       setPlain(null);
       setTranslatedLines(null);
+      setTranslatedPlain(null);
       setShowTranslation(false);
 
       const { synced, plain } = await fetchLyrics(currentTrack.title, currentTrack.artist, currentTrack.duration);
@@ -62,11 +64,16 @@ export const SyncedLyrics: React.FC<{ inline?: boolean }> = ({ inline = false })
 
   // ── Translation trigger ──────────────────────────────────────────────────
   const handleTranslate = async () => {
-    if (!synced || !currentTrack) return;
+    if (!currentTrack) return;
     setIsTranslating(true);
     try {
-      const result = await translateLyrics(synced, selectedLang.code, currentTrack.id);
-      setTranslatedLines(result);
+      if (synced && synced.length > 0) {
+        const result = await translateLyrics(synced, selectedLang.code, currentTrack.id);
+        setTranslatedLines(result);
+      } else if (plain) {
+        const result = await translatePlainLyrics(plain, selectedLang.code, currentTrack.id);
+        setTranslatedPlain(result);
+      }
       setShowTranslation(true);
     } catch (e: any) {
       console.error(e);
@@ -139,7 +146,7 @@ export const SyncedLyrics: React.FC<{ inline?: boolean }> = ({ inline = false })
             </motion.button>
 
             {/* Translation Toolbar */}
-            {synced && synced.length > 0 && !isLoading && (
+            {((synced && synced.length > 0) || plain) && !isLoading && (
               <div className="flex items-center gap-2 relative">
                 {/* Language picker */}
                 <div className="relative">
@@ -168,6 +175,7 @@ export const SyncedLyrics: React.FC<{ inline?: boolean }> = ({ inline = false })
                         setShowLangPicker(false);
                         // Reset translation so user can re-trigger
                         setTranslatedLines(null);
+                        setTranslatedPlain(null);
                         setShowTranslation(false);
                       }}
                       className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all hover:bg-white/10 ${selectedLang.code === lang.code ? 'text-purple-400 bg-purple-500/10' : 'text-white'}`}
@@ -274,7 +282,7 @@ export const SyncedLyrics: React.FC<{ inline?: boolean }> = ({ inline = false })
         ) : plain ? (
           <div className="text-center text-gray-300 whitespace-pre-wrap leading-relaxed text-lg">
             <div className="mb-6 pill-tag-secondary inline-block">Unsynced Lyrics</div>
-            <div>{plain}</div>
+            <div>{showTranslation && translatedPlain ? translatedPlain : plain}</div>
           </div>
         ) : (
           <div className="flex items-center justify-center h-full flex-col">

@@ -4,9 +4,11 @@ import type { Track, SavedPlaylist, DjEvent } from '../types/music';
 
 // Global native audio instance for Direct CDNs
 export const nativeAudio = new Audio();
+nativeAudio.crossOrigin = "anonymous";
 
 // Secondary audio instance for crossfade — lives here at module scope so it persists
 export const crossfadeAudio = new Audio();
+crossfadeAudio.crossOrigin = "anonymous";
 
 // DJ Arrangement Web Audio State
 export let audioCtx: AudioContext | null = null;
@@ -29,7 +31,67 @@ export let currentArrangement: DjEvent[] = [];
 export let processedEvents: Set<string> = new Set();
 
 const initAudioContext = () => {
-  // Web Audio API routing disabled for CORS safety in production
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    nativeAudioSource = audioCtx.createMediaElementSource(nativeAudio);
+    
+    nativeBassFilter = audioCtx.createBiquadFilter();
+    nativeBassFilter.type = 'lowshelf';
+    nativeBassFilter.frequency.value = 200;
+    nativeBassFilter.gain.value = 0;
+
+    nativeAudioFilter = audioCtx.createBiquadFilter();
+    nativeAudioFilter.type = 'peaking';
+    nativeAudioFilter.frequency.value = 1000;
+    nativeAudioFilter.Q.value = 1.5;
+    nativeAudioFilter.gain.value = 0; // 0 = no cut
+    
+    nativeAudioSource.connect(nativeBassFilter);
+    nativeBassFilter.connect(nativeAudioFilter);
+    
+    // Normal Mix
+    normalGain = audioCtx.createGain();
+    normalGain.gain.value = 1;
+    nativeAudioFilter.connect(normalGain);
+    normalGain.connect(audioCtx.destination);
+
+    // Karaoke Mix (Advanced Center Cancellation with Bass Preservation)
+    karaokeGain = audioCtx.createGain();
+    karaokeGain.gain.value = 0;
+    
+    const lowpass = audioCtx.createBiquadFilter();
+    lowpass.type = 'lowpass';
+    lowpass.frequency.value = 300; // Keep bass below 300Hz
+    
+    const highpass = audioCtx.createBiquadFilter();
+    highpass.type = 'highpass';
+    highpass.frequency.value = 300; // Vocals and mids above 300Hz
+
+    nativeAudioFilter.connect(lowpass);
+    nativeAudioFilter.connect(highpass);
+
+    const splitter = audioCtx.createChannelSplitter(2);
+    const merger = audioCtx.createChannelMerger(2);
+    const inverter = audioCtx.createGain();
+    inverter.gain.value = -1;
+
+    highpass.connect(splitter);
+    
+    // Center cancellation on mids/highs (L - R)
+    splitter.connect(merger, 0, 0);
+    splitter.connect(merger, 0, 1);
+    splitter.connect(inverter, 1, 0);
+    inverter.connect(merger, 0, 0);
+    inverter.connect(merger, 0, 1);
+    
+    // Recombine preserved bass and cancelled mids
+    merger.connect(karaokeGain);
+    lowpass.connect(karaokeGain);
+    karaokeGain.connect(audioCtx.destination);
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
 };
 
 export const rampVolume = (
@@ -500,12 +562,32 @@ export const usePlayerStore = create<PlayerState>()(
       if (track.mashupStreamUrls && track.mashupStreamUrls.length > 0) {
         track.mashupStreamUrls.forEach(item => {
            const aux = new Audio(item.url);
+           aux.crossOrigin = "anonymous";
            aux.volume = get().volume;
            aux.playbackRate = get().playbackRate;
            
            let source = null;
            let filter = null;
            let bassFilter = null;
+           
+           if (audioCtx) {
+             source = audioCtx.createMediaElementSource(aux);
+
+             bassFilter = audioCtx.createBiquadFilter();
+             bassFilter.type = 'lowshelf';
+             bassFilter.frequency.value = 200;
+             bassFilter.gain.value = 0;
+
+             filter = audioCtx.createBiquadFilter();
+             filter.type = 'peaking';
+             filter.frequency.value = 1000;
+             filter.Q.value = 1.5;
+             filter.gain.value = 0;
+
+             source.connect(bassFilter);
+             bassFilter.connect(filter);
+             filter.connect(audioCtx.destination);
+           }
            
            auxContexts.push({ audio: aux, source, filter, bassFilter, trackId: item.id });
            // Preload but do NOT auto-play — DJ arrangement controls when each track starts

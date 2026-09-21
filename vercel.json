@@ -5,6 +5,10 @@
       "destination": "https://www.jiosaavn.com/:match*"
     },
     {
+      "source": "/api/saavncdn/:match*",
+      "destination": "https://aac.saavncdn.com/:match*"
+    },
+    {
       "source": "/api/youtube/:match*",
       "destination": "https://suggestqueries.google.com/:match*"
     },
@@ -15,6 +19,14 @@
     {
       "source": "/(.*)",
       "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/saavncdn/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
     }
   ]
 }

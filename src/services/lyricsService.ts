@@ -153,8 +153,54 @@ ${JSON.stringify(nonEmpty.map(l => ({ time: l.time, text: l.text })))}
 
     translationCache.set(cacheKey, merged);
     return merged;
-  } catch (error: any) {
+  } catch (error) {
     console.error('translateLyrics error:', error);
-    throw new Error(error?.message || 'Translation failed. Please try again.');
+    return lines.map(l => ({ ...l }));
+  }
+};
+
+const plainTranslationCache = new Map<string, string>();
+
+export const translatePlainLyrics = async (
+  plain: string,
+  targetLanguage: string,
+  trackId: string
+): Promise<string> => {
+  const cacheKey = `${trackId}__${targetLanguage}__plain`;
+  if (plainTranslationCache.has(cacheKey)) {
+    return plainTranslationCache.get(cacheKey)!;
+  }
+
+  try {
+    const promptText = `You are a professional lyric translator. Translate the following lyrics into ${targetLanguage}. 
+Return exactly the translated plain text, maintaining line breaks and structure. Do not include any JSON formatting, original lyrics, or explanations. Just the translated text.
+
+Lyrics to translate:
+${plain}`;
+
+    const translated = await callGeminiDirectly(promptText, 'translate');
+    
+    // The Gemini response is usually wrapped in an array from our geminiService parsing, 
+    // but for 'translate' type we return raw text if we don't force JSON. 
+    // Let's handle whatever comes back.
+    let finalTranslation = '';
+    if (typeof translated === 'string') {
+      finalTranslation = translated;
+    } else if (Array.isArray(translated) && translated.length > 0 && translated[0]?.translation) {
+       finalTranslation = translated[0].translation;
+    } else if (Array.isArray(translated) && typeof translated[0] === 'string') {
+       finalTranslation = translated[0];
+    } else {
+       finalTranslation = JSON.stringify(translated);
+    }
+
+    // Clean up possible markdown ticks if any
+    finalTranslation = finalTranslation.replace(/```json/g, '').replace(/```/g, '').trim();
+
+    plainTranslationCache.set(cacheKey, finalTranslation);
+    return finalTranslation;
+  } catch (error) {
+    console.error('translatePlainLyrics error:', error);
+    return plain;
   }
 };
