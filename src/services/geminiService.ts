@@ -19,7 +19,7 @@ const getKeys = () => [
 const REVERSED_GROQ_API_KEY = 'KlapevwTKqnaVhYCv2RLVFDKYF3bydGWx1EQDpE7E1UcCJ27xkjz_ksg';
 const GROQ_MODEL = 'qwen/qwen3.8-27b';
 
-const callGroqFallback = async (promptText: string) => {
+const callGroqFallback = async (promptText: string, expectJson: boolean = true) => {
   const endpoint = `https://api.groq.com/openai/v1/chat/completions`;
   const response = await fetch(endpoint, {
     method: 'POST',
@@ -38,7 +38,12 @@ const callGroqFallback = async (promptText: string) => {
   }
 
   const data = await response.json();
-  let text = data.choices?.[0]?.message?.content || '[]';
+  let text = data.choices?.[0]?.message?.content || (expectJson ? '[]' : '');
+
+  if (!expectJson) {
+    return text.trim();
+  }
+
   text = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
   const jsonStart = text.indexOf('[');
   const jsonEnd = text.lastIndexOf(']');
@@ -50,7 +55,7 @@ const callGroqFallback = async (promptText: string) => {
   return Array.isArray(parsed) ? parsed : (parsed ? [parsed] : []);
 };
 
-export const callGeminiDirectly = async (promptText: string, type: 'playlist' | 'search' | 'mood' | 'translate', audioBase64?: string) => {
+export const callGeminiDirectly = async (promptText: string, type: 'playlist' | 'search' | 'mood' | 'translate', audioBase64?: string, expectJson: boolean = true): Promise<any> => {
   const keys = getKeys();
   if (keys.length === 0) throw new Error('API key not configured');
 
@@ -106,7 +111,12 @@ export const callGeminiDirectly = async (promptText: string, type: 'playlist' | 
         }
 
         const data = await response.json();
-        let text = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
+        let text = data.candidates?.[0]?.content?.parts?.[0]?.text || (expectJson ? '[]' : '');
+        
+        if (!expectJson) {
+          return text.trim();
+        }
+
         text = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
         const jsonStart = text.indexOf('[');
         const jsonEnd = text.lastIndexOf(']');
@@ -129,7 +139,7 @@ export const callGeminiDirectly = async (promptText: string, type: 'playlist' | 
   
   console.warn('All Gemini keys failed. Falling back to Groq API...');
   try {
-    return await callGroqFallback(promptText);
+    return await callGroqFallback(promptText, expectJson);
   } catch (groqError) {
     console.error('Groq fallback failed:', groqError);
     throw new Error(lastResponse?.status === 429 ? 'All AI keys rate-limited. Please wait a minute.' : 'AI Service Error. Please try again.');
