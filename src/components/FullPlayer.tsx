@@ -43,6 +43,10 @@ export const FullPlayer: React.FC = () => {
     return `${m}:${s}`;
   };
 
+  const videoSearchQuery = currentTrack.id.startsWith('mashup-') 
+    ? currentTrack.title.replace('🎛️ ', '').replace(' × ', ' ') + ' live mashup'
+    : `${currentTrack.title} ${currentTrack.artist || ''} official music video`;
+
   return (
     <div className={`fixed inset-0 z-50 bg-obsidian flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${isFullPlayerOpen ? 'translate-y-0' : 'translate-y-full'}`}>
       {/* Background blur */}
@@ -93,9 +97,9 @@ export const FullPlayer: React.FC = () => {
         </div>
 
         {isVideoMode ? (
-          <div className="w-full aspect-square max-h-[40vh] md:max-h-none rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] mb-6 relative">
+          <div className="w-full aspect-square max-h-[40vh] md:max-h-none rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] mb-6 relative bg-black flex items-center justify-center">
             <iframe
-              src={`https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(currentTrack.title + ' ' + (currentTrack.artist || '') + ' official music video')}&autoplay=1&mute=1`}
+              src={`https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(videoSearchQuery)}&autoplay=1&mute=1`}
               title="YouTube video player"
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

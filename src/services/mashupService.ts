@@ -256,47 +256,48 @@ Output ONLY the raw JSON, starting with { and ending with }.`;
     console.error('[Mashup] Gemini blueprint failed, using smart fallback:', e);
   }
 
-  // ── Fallback 10-second alternating blueprint ──────────────────────────────
-  if (!blueprint) {
-    const fallbackBpm = 120;
-    const secPerBar = (60 / fallbackBpm) * 4;
-    const combinedDur = (anchorTrack.duration || 180) + (secondaryTracks[0]?.duration || 180);
-    const totalFallbackBars = Math.ceil(combinedDur / secPerBar);
-    
-    const blocks: any[] = [];
-    const barsPer10Sec = 10 / secPerBar;
-    let currentBar = 1;
-    let isAnchor = true;
+  // ── Strict 10-Second Alternating Logic ───────────────────────────────────────
+  // Bypassing blueprint completely to perfectly follow user logic
+  const arrangement: DjEvent[] = [];
+  const combinedDur = (anchorTrack.duration || 180) + (secondaryTracks[0]?.duration || 180);
+  const chunkDuration = 10;
+  
+  let currentSec = 0;
+  let isPrimary = true;
+  const primaryId = anchorTrack.id;
+  const secondaryId = secondaryTracks[0]?.id || anchorTrack.id;
 
-    while (currentBar < totalFallbackBars) {
-      let endBar = Math.min(currentBar + barsPer10Sec, totalFallbackBars);
-      blocks.push({
-        bar_start: currentBar,
-        bar_end: endBar,
-        active_stems: [
-          {
-            track_id: isAnchor ? anchorTrack.id : (secondaryTracks[0]?.id || anchorTrack.id),
-            stem_type: 'full',
-            volume_db: 0,
-            pitch_shift_semitones: 0
-          }
-        ],
-        effects: { transition_type: 'crossfade' }
-      });
-      currentBar = endBar;
-      isAnchor = !isAnchor;
-    }
-
-    blueprint = {
-      mashup_metadata: { final_bpm: fallbackBpm, total_duration_bars: totalFallbackBars, target_key: '1A' },
-      timeline_blocks: blocks,
-    };
+  // Initial state: start primary at full, mute secondary
+  arrangement.push({ timestamp: 0, trackId: primaryId, type: 'set_volume', volume: 1 });
+  if (primaryId !== secondaryId) {
+    arrangement.push({ timestamp: 0, trackId: secondaryId, type: 'set_volume', volume: 0 });
   }
 
-  setStatus('mastering', 90);
+  while (currentSec < combinedDur) {
+    const nextSec = currentSec + chunkDuration;
+    if (nextSec >= combinedDur) break; // Reached the end
 
-  // Convert blueprint → DjEvent[]
-  const arrangement = blueprintToDjEvents(blueprint!, anchorTrack.id);
+    // Swap tracks
+    isPrimary = !isPrimary;
+    const enteringTrack = isPrimary ? primaryId : secondaryId;
+    const exitingTrack = isPrimary ? secondaryId : primaryId;
+
+    arrangement.push({ timestamp: nextSec, trackId: enteringTrack, type: 'fade_in', volume: 1 });
+    arrangement.push({ timestamp: nextSec, trackId: exitingTrack, type: 'fade_out' });
+
+    currentSec = nextSec;
+  }
+
+  // Final fade out for whoever is playing
+  arrangement.push({ timestamp: combinedDur - 3, trackId: isPrimary ? primaryId : secondaryId, type: 'fade_out' });
+
+  // Update blueprint mock for metadata
+  blueprint = {
+    mashup_metadata: { final_bpm: 120, total_duration_bars: Math.ceil(combinedDur / 2), target_key: '1A' },
+    timeline_blocks: [],
+  };
+
+  setStatus('mastering', 90);
 
   // Apply BPM matching via playbackRate on auxiliary tracks
   const finalBpm = blueprint!.mashup_metadata.final_bpm;
