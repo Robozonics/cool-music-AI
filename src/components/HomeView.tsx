@@ -6,7 +6,7 @@ import { usePlayerStore } from '../store/usePlayerStore';
 import { DaylistWidget } from './DaylistWidget';
 import { AIPlaylistModal } from './AIPlaylistModal';
 import type { TabType } from './BottomNav';
-import { generateAIPlaylist, generateAuraAnalysis } from '../services/geminiService';
+import { generateAIPlaylist, generateAuraAnalysis, callGeminiDirectly } from '../services/geminiService';
 
 const getMostRecentMonday = () => {
   const d = new Date();
@@ -229,19 +229,43 @@ const GeoDiscoveryBanner: React.FC = () => {
         
         setLocationName(city === "Your City" ? "your area" : city);
 
-        const query = city === "Your City" ? "trending hits viral top 50" : `trending hits in ${city}`;
-        let tracks = await searchUnblocked(query);
-        
-        // Fallback to State level if City returns no results
-        if (tracks.length === 0 && stateName && city !== "Your City") {
-          setLocationName(stateName);
-          tracks = await searchUnblocked(`trending hits in ${stateName}`);
+        let tracks: Track[] = [];
+
+        if (city !== "Your City" || stateName) {
+          try {
+            const locStr = [city !== "Your City" ? city : "", stateName].filter(Boolean).join(", ");
+            const prompt = `What are 5 highly popular and trending songs currently being listened to by people in ${locStr} right now? Reply ONLY with a valid JSON array of strings, where each string is the song name and artist. Example: ["Song Name by Artist", "Song Name by Artist"]`;
+            
+            const songStrings = await callGeminiDirectly(prompt, 'playlist', undefined, true);
+            
+            if (Array.isArray(songStrings) && songStrings.length > 0) {
+              const trackPromises = songStrings.map(async (songQuery: string) => {
+                const res = await searchUnblocked(songQuery);
+                return res[0]; 
+              });
+              const results = await Promise.all(trackPromises);
+              tracks = results.filter(t => !!t) as Track[];
+            }
+          } catch (aiErr) {
+            console.warn("AI trending failed, falling back to basic search", aiErr);
+          }
         }
 
-        // Final fallback if State also returns nothing
         if (tracks.length === 0) {
-          setLocationName("your area");
-          tracks = await searchUnblocked("trending hits viral top 50");
+          const query = city === "Your City" ? "trending hits viral top 50" : `trending hits in ${city}`;
+          tracks = await searchUnblocked(query);
+          
+          // Fallback to State level if City returns no results
+          if (tracks.length === 0 && stateName && city !== "Your City") {
+            setLocationName(stateName);
+            tracks = await searchUnblocked(`trending hits in ${stateName}`);
+          }
+
+          // Final fallback if State also returns nothing
+          if (tracks.length === 0) {
+            setLocationName("your area");
+            tracks = await searchUnblocked("trending hits viral top 50");
+          }
         }
         
         if (tracks.length > 0) {
