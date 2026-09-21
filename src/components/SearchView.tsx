@@ -143,6 +143,7 @@ export const SearchView: React.FC = () => {
     const hasEmoji = /\p{Extended_Pictographic}/u.test(query);
     if (hasEmoji && searchMode === 'standard') {
       setSearchMode('ai');
+      executeSearch(query);
     }
 
     if (!query.trim()) {

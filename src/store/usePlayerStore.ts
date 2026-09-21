@@ -4,11 +4,11 @@ import type { Track, SavedPlaylist, DjEvent } from '../types/music';
 
 // Global native audio instance for Direct CDNs
 export const nativeAudio = new Audio();
-nativeAudio.crossOrigin = "anonymous";
+// Removed nativeAudio.crossOrigin = "anonymous" to prevent CORS-blocking on some CDNs
 
 // Secondary audio instance for crossfade — lives here at module scope so it persists
 export const crossfadeAudio = new Audio();
-crossfadeAudio.crossOrigin = "anonymous";
+// Removed crossfadeAudio.crossOrigin = "anonymous"
 
 // DJ Arrangement Web Audio State
 export let audioCtx: AudioContext | null = null;
@@ -399,8 +399,8 @@ export const usePlayerStore = create<PlayerState>()(
   });
 
   nativeAudio.addEventListener('error', () => {
-    console.warn('Track playback failed (likely CORS or network error), skipping to next track.');
-    get().nextTrack();
+    console.warn('Track playback failed (likely CORS or network error).');
+    set({ isPlaying: false, isBuffering: false });
   });
 
   nativeAudio.addEventListener('play', () => {
@@ -556,7 +556,7 @@ export const usePlayerStore = create<PlayerState>()(
       if (track.mashupStreamUrls && track.mashupStreamUrls.length > 0) {
         track.mashupStreamUrls.forEach(item => {
            const aux = new Audio(item.url);
-           aux.crossOrigin = "anonymous";
+           // Removed aux.crossOrigin = "anonymous"
            aux.volume = get().volume;
            aux.playbackRate = get().playbackRate;
            

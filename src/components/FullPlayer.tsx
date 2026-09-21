@@ -21,6 +21,8 @@ export const FullPlayer: React.FC = () => {
   const setFullPlayerOpen = usePlayerStore(state => state.setFullPlayerOpen);
   const isLyricsOpen = usePlayerStore(state => state.isLyricsOpen);
   const setLyricsOpen = usePlayerStore(state => state.setLyricsOpen);
+  const isKaraokeMode = usePlayerStore(state => state.isKaraokeMode);
+  const toggleKaraokeMode = usePlayerStore(state => state.toggleKaraokeMode);
   
   const isVideoMode = usePlayerStore(state => state.isVideoMode);
   const toggleVideoMode = usePlayerStore(state => state.toggleVideoMode);
@@ -88,9 +90,22 @@ export const FullPlayer: React.FC = () => {
           <img src={currentTrack.thumbnail} className="w-full h-full object-cover blur-[100px] saturate-200" alt="" />
         </div>
 
-        <div className="w-full aspect-square max-h-[40vh] md:max-h-none rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] mb-6 relative group" style={{ transform: `scale(calc(1 + var(--vibe-intensity, 0) * 0.1))`, transition: 'transform 0.1s ease-out' }}>
-           <img src={currentTrack.thumbnail} alt={currentTrack.title} className="w-full h-full object-cover" />
-        </div>
+        {isVideoMode ? (
+          <div className="w-full aspect-square max-h-[40vh] md:max-h-none rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] mb-6 relative">
+            <iframe
+              src={`https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(currentTrack.title + ' ' + currentTrack.artist + ' official music video')}&autoplay=1`}
+              title="YouTube video player"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="w-full h-full object-cover"
+            />
+          </div>
+        ) : (
+          <div className="w-full aspect-square max-h-[40vh] md:max-h-none rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] mb-6 relative group" style={{ transform: `scale(calc(1 + var(--vibe-intensity, 0) * 0.1))`, transition: 'transform 0.1s ease-out' }}>
+             <img src={currentTrack.thumbnail} alt={currentTrack.title} className="w-full h-full object-cover" />
+          </div>
+        )}
 
         <div className="w-full flex flex-col mb-6">
           <div className="w-full flex justify-between items-start mb-4">
@@ -156,9 +171,9 @@ export const FullPlayer: React.FC = () => {
             </button>
 
             <button 
-              onClick={() => setLyricsOpen(!isLyricsOpen)}
-              className={`p-2 sm:p-3 rounded-full transition-colors ${isLyricsOpen ? 'text-acid-lime shadow-[0_0_15px_rgba(204,255,0,0.3)]' : 'text-gray-400 hover:text-white'}`}
-              title="Lyrics"
+              onClick={toggleKaraokeMode}
+              className={`p-2 sm:p-3 rounded-full transition-colors ${isKaraokeMode ? 'text-electric-fuchsia shadow-[0_0_15px_rgba(255,0,255,0.3)]' : 'text-gray-400 hover:text-white'}`}
+              title="Karaoke"
             >
               <Mic2 className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>

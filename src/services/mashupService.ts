@@ -174,7 +174,10 @@ export const generateAiMashup = async (tracks: Track[], anchorTrackId: string): 
 
   setStatus('extracting', 5);
 
-  const totalBars = 64; // 64 bars ≈ 2 minutes at ~120 BPM
+  const targetBpm = 120;
+  const secPerBar = (60 / targetBpm) * 4;
+  const combinedDuration = (anchorTrack.duration || 180) + (secondaryTracks[0]?.duration || 180);
+  const totalBars = Math.ceil(combinedDuration / secPerBar); 
 
   const promptText = `You are an expert AI DJ, Audio Producer, and Music Arranger specializing in creating seamless, high-energy, and harmonically correct mashups.
 
@@ -193,13 +196,11 @@ ${secondaryTracks.map((t, i) => `  ${i + 1}. id: "${t.id}" | name: "${t.title}" 
 Based on your knowledge of these songs (estimate BPM and Camelot key), create a professional ${totalBars}-bar mashup blueprint.
 
 === RULES ===
-1. TEMPO: Estimate a target_bpm (median of all tracks). Use "full" stem_type since we have no stem separation.
-2. HARMONIC MIXING: Estimate each track's Camelot key. Calculate pitch_shift_semitones to bring each to the target key.
-3. NEVER overlap two tracks both using "vocals" stem_type simultaneously — always switch one to "other".
-4. NEVER overlap two tracks both using "bass" stem_type simultaneously.
-5. Structure as: Intro (bars 1-8), Build (9-16), First Drop (17-32), Break (33-40), Second Drop (41-56), Outro (57-64).
-6. Use transition_type: "high_pass_sweep" or "low_pass_sweep" at section boundaries with a filter_cutoff_hz value.
-7. volume_db should range from -6 to 0. Duck secondary tracks to -3 when anchor plays.
+1. TEMPO: Estimate a target_bpm (median of all tracks). Use "full" stem_type.
+2. TOTAL DURATION: The mashup must last the full combined duration of the tracks.
+3. 10-SECOND ALTERNATING LOGIC: You MUST alternate between the primary track and secondary track exactly every 10 seconds. Play the primary track for 10s, then the secondary track for 10s, and repeat this pattern until the end of the total duration.
+4. Convert 10 seconds into the correct number of bars based on your target_bpm to create the timeline_blocks.
+5. NEVER overlap the tracks; one plays while the other is silent (volume_db = -60) or crossfaded out.
 
 === REQUIRED OUTPUT FORMAT ===
 {
@@ -255,32 +256,40 @@ Output ONLY the raw JSON, starting with { and ending with }.`;
     console.error('[Mashup] Gemini blueprint failed, using smart fallback:', e);
   }
 
-  // ── Fallback 3-act blueprint if Gemini fails ──────────────────────────────
+  // ── Fallback 10-second alternating blueprint ──────────────────────────────
   if (!blueprint) {
-    const dur = Math.min(anchorTrack.duration || 180, 120);
     const fallbackBpm = 120;
     const secPerBar = (60 / fallbackBpm) * 4;
-    const totalFallbackBars = Math.floor(dur / secPerBar);
-    const b1 = Math.round(totalFallbackBars * 0.15);
-    const b2 = Math.round(totalFallbackBars * 0.4);
-    const b3 = Math.round(totalFallbackBars * 0.75);
+    const combinedDur = (anchorTrack.duration || 180) + (secondaryTracks[0]?.duration || 180);
+    const totalFallbackBars = Math.ceil(combinedDur / secPerBar);
+    
+    const blocks: any[] = [];
+    const barsPer10Sec = 10 / secPerBar;
+    let currentBar = 1;
+    let isAnchor = true;
+
+    while (currentBar < totalFallbackBars) {
+      let endBar = Math.min(currentBar + barsPer10Sec, totalFallbackBars);
+      blocks.push({
+        bar_start: currentBar,
+        bar_end: endBar,
+        active_stems: [
+          {
+            track_id: isAnchor ? anchorTrack.id : (secondaryTracks[0]?.id || anchorTrack.id),
+            stem_type: 'full',
+            volume_db: 0,
+            pitch_shift_semitones: 0
+          }
+        ],
+        effects: { transition_type: 'crossfade' }
+      });
+      currentBar = endBar;
+      isAnchor = !isAnchor;
+    }
 
     blueprint = {
-      mashup_metadata: { final_bpm: fallbackBpm, total_duration_bars: totalFallbackBars },
-      timeline_blocks: [
-        { bar_start: 1, bar_end: b1, active_stems: [{ track_id: anchorTrack.id, stem_type: 'full' as const, volume_db: 0, pitch_shift_semitones: 0 }], effects: { transition_type: 'none' as const } },
-        ...(secondaryTracks[0] ? [
-          { bar_start: b1 + 1, bar_end: b2, active_stems: [
-            { track_id: anchorTrack.id, stem_type: 'full' as const, volume_db: -1, pitch_shift_semitones: 0 },
-            { track_id: secondaryTracks[0].id, stem_type: 'other' as const, volume_db: -3, pitch_shift_semitones: 0 },
-          ], effects: { transition_type: 'high_pass_sweep' as const, filter_cutoff_hz: 800 } },
-          { bar_start: b2 + 1, bar_end: b3, active_stems: [
-            { track_id: anchorTrack.id, stem_type: 'other' as const, volume_db: -3, pitch_shift_semitones: 0 },
-            { track_id: secondaryTracks[0].id, stem_type: 'full' as const, volume_db: 0, pitch_shift_semitones: 0 },
-          ], effects: { transition_type: 'low_pass_sweep' as const, filter_cutoff_hz: 1200 } },
-        ] : []),
-        { bar_start: b3 + 1, bar_end: totalFallbackBars, active_stems: [{ track_id: anchorTrack.id, stem_type: 'full' as const, volume_db: 0, pitch_shift_semitones: 0 }], effects: { transition_type: 'crossfade' as const } },
-      ],
+      mashup_metadata: { final_bpm: fallbackBpm, total_duration_bars: totalFallbackBars, target_key: '1A' },
+      timeline_blocks: blocks,
     };
   }
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Play, Loader2, Heart, Sparkles, Plus } from 'lucide-react';
+import { Play, Loader2, Heart, Sparkles, Plus, MapPin } from 'lucide-react';
 import { searchUnblocked } from '../services/unblockedMusicService';
 import type { Track } from '../types/music';
 import { usePlayerStore } from '../store/usePlayerStore';
@@ -197,6 +197,105 @@ const DiscoverWeeklyBanner: React.FC = () => {
   );
 };
 
+};
+
+const GeoDiscoveryBanner: React.FC = () => {
+  const [localTracks, setLocalTracks] = useState<Track[]>([]);
+  const [locationName, setLocationName] = useState<string>('');
+  const [isFetching, setIsFetching] = useState(false);
+  const playTrack = usePlayerStore(state => state.playTrack);
+  const setQueue = usePlayerStore(state => state.setQueue);
+
+  const fetchLocalVibes = () => {
+    setIsFetching(true);
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser");
+      setIsFetching(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(async (position) => {
+      try {
+        // Approximate city using coordinates (mocking reverse geocoding via standard search or a generic city)
+        // In a production app, we'd use a real reverse geocoding API.
+        const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${position.coords.latitude}&longitude=${position.coords.longitude}&localityLanguage=en`);
+        const data = await res.json();
+        const city = data.city || data.locality || "Your City";
+        setLocationName(city);
+
+        const tracks = await searchUnblocked(`trending hits in ${city}`);
+        setLocalTracks(tracks.slice(0, 5));
+      } catch (e) {
+        console.error("Geo fetch failed", e);
+      } finally {
+        setIsFetching(false);
+      }
+    }, (error) => {
+      console.error(error);
+      alert("Please allow location access to discover local tracks.");
+      setIsFetching(false);
+    });
+  };
+
+  return (
+    <div className="relative overflow-hidden rounded-[2rem] p-6 md:p-8 bg-gradient-to-br from-emerald-900/40 to-teal-900/20 border border-emerald-500/20 shadow-2xl flex flex-col md:flex-row items-center gap-6 group">
+      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay pointer-events-none" />
+      
+      <div className="relative z-10 w-24 h-24 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0 border border-emerald-500/30">
+        <MapPin className="w-10 h-10 text-emerald-400" />
+      </div>
+
+      <div className="relative z-10 flex-1 text-center md:text-left">
+        <h2 className="text-xs font-bold tracking-[0.2em] uppercase text-emerald-400 mb-2">Geo-Tagged Discovery</h2>
+        {locationName ? (
+          <h3 className="text-2xl font-black text-white mb-2">Trending in {locationName}</h3>
+        ) : (
+          <h3 className="text-2xl font-black text-white mb-2">Find Local Vibes</h3>
+        )}
+        <p className="text-sm text-zinc-400 mb-4 max-w-md">
+          Discover the tracks everyone is listening to around your exact physical location right now.
+        </p>
+
+        {localTracks.length === 0 && !isFetching && (
+          <button 
+            onClick={fetchLocalVibes}
+            className="px-6 py-2.5 rounded-full bg-emerald-500 text-obsidian font-bold text-sm hover:scale-105 transition-transform"
+          >
+            Scan Location
+          </button>
+        )}
+        
+        {isFetching && (
+          <div className="flex items-center gap-2 text-emerald-400 text-sm font-bold">
+            <Loader2 className="w-5 h-5 animate-spin" /> Scanning radar...
+          </div>
+        )}
+
+        {localTracks.length > 0 && (
+          <div className="flex gap-3 overflow-x-auto pb-2 snap-x hide-scrollbar">
+            {localTracks.map(track => (
+              <div 
+                key={track.id} 
+                onClick={() => { setQueue(localTracks); playTrack(track); }}
+                className="w-32 shrink-0 cursor-pointer group/track"
+              >
+                <div className="relative w-full aspect-square rounded-xl overflow-hidden mb-2">
+                  <img src={track.thumbnail} alt={track.title} className="w-full h-full object-cover group-hover/track:scale-110 transition-transform" />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/track:opacity-100 flex items-center justify-center transition-opacity">
+                    <Play className="w-8 h-8 text-emerald-400 fill-emerald-400" />
+                  </div>
+                </div>
+                <p className="text-xs font-bold text-white truncate">{track.title}</p>
+                <p className="text-[10px] text-zinc-400 truncate">{track.artist}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const MOOD_PILLS = [
   { label: '3 AM OVERTHINKING', color: 'bg-lime-400 text-black', query: 'sad lofi study beats' },
   { label: 'HYPERPOP RUSH', color: 'bg-pink-500 text-white', query: 'hyperpop gym hardstyle' },
@@ -276,6 +375,9 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab }) => {
 
       {/* Discover Weekly Banner */}
       <DiscoverWeeklyBanner />
+      
+      {/* Geo-Tagged Discovery Banner */}
+      <GeoDiscoveryBanner />
 
       {/* Daylist Widget — Time-Contextual (Feature 4) */}
       <DaylistWidget />
