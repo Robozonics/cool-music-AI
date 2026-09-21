@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, SkipForward, SkipBack, ChevronDown, Mic2, Download, Plus, X, Repeat, Share2, Video, Blend, ListMusic } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, ChevronDown, Download, Plus, X, Repeat, Share2, Video, Blend, ListMusic } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
 
 export const FullPlayer: React.FC = () => {
