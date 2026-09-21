@@ -329,6 +329,7 @@ export const usePlayerStore = create<PlayerState>()(
     
     // Do NOT auto-play aux tracks here, wait for the 'play' event to unlock them
     // so they are started with a valid user gesture.
+  };
 
 
   // ─────────────────────────────────────────────
