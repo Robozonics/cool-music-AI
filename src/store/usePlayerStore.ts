@@ -151,7 +151,7 @@ const executeDjEvent = (evt: DjEvent, volume: number) => {
       targetAudio.play().catch(() => {});
       break;
     case 'pause':
-      rampVolume(targetAudio, targetAudio.volume, 0, 800, () => {
+      rampVolume(targetAudio, targetAudio.volume, 0, 3000, () => {
         targetAudio!.pause();
       });
       break;

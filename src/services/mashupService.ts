@@ -285,7 +285,7 @@ Output ONLY the raw JSON, starting with { and ending with }.`;
   // Bypassing blueprint completely to perfectly follow user logic
   const arrangement: DjEvent[] = [];
   const combinedDur = (anchorTrack.duration || 180) + secondaryTracks.reduce((sum, t) => sum + (t.duration || 180), 0);
-  const chunkDuration = 10;
+  const chunkDuration = 25;
   
   let currentSec = 0;
   let isPrimary = true;
