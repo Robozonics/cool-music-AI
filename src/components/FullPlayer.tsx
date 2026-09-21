@@ -90,7 +90,7 @@ export const FullPlayer: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center relative z-10 w-full max-w-sm mx-auto min-h-0 overflow-y-auto pb-4">
+      <div className="flex-1 flex flex-col items-center justify-center relative z-10 w-full max-w-sm mx-auto min-h-0 overflow-y-auto pb-4 px-6 sm:px-0">
         {/* Dynamic Background Blur */}
         <div className="absolute inset-[-100%] -z-10 pointer-events-none opacity-40">
           <img src={currentTrack.thumbnail} className="w-full h-full object-cover blur-[100px] saturate-200" alt="" />
@@ -207,7 +207,7 @@ export const FullPlayer: React.FC = () => {
               style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
             >
               <div 
-                className={`absolute left-0 top-0 w-[100vw] h-full genz-waveform ${!isPlaying ? 'opacity-70' : ''}`}
+                className={`absolute left-0 top-0 w-[600px] h-full genz-waveform ${!isPlaying ? 'opacity-70' : ''}`}
                 style={{ animationPlayState: isPlaying ? 'running' : 'paused' }}
               />
             </div>
@@ -227,7 +227,7 @@ export const FullPlayer: React.FC = () => {
         </div>
 
         {/* Controls */}
-        <div className="flex items-center justify-between w-full max-w-sm px-4 mb-8">
+        <div className="flex items-center justify-between w-full max-w-sm mb-8">
           <button 
             onClick={toggleRepeat}
             className={`p-2 rounded-full transition relative ${repeatMode === 'one' ? 'text-acid-lime' : repeatMode === 'all' ? 'text-white' : 'text-zinc-500'}`}
