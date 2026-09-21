@@ -215,11 +215,13 @@ const GeoDiscoveryBanner: React.FC = () => {
     navigator.geolocation.getCurrentPosition(async (position) => {
       try {
         let city = "Your City";
+        let stateName = "";
         try {
           const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${position.coords.latitude}&longitude=${position.coords.longitude}&localityLanguage=en`);
           if (res.ok) {
             const data = await res.json();
             city = data.city || data.locality || "Your City";
+            stateName = data.principalSubdivision || "";
           }
         } catch (apiErr) {
           console.warn("Reverse geocode API failed/blocked", apiErr);
@@ -228,7 +230,19 @@ const GeoDiscoveryBanner: React.FC = () => {
         setLocationName(city === "Your City" ? "your area" : city);
 
         const query = city === "Your City" ? "trending hits viral top 50" : `trending hits in ${city}`;
-        const tracks = await searchUnblocked(query);
+        let tracks = await searchUnblocked(query);
+        
+        // Fallback to State level if City returns no results
+        if (tracks.length === 0 && stateName && city !== "Your City") {
+          setLocationName(stateName);
+          tracks = await searchUnblocked(`trending hits in ${stateName}`);
+        }
+
+        // Final fallback if State also returns nothing
+        if (tracks.length === 0) {
+          setLocationName("your area");
+          tracks = await searchUnblocked("trending hits viral top 50");
+        }
         
         if (tracks.length > 0) {
           setLocalTracks(tracks.slice(0, 5));
