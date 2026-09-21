@@ -239,8 +239,10 @@ const GeoDiscoveryBanner: React.FC = () => {
             const songStrings = await callGeminiDirectly(prompt, 'playlist', undefined, true);
             
             if (Array.isArray(songStrings) && songStrings.length > 0) {
-              const trackPromises = songStrings.map(async (songQuery: string) => {
-                const res = await searchUnblocked(songQuery);
+              const trackPromises = songStrings.map(async (songQuery: any) => {
+                const queryStr = typeof songQuery === 'string' ? songQuery : `${songQuery.title || ''} ${songQuery.artist || ''} ${songQuery.name || ''}`;
+                if (!queryStr.trim()) return null;
+                const res = await searchUnblocked(queryStr);
                 return res[0]; 
               });
               const results = await Promise.all(trackPromises);
