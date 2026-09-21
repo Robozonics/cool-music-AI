@@ -4,11 +4,11 @@ import type { Track, SavedPlaylist, DjEvent } from '../types/music';
 
 // Global native audio instance for Direct CDNs
 export const nativeAudio = new Audio();
-// Removed nativeAudio.crossOrigin = "anonymous" to prevent CORS-blocking on some CDNs
+nativeAudio.crossOrigin = "anonymous";
 
 // Secondary audio instance for crossfade — lives here at module scope so it persists
 export const crossfadeAudio = new Audio();
-// Removed crossfadeAudio.crossOrigin = "anonymous"
+crossfadeAudio.crossOrigin = "anonymous";
 
 // DJ Arrangement Web Audio State
 export let audioCtx: AudioContext | null = null;
@@ -161,9 +161,7 @@ const executeDjEvent = (evt: DjEvent, volume: number) => {
       rampVolume(targetAudio, 0, volume, 3000);
       break;
     case 'fade_out':
-      rampVolume(targetAudio, targetAudio.volume, 0, 3000, () => {
-         targetAudio!.pause();
-      });
+      rampVolume(targetAudio, targetAudio.volume, 0, 3000);
       break;
     case 'cut_vocals':
       if (targetFilter && audioCtx) {
@@ -329,9 +327,8 @@ export const usePlayerStore = create<PlayerState>()(
       });
     }
     
-    // Do NOT auto-play aux tracks — the DJ arrangement events control them
-    // (Aux tracks are preloaded but start paused, waiting for their cue)
-  };
+    // Do NOT auto-play aux tracks here, wait for the 'play' event to unlock them
+    // so they are started with a valid user gesture.
 
 
   // ─────────────────────────────────────────────
@@ -419,21 +416,13 @@ export const usePlayerStore = create<PlayerState>()(
     nativeAudio.playbackRate = get().playbackRate;
     set({ isAutoplayBlocked: false });
     
-    // Unlock auxiliary tracks for mobile autoplay policies
+    // Unlock auxiliary tracks for mobile autoplay policies and keep them synced!
     auxContexts.forEach(a => {
        a.audio.playbackRate = get().playbackRate;
-       // We must play them to unlock, but we want them silent until the DJ event says so
+       // Play them immediately so they stay in perfect sync with the master track.
+       // Their initial volume is 0, and the DJ Events will fade them in when needed.
        if (a.audio.paused) {
-         const oldVol = a.audio.volume;
-         a.audio.volume = 0;
-         const p = a.audio.play();
-         if (p !== undefined) {
-           p.then(() => {
-             // Successfully unlocked, now pause and wait for DJ Event 'fade_in'
-             a.audio.pause();
-             a.audio.volume = oldVol;
-           }).catch(() => {});
-         }
+         a.audio.play().catch(() => console.warn('Aux autoplay blocked'));
        }
     });
   });
@@ -569,7 +558,7 @@ export const usePlayerStore = create<PlayerState>()(
       if (track.mashupStreamUrls && track.mashupStreamUrls.length > 0) {
         track.mashupStreamUrls.forEach(item => {
            const aux = new Audio(item.url);
-           // Removed aux.crossOrigin = "anonymous"
+           aux.crossOrigin = "anonymous";
            aux.volume = get().volume;
            aux.playbackRate = get().playbackRate;
            
