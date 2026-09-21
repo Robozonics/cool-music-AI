@@ -55,6 +55,8 @@ const callGroqFallback = async (promptText: string, expectJson: boolean = true) 
   return Array.isArray(parsed) ? parsed : (parsed ? [parsed] : []);
 };
 
+const deadKeys = new Set<string>();
+
 export const callGeminiDirectly = async (promptText: string, type: 'playlist' | 'search' | 'mood' | 'translate', audioBase64?: string, expectJson: boolean = true): Promise<any> => {
   const keys = getKeys();
   if (keys.length === 0) throw new Error('API key not configured');
@@ -83,6 +85,8 @@ export const callGeminiDirectly = async (promptText: string, type: 'playlist' | 
   const MAX_RETRIES = 2;
 
   for (const apiKey of keys) {
+    if (deadKeys.has(apiKey)) continue;
+
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
     let keyFailed = false;
 
@@ -98,14 +102,18 @@ export const callGeminiDirectly = async (promptText: string, type: 'playlist' | 
           lastResponse = response;
           if (response.status === 429) {
             console.warn(`Key ending in ${apiKey.slice(-5)} rate limited (429). Switching to next key...`);
+            deadKeys.add(apiKey);
             keyFailed = true;
             break;
           }
           if (response.status === 503 && attempt < MAX_RETRIES) {
-            await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+            await new Promise(resolve => setTimeout(resolve, attempt * 500)); // reduce wait time to 500ms
             continue;
           }
           console.error(`Gemini API error (Status ${response.status}):`, response.statusText);
+          if (response.status === 503 || response.status === 400 || response.status >= 500) {
+            deadKeys.add(apiKey);
+          }
           keyFailed = true;
           break;
         }
