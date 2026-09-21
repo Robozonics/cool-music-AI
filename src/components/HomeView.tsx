@@ -214,17 +214,30 @@ const GeoDiscoveryBanner: React.FC = () => {
 
     navigator.geolocation.getCurrentPosition(async (position) => {
       try {
-        // Approximate city using coordinates (mocking reverse geocoding via standard search or a generic city)
-        // In a production app, we'd use a real reverse geocoding API.
-        const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${position.coords.latitude}&longitude=${position.coords.longitude}&localityLanguage=en`);
-        const data = await res.json();
-        const city = data.city || data.locality || "Your City";
-        setLocationName(city);
+        let city = "Your City";
+        try {
+          const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${position.coords.latitude}&longitude=${position.coords.longitude}&localityLanguage=en`);
+          if (res.ok) {
+            const data = await res.json();
+            city = data.city || data.locality || "Your City";
+          }
+        } catch (apiErr) {
+          console.warn("Reverse geocode API failed/blocked", apiErr);
+        }
+        
+        setLocationName(city === "Your City" ? "your area" : city);
 
-        const tracks = await searchUnblocked(`trending hits in ${city}`);
-        setLocalTracks(tracks.slice(0, 5));
+        const query = city === "Your City" ? "trending hits viral top 50" : `trending hits in ${city}`;
+        const tracks = await searchUnblocked(query);
+        
+        if (tracks.length > 0) {
+          setLocalTracks(tracks.slice(0, 5));
+        } else {
+          alert("We couldn't find local vibes right now, but keep exploring!");
+        }
       } catch (e) {
         console.error("Geo fetch failed", e);
+        alert("Oops! Something went wrong fetching the local tracks.");
       } finally {
         setIsFetching(false);
       }

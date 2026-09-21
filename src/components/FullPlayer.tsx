@@ -19,7 +19,8 @@ export const FullPlayer: React.FC = () => {
   
   const isFullPlayerOpen = usePlayerStore(state => state.isFullPlayerOpen);
   const setFullPlayerOpen = usePlayerStore(state => state.setFullPlayerOpen);
-
+  const isLyricsOpen = usePlayerStore(state => state.isLyricsOpen);
+  const setLyricsOpen = usePlayerStore(state => state.setLyricsOpen);
   const isKaraokeMode = usePlayerStore(state => state.isKaraokeMode);
   const toggleKaraokeMode = usePlayerStore(state => state.toggleKaraokeMode);
   
@@ -167,6 +168,14 @@ export const FullPlayer: React.FC = () => {
               title={isCrossfadeEnabled ? 'Smart Mix Transitions: ON (3s)' : 'Smart Mix Transitions: OFF'}
             >
               <Blend className="w-5 h-5 sm:w-6 sm:h-6" />
+            </button>
+
+            <button 
+              onClick={() => setLyricsOpen(!isLyricsOpen)}
+              className={`p-2 sm:p-3 rounded-full transition-colors ${isLyricsOpen ? 'text-acid-lime shadow-[0_0_15px_rgba(204,255,0,0.3)]' : 'text-gray-400 hover:text-white'}`}
+              title="Lyrics"
+            >
+              <ListMusic className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
 
             <button 
