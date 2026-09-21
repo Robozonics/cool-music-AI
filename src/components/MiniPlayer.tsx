@@ -15,7 +15,7 @@ export const MiniPlayer: React.FC = () => {
   return (
       <div 
         className="fixed left-4 right-4 z-40 md:hidden transition-transform"
-        style={{ bottom: 'calc(64px + 16px + env(safe-area-inset-bottom) + 12px)' }}
+        style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom, 1rem) + 12px)' }}
       >
       <div 
         className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-2xl flex items-center p-2 cursor-pointer shadow-[0_15px_30px_rgba(0,0,0,0.5)] hover:bg-white/10 transition-colors" 

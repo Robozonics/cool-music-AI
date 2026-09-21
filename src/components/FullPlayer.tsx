@@ -21,8 +21,6 @@ export const FullPlayer: React.FC = () => {
   const setFullPlayerOpen = usePlayerStore(state => state.setFullPlayerOpen);
   const isLyricsOpen = usePlayerStore(state => state.isLyricsOpen);
   const setLyricsOpen = usePlayerStore(state => state.setLyricsOpen);
-  const isKaraokeMode = usePlayerStore(state => state.isKaraokeMode);
-  const toggleKaraokeMode = usePlayerStore(state => state.toggleKaraokeMode);
   
   const isVideoMode = usePlayerStore(state => state.isVideoMode);
   const toggleVideoMode = usePlayerStore(state => state.toggleVideoMode);
@@ -46,11 +44,15 @@ export const FullPlayer: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-40 bg-obsidian flex flex-col pt-12 pb-8 px-6 transition-transform duration-500 overflow-y-auto">
-      {/* Background glow based on thumbnail (simplified for now) */}
-      <div className="absolute inset-0 opacity-20 blur-3xl pointer-events-none" style={{ backgroundImage: `url(${currentTrack.thumbnail})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
-
-      <div className="flex justify-between items-center relative z-10 mb-8 h-12 w-full shrink-0">
+    <div className={`fixed inset-0 z-50 bg-obsidian flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${isFullPlayerOpen ? 'translate-y-0' : 'translate-y-full'}`}>
+      {/* Background blur */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center opacity-30 blur-[100px] scale-150 transform-gpu"
+        style={{ backgroundImage: `url(${currentTrack.thumbnail})` }}
+      />
+      
+      {/* Header */}
+      <div className="relative z-10 px-4 pt-[calc(env(safe-area-inset-top,0px)+1rem)] pb-4 sm:px-6 sm:py-6 flex justify-between items-center">
         <button 
           onClick={() => setFullPlayerOpen(false)} 
           className="p-2 rounded-full hover:bg-white/10 transition shrink-0"
@@ -93,7 +95,7 @@ export const FullPlayer: React.FC = () => {
         {isVideoMode ? (
           <div className="w-full aspect-square max-h-[40vh] md:max-h-none rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] mb-6 relative">
             <iframe
-              src={`https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(currentTrack.title + ' ' + currentTrack.artist + ' official music video')}&autoplay=1`}
+              src={`https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(currentTrack.title + ' ' + (currentTrack.artist || '') + ' official music video')}&autoplay=1&mute=1`}
               title="YouTube video player"
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -176,14 +178,6 @@ export const FullPlayer: React.FC = () => {
               title="Lyrics"
             >
               <ListMusic className="w-5 h-5 sm:w-6 sm:h-6" />
-            </button>
-
-            <button 
-              onClick={toggleKaraokeMode}
-              className={`p-2 sm:p-3 rounded-full transition-colors ${isKaraokeMode ? 'text-electric-fuchsia shadow-[0_0_15px_rgba(255,0,255,0.3)]' : 'text-gray-400 hover:text-white'}`}
-              title="Karaoke"
-            >
-              <Mic2 className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
           </div>
         </div>
