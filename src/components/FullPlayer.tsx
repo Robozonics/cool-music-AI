@@ -19,8 +19,7 @@ export const FullPlayer: React.FC = () => {
   
   const isFullPlayerOpen = usePlayerStore(state => state.isFullPlayerOpen);
   const setFullPlayerOpen = usePlayerStore(state => state.setFullPlayerOpen);
-  const isLyricsOpen = usePlayerStore(state => state.isLyricsOpen);
-  const setLyricsOpen = usePlayerStore(state => state.setLyricsOpen);
+
   const isKaraokeMode = usePlayerStore(state => state.isKaraokeMode);
   const toggleKaraokeMode = usePlayerStore(state => state.toggleKaraokeMode);
   
