@@ -15,7 +15,6 @@ export const OfflineVault: React.FC<OfflineVaultProps> = ({ setActiveTab }) => {
   const playTrack = usePlayerStore(state => state.playTrack);
   const setQueue = usePlayerStore(state => state.setQueue);
   const likedTrackDetails = usePlayerStore(state => state.likedTrackDetails || []);
-  const toggleLikeTrack = usePlayerStore(state => state.toggleLikeTrack);
 
   useEffect(() => {
     loadTracks();
