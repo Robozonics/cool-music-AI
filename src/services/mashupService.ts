@@ -221,11 +221,16 @@ ${secondaryTracks.map((t, i) => `  ${i + 1}. id: "${t.id}" | name: "${t.title}" 
 Based on your knowledge of these songs (estimate BPM and Camelot key), create a professional ${totalBars}-bar mashup blueprint.
 
 === RULES ===
-1. TEMPO: Estimate a target_bpm (median of all tracks). Use "full" stem_type.
-2. TOTAL DURATION: The mashup must last the full combined duration of the tracks.
-3. 10-SECOND ALTERNATING LOGIC: You MUST alternate between the primary track and secondary track exactly every 10 seconds. Play the primary track for 10s, then the secondary track for 10s, and repeat this pattern until the end of the total duration.
-4. Convert 10 seconds into the correct number of bars based on your target_bpm to create the timeline_blocks.
-5. NEVER overlap the tracks; one plays while the other is silent (volume_db = -60) or crossfaded out.
+1. TEMPO & KEY: Estimate a target_bpm (median of all tracks) and target_key.
+2. TOTAL DURATION: The mashup must last the full combined duration of the tracks, mapped into bars based on target_bpm.
+3. PHRASING: Structure the mashup in standard 8, 16, or 32 bar phrases. Do not make rapid 1-bar changes.
+4. BLENDING & OVERLAPPING: You are a Grammy-winning DJ. OVERLAP the tracks creatively! Do not just alternate them.
+5. STEM CONTROL: The engine supports pseudo-stem isolation. 
+   - Assign 'stem_type: "vocals"' to a track if you want its vocals to be prominent over the other track.
+   - Assign 'stem_type: "bass"' if you want its bassline to drive the groove.
+   - Assign 'stem_type: "full"' for standard playback.
+   - Play 2 tracks at once! For example, set the Anchor Track to 'bass' and Secondary to 'vocals' to create a true mashup.
+6. TRANSITIONS: Use 'transition_type: "crossfade"' when moving between sections. Use 'volume_db' (-60 to 0) to balance tracks.
 
 === REQUIRED OUTPUT FORMAT ===
 {
