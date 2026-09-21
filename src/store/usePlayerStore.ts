@@ -156,6 +156,9 @@ const executeDjEvent = (evt: DjEvent, volume: number) => {
       });
       break;
     case 'fade_in':
+      if (evt.seekTo !== undefined) {
+        targetAudio.currentTime = evt.seekTo;
+      }
       targetAudio.volume = 0;
       targetAudio.play().catch(() => {});
       rampVolume(targetAudio, 0, volume, 3000);

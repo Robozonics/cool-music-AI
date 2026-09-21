@@ -166,6 +166,31 @@ export const blueprintToDjEvents = (
   return events.sort((a, b) => a.timestamp - b.timestamp);
 };
 
+// ── Silent Audio Generator ──────────────────────────────────────────────────
+export const generateSilentAudio = (durationInSeconds: number): string => {
+  const sampleRate = 8000;
+  const numSamples = Math.ceil(sampleRate * durationInSeconds);
+  const buffer = new ArrayBuffer(44 + numSamples * 2);
+  const view = new DataView(buffer);
+  
+  view.setUint32(0, 1380533830, false); // RIFF
+  view.setUint32(4, 36 + numSamples * 2, true);
+  view.setUint32(8, 1463899717, false); // WAVE
+  view.setUint32(12, 1718449184, false); // fmt 
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true); // PCM
+  view.setUint16(22, 1, true); // 1 channel
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  view.setUint32(36, 1684108385, false); // data
+  view.setUint32(40, numSamples * 2, true);
+  
+  const blob = new Blob([view], { type: 'audio/wav' });
+  return URL.createObjectURL(blob);
+};
+
 // ── Main mashup generator ─────────────────────────────────────────────────────
 export const generateAiMashup = async (tracks: Track[], anchorTrackId: string): Promise<Track> => {
   const setStatus = useMashupStore.getState().setStatus;
@@ -176,7 +201,7 @@ export const generateAiMashup = async (tracks: Track[], anchorTrackId: string): 
 
   const targetBpm = 120;
   const secPerBar = (60 / targetBpm) * 4;
-  const combinedDuration = (anchorTrack.duration || 180) + (secondaryTracks[0]?.duration || 180);
+  const combinedDuration = (anchorTrack.duration || 180) + secondaryTracks.reduce((sum, t) => sum + (t.duration || 180), 0);
   const totalBars = Math.ceil(combinedDuration / secPerBar); 
 
   const promptText = `You are an expert AI DJ, Audio Producer, and Music Arranger specializing in creating seamless, high-energy, and harmonically correct mashups.
@@ -266,11 +291,14 @@ Output ONLY the raw JSON, starting with { and ending with }.`;
   let isPrimary = true;
   const primaryId = anchorTrack.id;
   const secondaryId = secondaryTracks[0]?.id || anchorTrack.id;
+  
+  let primaryAccumulated = 0;
+  let secondaryAccumulated = 0;
 
   // Initial state: start primary at full, mute secondary
   arrangement.push({ timestamp: 0, trackId: primaryId, type: 'set_volume', volume: 1 });
   if (primaryId !== secondaryId) {
-    arrangement.push({ timestamp: 0, trackId: secondaryId, type: 'set_volume', volume: 0 });
+    arrangement.push({ timestamp: 0, trackId: secondaryId, type: 'pause' });
   }
 
   while (currentSec < combinedDur) {
@@ -281,15 +309,24 @@ Output ONLY the raw JSON, starting with { and ending with }.`;
     isPrimary = !isPrimary;
     const enteringTrack = isPrimary ? primaryId : secondaryId;
     const exitingTrack = isPrimary ? secondaryId : primaryId;
+    
+    // Accumulate time for the track that just finished playing
+    if (!isPrimary) {
+      primaryAccumulated += chunkDuration;
+    } else {
+      secondaryAccumulated += chunkDuration;
+    }
+    
+    const enteringAccumulatedTime = isPrimary ? primaryAccumulated : secondaryAccumulated;
 
-    arrangement.push({ timestamp: nextSec, trackId: enteringTrack, type: 'fade_in', volume: 1 });
-    arrangement.push({ timestamp: nextSec, trackId: exitingTrack, type: 'fade_out' });
+    arrangement.push({ timestamp: nextSec, trackId: enteringTrack, type: 'fade_in', volume: 1, seekTo: enteringAccumulatedTime });
+    arrangement.push({ timestamp: nextSec, trackId: exitingTrack, type: 'pause' });
 
     currentSec = nextSec;
   }
 
   // Final fade out for whoever is playing
-  arrangement.push({ timestamp: combinedDur - 3, trackId: isPrimary ? primaryId : secondaryId, type: 'fade_out' });
+  arrangement.push({ timestamp: combinedDur - 3, trackId: isPrimary ? primaryId : secondaryId, type: 'pause' });
 
   // Update blueprint mock for metadata
   blueprint = {
@@ -306,8 +343,9 @@ Output ONLY the raw JSON, starting with { and ending with }.`;
 
   const mashupTitle = `🎛️ ${tracks.map(t => t.title.split(' ')[0]).join(' × ')}`;
 
-  // Compute pitch-corrected playback rates for aux tracks
-  const mashupStreamUrls = secondaryTracks.map(t => {
+  // Compute pitch-corrected playback rates for aux tracks (ALL tracks are aux now)
+  const allTracks = [anchorTrack, ...secondaryTracks];
+  const mashupStreamUrls = allTracks.map(t => {
     // Estimate original BPM from Gemini's blueprint stems
     const stemBlocks = blueprint!.timeline_blocks.flatMap(b => b.active_stems.filter(s => s.track_id === t.id));
     const semitones = stemBlocks[0]?.pitch_shift_semitones ?? 0;
@@ -321,8 +359,8 @@ Output ONLY the raw JSON, starting with { and ending with }.`;
     title: mashupTitle,
     artist: `AI Mashup • ${finalBpm} BPM`,
     thumbnail: anchorTrack.thumbnail || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=500',
-    duration: ((blueprint!.mashup_metadata.total_duration_bars * 4 * 60) / finalBpm),
-    streamUrl: anchorTrack.streamUrl,
+    duration: combinedDuration,
+    streamUrl: generateSilentAudio(combinedDuration),
     mashupStreamUrls: mashupStreamUrls.map(m => ({ id: m.id, url: m.url })),
     arrangement,
     source: 'saavn',
