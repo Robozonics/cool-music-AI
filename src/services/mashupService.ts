@@ -111,7 +111,7 @@ export const blueprintToDjEvents = (
         events.push({
           timestamp: blockStartSec,
           trackId: tid,
-          type: 'fade_in',
+          type: blockStartSec === 0 ? 'play' : 'fade_in',
           volume: linearVol,
         });
 

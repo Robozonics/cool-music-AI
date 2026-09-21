@@ -147,7 +147,8 @@ const executeDjEvent = (evt: DjEvent, volume: number) => {
       }
       break;
     case 'play':
-      targetAudio.volume = volume;
+      const targetVol = evt.volume !== undefined ? evt.volume * volume : volume;
+      targetAudio.volume = targetVol;
       targetAudio.play().catch((err) => {
         if (err.name === 'NotAllowedError') {
           usePlayerStore.setState({ isAutoplayBlocked: true });
@@ -171,7 +172,8 @@ const executeDjEvent = (evt: DjEvent, volume: number) => {
           nativeAudio.pause();
         }
       });
-      rampVolume(targetAudio, 0, volume, 3000);
+      const finalFadeVol = evt.volume !== undefined ? evt.volume * volume : volume;
+      rampVolume(targetAudio, 0, finalFadeVol, 3000);
       break;
     case 'fade_out':
       rampVolume(targetAudio, targetAudio.volume, 0, 3000);
