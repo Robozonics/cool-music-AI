@@ -391,6 +391,19 @@ interface PlayerState {
   setDiscoverWeekly: (tracks: Track[], generatedAt: number, vibeTitle?: string, vibeDescription?: string, vibeColor?: string) => void;
 }
 
+export const normalizeStreamUrl = (url?: string): string => {
+  if (!url) return '';
+  if (url.includes('aac.saavncdn.com')) {
+    try {
+      const u = new URL(url);
+      return '/api/saavncdn' + u.pathname + u.search;
+    } catch {
+      return url;
+    }
+  }
+  return url;
+};
+
 export const usePlayerStore = create<PlayerState>()(
   persist(
     (set, get) => {
@@ -399,6 +412,9 @@ export const usePlayerStore = create<PlayerState>()(
   // ─────────────────────────────────────────────
 
   const attemptPlay = () => {
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(() => {});
+    }
     const playPromise = nativeAudio.play();
     if (playPromise !== undefined) {
       playPromise.catch(error => {
@@ -406,18 +422,8 @@ export const usePlayerStore = create<PlayerState>()(
           console.warn('Autoplay blocked. User interaction required.');
           set({ isAutoplayBlocked: true });
         } else if (error.name === 'AbortError') {
-          // Play request was interrupted by load or source change.
-          // On mobile, retry as soon as the audio has buffered enough data.
-          console.warn('Play aborted by load transition, retrying on canplay...');
-          const onCanPlay = () => {
-            nativeAudio.removeEventListener('canplay', onCanPlay);
-            nativeAudio.play().catch(e => {
-              if (e.name === 'NotAllowedError') {
-                set({ isAutoplayBlocked: true });
-              }
-            });
-          };
-          nativeAudio.addEventListener('canplay', onCanPlay);
+          // Play transitioned by new track or load; safe to ignore without breaking user gesture
+          console.log('Play transitioned by track change.');
         } else {
           console.error('Playback error:', error);
         }
@@ -564,39 +570,29 @@ export const usePlayerStore = create<PlayerState>()(
   });
 
   nativeAudio.addEventListener('error', () => {
-    console.warn('Track playback failed (likely CORS or network error).');
+    console.warn('Track playback error encountered.');
     const state = get();
     const track = state.currentTrack;
 
-    // 1. If playback failed with crossOrigin set, retry immediately without crossOrigin
-    if (nativeAudio.crossOrigin) {
-      console.warn('Retrying playback without crossOrigin header...');
-      nativeAudio.removeAttribute('crossOrigin');
-      nativeAudio.load();
-      attemptPlay();
-      return;
-    }
-    
-    // 2. Attempt recovery for Saavn tracks (URLs expire)
     if (track && track.source === 'saavn' && !track.isOffline && track.id.startsWith('saavn-')) {
-       if (!(nativeAudio as any)._isRecovering) {
-           console.log("Attempting to fetch fresh URL for expired Saavn track...");
-           (nativeAudio as any)._isRecovering = true;
-           fetchFreshSaavnUrl(track.id).then(freshUrl => {
-               if (freshUrl && freshUrl !== track.streamUrl) {
-                   nativeAudio.src = freshUrl;
-                   nativeAudio.load();
-                   attemptPlay();
-               } else {
-                   set({ isPlaying: false, isBuffering: false });
-                   (nativeAudio as any)._isRecovering = false;
-               }
-           }).catch(() => {
-               set({ isPlaying: false, isBuffering: false });
-               (nativeAudio as any)._isRecovering = false;
-           });
-           return;
-       }
+      if (!(nativeAudio as any)._isRecovering) {
+        (nativeAudio as any)._isRecovering = true;
+        fetchFreshSaavnUrl(track.id).then(freshUrl => {
+          if (freshUrl) {
+            const safeFresh = normalizeStreamUrl(freshUrl);
+            nativeAudio.crossOrigin = "anonymous";
+            nativeAudio.src = safeFresh;
+            attemptPlay();
+          } else {
+            set({ isPlaying: false, isBuffering: false });
+          }
+          (nativeAudio as any)._isRecovering = false;
+        }).catch(() => {
+          set({ isPlaying: false, isBuffering: false });
+          (nativeAudio as any)._isRecovering = false;
+        });
+        return;
+      }
     }
     
     (nativeAudio as any)._isRecovering = false;
@@ -812,17 +808,18 @@ export const usePlayerStore = create<PlayerState>()(
         });
       }
 
-      let finalStreamUrl = track.streamUrl;
+      let finalStreamUrl = normalizeStreamUrl(track.streamUrl);
 
-      // Cleanly prepare nativeAudio for the new track
-      nativeAudio.pause();
       nativeAudio.volume = get().volume;
       nativeAudio.playbackRate = get().playbackRate;
+      if (!nativeAudio.crossOrigin) {
+        nativeAudio.crossOrigin = "anonymous";
+      }
 
       if (finalStreamUrl) {
-        if (nativeAudio.src !== finalStreamUrl) {
+        const isDifferent = !nativeAudio.src || !nativeAudio.src.endsWith(finalStreamUrl);
+        if (isDifferent) {
           nativeAudio.src = finalStreamUrl;
-          nativeAudio.load();
         }
         attemptPlay();
       }
@@ -830,20 +827,20 @@ export const usePlayerStore = create<PlayerState>()(
       // If it is a Saavn track and not offline, verify/refresh URL in background
       if (track.source === 'saavn' && !track.isOffline && track.id.startsWith('saavn-')) {
         fetchFreshSaavnUrl(track.id).then(freshUrl => {
-          if (freshUrl && freshUrl !== finalStreamUrl) {
+          const safeFresh = normalizeStreamUrl(freshUrl);
+          if (safeFresh && safeFresh !== finalStreamUrl) {
             set(state => ({
-              currentTrack: state.currentTrack?.id === track.id ? { ...state.currentTrack, streamUrl: freshUrl } : state.currentTrack,
-              queue: state.queue.map(q => q.id === track.id ? { ...q, streamUrl: freshUrl } : q),
-              likedTrackDetails: (state.likedTrackDetails || []).map(q => q.id === track.id ? { ...q, streamUrl: freshUrl } : q),
+              currentTrack: state.currentTrack?.id === track.id ? { ...state.currentTrack, streamUrl: safeFresh } : state.currentTrack,
+              queue: state.queue.map(q => q.id === track.id ? { ...q, streamUrl: safeFresh } : q),
+              likedTrackDetails: (state.likedTrackDetails || []).map(q => q.id === track.id ? { ...q, streamUrl: safeFresh } : q),
               savedPlaylists: state.savedPlaylists.map(p => ({
                 ...p,
-                tracks: p.tracks.map(q => q.id === track.id ? { ...q, streamUrl: freshUrl } : q)
+                tracks: p.tracks.map(q => q.id === track.id ? { ...q, streamUrl: safeFresh } : q)
               }))
             }));
-            // If the old URL failed or was empty, switch to fresh URL immediately
-            if (!finalStreamUrl || nativeAudio.error || nativeAudio.paused) {
-              nativeAudio.src = freshUrl;
-              nativeAudio.load();
+            // Only swap immediately if initial URL was completely missing or failed
+            if (!finalStreamUrl || nativeAudio.error) {
+              nativeAudio.src = safeFresh;
               attemptPlay();
             }
           }
@@ -858,13 +855,14 @@ export const usePlayerStore = create<PlayerState>()(
         const nextItem = q[curIdx + 1];
         if (nextItem.source === 'saavn' && !nextItem.isOffline && nextItem.id.startsWith('saavn-')) {
           fetchFreshSaavnUrl(nextItem.id).then(nextFreshUrl => {
-            if (nextFreshUrl && nextFreshUrl !== nextItem.streamUrl) {
+            const safeNext = normalizeStreamUrl(nextFreshUrl);
+            if (safeNext && safeNext !== nextItem.streamUrl) {
               set(state => ({
-                queue: state.queue.map(item => item.id === nextItem.id ? { ...item, streamUrl: nextFreshUrl } : item),
-                likedTrackDetails: (state.likedTrackDetails || []).map(item => item.id === nextItem.id ? { ...item, streamUrl: nextFreshUrl } : item),
+                queue: state.queue.map(item => item.id === nextItem.id ? { ...item, streamUrl: safeNext } : item),
+                likedTrackDetails: (state.likedTrackDetails || []).map(item => item.id === nextItem.id ? { ...item, streamUrl: safeNext } : item),
                 savedPlaylists: state.savedPlaylists.map(p => ({
                   ...p,
-                  tracks: p.tracks.map(item => item.id === nextItem.id ? { ...item, streamUrl: nextFreshUrl } : item)
+                  tracks: p.tracks.map(item => item.id === nextItem.id ? { ...item, streamUrl: safeNext } : item)
                 }))
               }));
             }
@@ -1110,4 +1108,22 @@ export const usePlayerStore = create<PlayerState>()(
     theme: state.theme,
     discoverWeekly: state.discoverWeekly
   }),
+  onRehydrateStorage: () => (hydratedState) => {
+    if (!hydratedState) return;
+    if (hydratedState.savedPlaylists) {
+      hydratedState.savedPlaylists = hydratedState.savedPlaylists.map(p => ({
+        ...p,
+        tracks: (p.tracks || []).map(t => ({
+          ...t,
+          streamUrl: normalizeStreamUrl(t.streamUrl)
+        }))
+      }));
+    }
+    if (hydratedState.likedTrackDetails) {
+      hydratedState.likedTrackDetails = hydratedState.likedTrackDetails.map(t => ({
+        ...t,
+        streamUrl: normalizeStreamUrl(t.streamUrl)
+      }));
+    }
+  }
 }));
