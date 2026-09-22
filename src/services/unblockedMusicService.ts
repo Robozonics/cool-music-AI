@@ -56,6 +56,39 @@ export const decryptSaavnUrl = (url: string) => {
   }
 };
 
+export const fetchFreshSaavnUrl = async (trackId: string): Promise<string> => {
+  try {
+    const rawId = trackId.replace('saavn-', '');
+    const detailsUrl = `${SAAVN_BASE}?__call=song.getDetails&pids=${rawId}&_marker=0&ctx=android&_format=json`;
+    const res = await fetch(proxifyUrl(detailsUrl, 'saavn'));
+    if (!res.ok) return '';
+    const data = await res.json();
+    const song = data[rawId] || data[Object.keys(data)[0]];
+    if (!song) return '';
+    
+    let streamUrl = song.media_preview_url || '';
+    if (song.encrypted_media_url) {
+      streamUrl = decryptSaavnUrl(song.encrypted_media_url);
+    }
+    
+    // Proxy ALL streamUrls to bypass CORS for Web Audio API
+    if (streamUrl && streamUrl.startsWith('http')) {
+      try {
+         if (Capacitor.isNativePlatform()) {
+             // Do nothing for native, use direct URL
+         } else {
+             const urlObj = new URL(streamUrl);
+             streamUrl = '/api/saavncdn' + urlObj.pathname + urlObj.search;
+         }
+      } catch (e) {}
+    }
+    return streamUrl;
+  } catch (e) {
+    console.error('Error refreshing Saavn URL:', e);
+    return '';
+  }
+};
+
 export const searchSaavn = async (query: string): Promise<Track[]> => {
   try {
     const searchUrl = `${SAAVN_BASE}?__call=autocomplete.get&_marker=0&query=${encodeURIComponent(query)}&ctx=android&_format=json`;

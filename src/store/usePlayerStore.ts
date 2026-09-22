@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Track, SavedPlaylist, DjEvent } from '../types/music';
-import { decryptSaavnUrl } from '../services/unblockedMusicService';
+import { fetchFreshSaavnUrl } from '../services/unblockedMusicService';
 
 // Global native audio instance for Direct CDNs
 export const nativeAudio = new Audio();
@@ -629,29 +629,10 @@ export const usePlayerStore = create<PlayerState>()(
       // If not offline and it's a Saavn track, refresh the streamUrl because they expire (causes Next Track bug on Liked Songs)
       let finalStreamUrl = track.streamUrl;
       if (track.source === 'saavn' && !track.isOffline && track.id.startsWith('saavn-')) {
-        try {
-          const rawId = track.id.replace('saavn-', '');
-          const res = await fetch(`/api/saavn?__call=song.getDetails&pids=${rawId}&_marker=0&ctx=android&_format=json`);
-          if (res.ok) {
-            const data = await res.json();
-            const song = data[rawId] || data[Object.keys(data)[0]];
-            if (song) {
-              let freshUrl = song.media_preview_url || '';
-              if (song.encrypted_media_url) {
-                freshUrl = decryptSaavnUrl(song.encrypted_media_url);
-              }
-              if (freshUrl && freshUrl.startsWith('http')) {
-                try {
-                  const urlObj = new URL(freshUrl);
-                  freshUrl = '/api/saavncdn' + urlObj.pathname + urlObj.search;
-                } catch(e) {}
-              }
-              if (freshUrl) finalStreamUrl = freshUrl;
-            }
+          const freshUrl = await fetchFreshSaavnUrl(track.id);
+          if (freshUrl) {
+              finalStreamUrl = freshUrl;
           }
-        } catch (e) {
-          console.error('Failed to refresh Saavn URL:', e);
-        }
       }
 
       nativeAudio.src = finalStreamUrl;
