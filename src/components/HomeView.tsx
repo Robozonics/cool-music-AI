@@ -377,6 +377,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab }) => {
   const playTrack = usePlayerStore(state => state.playTrack);
   const setQueue = usePlayerStore(state => state.setQueue);
   const likedTracks = usePlayerStore(state => state.likedTracks);
+  const toggleLikeTrack = usePlayerStore(state => state.toggleLikeTrack);
 
   useEffect(() => {
     const fetchHomeData = async () => {
@@ -531,7 +532,17 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab }) => {
                       <p className="text-zinc-400 font-sans text-sm truncate">{track.artist}</p>
                     </div>
 
-                    <div className="relative z-10 ml-4 shrink-0">
+                    <div className="relative z-10 ml-4 shrink-0 flex items-center gap-1">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleLikeTrack(track);
+                        }}
+                        className="p-3 text-zinc-500 hover:text-pink-500 hover:bg-white/10 rounded-full transition-all"
+                        title="Like Track"
+                      >
+                        <Heart className={`w-6 h-6 ${likedTracks.includes(track.id) ? 'fill-pink-500 text-pink-500' : ''}`} />
+                      </button>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();

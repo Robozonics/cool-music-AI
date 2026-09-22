@@ -18,6 +18,8 @@ const TrackItem = ({ track, playlist, idx, playlistId }: { track: Track, playlis
   const setQueue = usePlayerStore(state => state.setQueue);
   const removeTrackFromPlaylist = usePlayerStore(state => state.removeTrackFromPlaylist);
   const currentTrack = usePlayerStore(state => state.currentTrack);
+  const likedTracks = usePlayerStore(state => state.likedTracks);
+  const toggleLikeTrack = usePlayerStore(state => state.toggleLikeTrack);
   const isPlayingThis = currentTrack?.id === track.id;
 
   return (
@@ -89,6 +91,18 @@ const TrackItem = ({ track, playlist, idx, playlistId }: { track: Track, playlis
       </button>
 
       <div className="flex items-center gap-0 md:gap-2 shrink-0 relative z-10">
+        {playlistId !== 'liked_songs' && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleLikeTrack(track);
+            }}
+            className="p-3 md:p-2 rounded-full transition text-zinc-400 hover:text-pink-500"
+            title="Like Track"
+          >
+            <Heart className={`w-5 h-5 md:w-4 md:h-4 ${likedTracks.includes(track.id) ? 'fill-pink-500 text-pink-500' : ''}`} />
+          </button>
+        )}
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -124,7 +138,7 @@ const TrackItem = ({ track, playlist, idx, playlistId }: { track: Track, playlis
           <button
             onClick={(e) => {
               e.stopPropagation();
-              usePlayerStore.getState().toggleLikeTrack(track);
+              toggleLikeTrack(track);
             }}
             className="p-3 md:p-2 rounded-full transition hover:scale-110"
             title="Remove from Liked Songs"

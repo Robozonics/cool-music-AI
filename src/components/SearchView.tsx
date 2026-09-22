@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Play, Download, Loader2, Sparkles, Plus, Mic, MicOff, Layers } from 'lucide-react';
+import { Search, Play, Download, Loader2, Sparkles, Plus, Mic, MicOff, Layers, Heart } from 'lucide-react';
 import { searchUnblocked } from '../services/unblockedMusicService';
 import { searchBestMusicWithAI } from '../services/geminiService';
 import type { Track } from '../types/music';
@@ -17,6 +17,8 @@ export const SearchView: React.FC = () => {
   const playTrack = usePlayerStore(state => state.playTrack);
   const setQueue = usePlayerStore(state => state.setQueue);
   const setApiKeyModalOpen = usePlayerStore(state => state.setApiKeyModalOpen);
+  const likedTracks = usePlayerStore(state => state.likedTracks);
+  const toggleLikeTrack = usePlayerStore(state => state.toggleLikeTrack);
 
   const aiPills = [
     '🔥 All-Time Best Billboard Hits',
@@ -330,6 +332,16 @@ export const SearchView: React.FC = () => {
                 </span>
                 
                 <div className="flex items-center gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleLikeTrack(track);
+                    }}
+                    className="p-1.5 rounded-full hover:bg-white/10 transition text-gray-400 hover:text-pink-500"
+                    title="Like Track"
+                  >
+                    <Heart className={`w-4 h-4 ${likedTracks.includes(track.id) ? 'fill-pink-500 text-pink-500' : ''}`} />
+                  </button>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();

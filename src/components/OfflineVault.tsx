@@ -15,6 +15,7 @@ export const OfflineVault: React.FC<OfflineVaultProps> = ({ setActiveTab }) => {
   const playTrack = usePlayerStore(state => state.playTrack);
   const setQueue = usePlayerStore(state => state.setQueue);
   const likedTrackDetails = usePlayerStore(state => state.likedTrackDetails || []);
+  const likedTracks = usePlayerStore(state => state.likedTracks);
 
   useEffect(() => {
     loadTracks();
@@ -145,7 +146,17 @@ export const OfflineVault: React.FC<OfflineVaultProps> = ({ setActiveTab }) => {
                 <p className="text-gray-400 text-sm truncate">{track.artist}</p>
               </div>
 
-              <div className="flex items-center gap-2 ml-4">
+              <div className="flex items-center gap-1 ml-4">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    usePlayerStore.getState().toggleLikeTrack(track);
+                  }}
+                  className="p-3 text-gray-500 hover:text-pink-500 transition-colors"
+                  title="Like Track"
+                >
+                  <Heart className={`w-5 h-5 ${likedTracks.includes(track.id) ? 'fill-pink-500 text-pink-500' : ''}`} />
+                </button>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
