@@ -31,6 +31,19 @@ export const fetchLyrics = async (
     }
 
     if (!data || (!data.syncedLyrics && !data.plainLyrics)) {
+      // Secondary API Fallback
+      try {
+        const ovhRes = await fetch(`https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`);
+        if (ovhRes.ok) {
+          const ovhData = await ovhRes.json();
+          if (ovhData.lyrics) {
+            return { synced: null, plain: ovhData.lyrics };
+          }
+        }
+      } catch (e) {
+        console.warn('lyrics.ovh fallback failed', e);
+      }
+      
       // AI Fallback for generating lyrics
       return await generateLyricsWithAI(title, artist);
     }
@@ -57,6 +70,11 @@ If you absolutely do not know the song, return nothing (an empty string).`;
     const result = await callGeminiDirectly(promptText, 'search', undefined, false);
     
     if (typeof result === 'string' && result.trim() !== '') {
+      const lowerRes = result.toLowerCase();
+      if (lowerRes.includes('copyright') || lowerRes.includes('cannot provide') || lowerRes.includes('apologize') || lowerRes.includes('sorry')) {
+        console.warn('AI refused to generate lyrics due to copyright');
+        return { synced: null, plain: null };
+      }
       return { synced: null, plain: result.trim() };
     }
 
