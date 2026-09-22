@@ -363,6 +363,54 @@ export const usePlayerStore = create<PlayerState>()(
     }
   };
 
+  const syncMediaSession = (track: Track | null, isPlaying: boolean) => {
+    if (typeof window === 'undefined' || !('mediaSession' in navigator)) return;
+    if (!track) {
+      navigator.mediaSession.playbackState = 'none';
+      return;
+    }
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: track.title,
+        artist: track.artist,
+        album: 'Musify',
+        artwork: track.thumbnail ? [
+          { src: track.thumbnail, sizes: '96x96', type: 'image/jpeg' },
+          { src: track.thumbnail, sizes: '128x128', type: 'image/jpeg' },
+          { src: track.thumbnail, sizes: '192x192', type: 'image/jpeg' },
+          { src: track.thumbnail, sizes: '256x256', type: 'image/jpeg' },
+          { src: track.thumbnail, sizes: '512x512', type: 'image/jpeg' },
+        ] : []
+      });
+      navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+    } catch (e) {
+      console.warn('MediaSession sync error:', e);
+    }
+  };
+
+  if (typeof window !== 'undefined' && 'mediaSession' in navigator) {
+    try {
+      navigator.mediaSession.setActionHandler('play', () => {
+        get().togglePlay();
+      });
+      navigator.mediaSession.setActionHandler('pause', () => {
+        get().togglePlay();
+      });
+      navigator.mediaSession.setActionHandler('nexttrack', () => {
+        get().nextTrack();
+      });
+      navigator.mediaSession.setActionHandler('previoustrack', () => {
+        get().prevTrack();
+      });
+      navigator.mediaSession.setActionHandler('seekto', (details) => {
+        if (details.seekTime !== undefined && Number.isFinite(details.seekTime)) {
+          get().seek(details.seekTime);
+        }
+      });
+    } catch (e) {
+      console.warn('MediaSession handlers init error:', e);
+    }
+  }
 
   // ─────────────────────────────────────────────
   // Native audio event listeners
@@ -372,6 +420,19 @@ export const usePlayerStore = create<PlayerState>()(
     const state = get();
     const t = nativeAudio.currentTime;
     set({ currentTime: t });
+
+    // Update mediaSession position state if supported
+    if (typeof window !== 'undefined' && 'mediaSession' in navigator && 'setPositionState' in navigator.mediaSession) {
+      if (Number.isFinite(nativeAudio.duration) && nativeAudio.duration > 0) {
+        try {
+          navigator.mediaSession.setPositionState({
+            duration: nativeAudio.duration,
+            playbackRate: nativeAudio.playbackRate || 1,
+            position: Math.min(t, nativeAudio.duration)
+          });
+        } catch (_) {}
+      }
+    }
 
     // Process DJ Arrangement
     if (currentArrangement && currentArrangement.length > 0 && state.currentTrack) {
@@ -497,6 +558,7 @@ export const usePlayerStore = create<PlayerState>()(
 
   nativeAudio.addEventListener('playing', () => {
     set({ isPlaying: true, isBuffering: false });
+    syncMediaSession(get().currentTrack, true);
   });
 
   nativeAudio.addEventListener('waiting', () => {
@@ -510,6 +572,7 @@ export const usePlayerStore = create<PlayerState>()(
   nativeAudio.addEventListener('pause', () => {
     set({ isPlaying: false, isBuffering: false });
     auxContexts.forEach(a => a.audio.pause());
+    syncMediaSession(get().currentTrack, false);
   });
 
   // ─────────────────────────────────────────────

@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, Plus, Heart, Volume2, VolumeX, Loader2, Music } from 'lucide-react';
 import { searchUnblocked } from '../services/unblockedMusicService';
-import { usePlayerStore } from '../store/usePlayerStore';
+import { usePlayerStore, nativeAudio } from '../store/usePlayerStore';
 import type { Track } from '../types/music';
 
 const SAMPLES_QUERIES = [
@@ -330,8 +330,9 @@ export const SamplesFeed: React.FC = () => {
   }, [tracks]);
 
   useEffect(() => {
-    if (mainPlayerIsPlaying) setActiveIndex(-1);
-  }, [mainPlayerIsPlaying]);
+    // Pause main player audio so samples can play without interference
+    nativeAudio.pause();
+  }, []);
 
   const handleAddToQueue = useCallback((track: Track) => {
     addToQueue([...queue, track]);
