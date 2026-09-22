@@ -149,7 +149,7 @@ const DiscoverWeeklyBanner: React.FC = () => {
   const auraColor = discoverWeekly.vibeColor || '#8B5CF6';
 
   return (
-    <div className="relative overflow-hidden rounded-[2rem] p-6 md:p-10 bg-[#0a0a0a] border border-white/10 shadow-2xl flex flex-col md:flex-row items-center gap-8 group min-h-[300px]">
+    <div className="relative overflow-hidden rounded-3xl md:rounded-[2rem] p-5 md:p-10 bg-[#0a0a0a] border border-white/10 shadow-2xl flex flex-col md:flex-row items-center gap-6 md:gap-8 group min-h-[250px] md:min-h-[300px]">
       {/* Dynamic Background Blob based on Aura Color */}
       <div className="absolute inset-0 opacity-30 mix-blend-screen pointer-events-none transition-opacity duration-700 group-hover:opacity-50">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] blur-[120px] rounded-full animate-spin-slow" 
@@ -292,7 +292,7 @@ const GeoDiscoveryBanner: React.FC = () => {
   };
 
   return (
-    <div className="relative overflow-hidden rounded-[2rem] p-6 md:p-8 bg-gradient-to-br from-emerald-900/40 to-teal-900/20 border border-emerald-500/20 shadow-2xl flex flex-col md:flex-row items-center gap-6 group">
+    <div className="relative overflow-hidden rounded-3xl md:rounded-[2rem] p-5 md:p-8 bg-gradient-to-br from-emerald-900/40 to-teal-900/20 border border-emerald-500/20 shadow-2xl flex flex-col md:flex-row items-center gap-5 md:gap-6 group">
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay pointer-events-none" />
       
       <div className="relative z-10 w-24 h-24 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0 border border-emerald-500/30">
@@ -452,7 +452,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab }) => {
   }
 
   return (
-    <div className="space-y-12 pb-32 mx-auto" style={{ width: 'calc(100% - 2px)' }}>
+    <div className="space-y-8 md:space-y-12 pb-32 mx-auto px-3 sm:px-6 w-full max-w-7xl overflow-hidden md:overflow-visible">
       {/* AI Playlist Modal */}
       <AIPlaylistModal isOpen={isAIPlaylistOpen} onClose={() => setIsAIPlaylistOpen(false)} onNavigateToPlaylist={(id) => setActiveTab && setActiveTab(`playlist:${id}`)} />
 
@@ -468,7 +468,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab }) => {
       {/* AI Playlist Generator CTA Card */}
       <div
         onClick={() => setIsAIPlaylistOpen(true)}
-        className="relative cursor-pointer group overflow-hidden rounded-3xl p-5 bg-gradient-to-r from-purple-600/20 via-pink-600/15 to-violet-600/10 border border-purple-500/25 hover:border-purple-500/50 transition-all shadow-[0_8px_40px_rgba(139,92,246,0.2)] hover:shadow-[0_8px_50px_rgba(139,92,246,0.35)]"
+        className="relative cursor-pointer group overflow-hidden rounded-3xl p-4 md:p-5 bg-gradient-to-r from-purple-600/20 via-pink-600/15 to-violet-600/10 border border-purple-500/25 hover:border-purple-500/50 transition-all shadow-[0_8px_40px_rgba(139,92,246,0.2)] hover:shadow-[0_8px_50px_rgba(139,92,246,0.35)]"
       >
         <div className="absolute inset-0 bg-gradient-to-r from-purple-600/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
         <div className="relative z-10 flex items-center gap-4">
@@ -519,7 +519,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab }) => {
             <h2 className="text-xl font-display font-black text-white tracking-tight">YOUR LIKED SONGS</h2>
             <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">{likedTracks.length} TRACKS</span>
           </div>
-          <div className="flex gap-4 overflow-x-auto pb-6 snap-x hide-scrollbar -mx-6 px-6">
+          <div className="flex gap-4 overflow-x-auto pb-6 snap-x hide-scrollbar -mx-3 px-3 md:-mx-6 md:px-6">
             <div className="min-w-[280px] p-4 rounded-2xl bg-gradient-to-br from-pink-500/20 to-rose-500/10 border border-pink-500/20 backdrop-blur-md flex flex-col justify-center items-center text-center shadow-[0_0_30px_rgba(236,72,153,0.15)]">
                <Heart className="w-8 h-8 text-pink-500 mb-2 fill-pink-500" />
                <p className="text-white font-bold text-sm">You have {likedTracks.length} liked tracks.</p>
@@ -555,7 +555,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab }) => {
                       hidden: { opacity: 0, y: 20 },
                       show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
                     }}
-                    className="group relative flex items-center p-5 rounded-3xl bg-white/5 hover:bg-white/10 transition-all cursor-pointer overflow-hidden border border-white/10 hover:border-acid-lime/50 hover:scale-[1.02] shadow-[0_10px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_15px_40px_rgba(163,230,53,0.15)]"
+                    className="group relative flex items-center p-3 md:p-5 rounded-2xl md:rounded-3xl bg-white/5 hover:bg-white/10 transition-all cursor-pointer overflow-hidden border border-white/10 hover:border-acid-lime/50 hover:scale-[1.02] shadow-[0_10px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_15px_40px_rgba(163,230,53,0.15)]"
                     onClick={() => handlePlay(track, data)}
                   >
                     {/* Massive faded number in background */}

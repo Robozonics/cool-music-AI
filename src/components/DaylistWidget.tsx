@@ -233,7 +233,7 @@ export const DaylistWidget: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 12 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
-        className={`relative rounded-3xl p-5 mb-6 overflow-hidden border border-white/8 shadow-[0_8px_40px_rgba(0,0,0,0.5)] bg-gradient-to-br ${daylist.gradient}`}
+        className={`relative rounded-3xl p-4 md:p-5 overflow-hidden border border-white/8 shadow-[0_8px_40px_rgba(0,0,0,0.5)] bg-gradient-to-br ${daylist.gradient}`}
       >
         {/* Subtle animated blob */}
         <motion.div
