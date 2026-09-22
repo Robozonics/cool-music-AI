@@ -66,7 +66,7 @@ export const FullPlayer: React.FC = () => {
       />
       
       {/* Header */}
-      <div className="relative z-10 px-4 pt-12 sm:pt-6 pb-4 sm:px-6 sm:py-6 flex justify-between items-center">
+      <div className="relative z-10 px-4 pt-6 pb-2 sm:px-6 sm:py-6 flex justify-between items-center">
         <button 
           onClick={() => setFullPlayerOpen(false)} 
           className="p-2 rounded-full hover:bg-white/10 transition shrink-0"
@@ -100,7 +100,7 @@ export const FullPlayer: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-start relative z-10 w-full max-w-sm mx-auto min-h-0 overflow-y-auto pt-8 pb-4 px-6 sm:px-0">
+      <div className="flex-1 flex flex-col items-center justify-start relative z-10 w-full max-w-sm mx-auto min-h-0 overflow-y-auto pt-4 pb-4 px-6 sm:px-0">
         {/* Dynamic Background Blur */}
         <div className="absolute inset-[-100%] -z-10 pointer-events-none opacity-40">
           <img src={currentTrack.thumbnail} className="w-full h-full object-cover blur-[100px] saturate-200" alt="" />
@@ -119,10 +119,11 @@ export const FullPlayer: React.FC = () => {
           </div>
         ) : (
           <div 
-            className={`w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 rounded-full overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] mb-6 relative group flex-shrink-0 ${isPlaying ? 'animate-[spin_20s_linear_infinite]' : ''}`} 
+            className="w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 rounded-full overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] mb-6 relative group flex-shrink-0 animate-[spin_10s_linear_infinite]" 
             style={{ 
               transform: `scale(calc(1 + var(--vibe-intensity, 0) * 0.1))`, 
-              transition: 'transform 0.1s ease-out' 
+              transition: 'transform 0.1s ease-out',
+              animationPlayState: isPlaying ? 'running' : 'paused'
             }}
           >
              <img src={currentTrack.thumbnail} alt={currentTrack.title} className="w-full h-full object-cover" />
