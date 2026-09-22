@@ -65,11 +65,11 @@ export const FullPlayer: React.FC = () => {
         style={{ backgroundImage: `url(${currentTrack.thumbnail})` }}
       />
       
-      {/* Header */}
-      <div className="relative z-10 px-4 pt-6 pb-2 sm:px-6 sm:py-6 flex justify-between items-center">
+      {/* Header (Absolute so it doesn't push content down) */}
+      <div className="absolute top-0 w-full z-20 px-4 pt-4 pb-2 sm:px-6 sm:py-6 flex justify-between items-center pointer-events-none">
         <button 
           onClick={() => setFullPlayerOpen(false)} 
-          className="p-2 rounded-full hover:bg-white/10 transition shrink-0"
+          className="p-2 rounded-full hover:bg-white/10 transition shrink-0 pointer-events-auto"
         >
           <ChevronDown className="w-8 h-8 text-white" />
         </button>
@@ -92,7 +92,7 @@ export const FullPlayer: React.FC = () => {
           </button>
           <button
             onClick={() => usePlayerStore.getState().closePlayer()}
-            className="p-2 rounded-full text-gray-400 hover:text-red-500 hover:bg-white/10 transition"
+            className="p-2 rounded-full text-gray-400 hover:text-red-500 hover:bg-white/10 transition pointer-events-auto"
             title="Close Player"
           >
             <X className="w-6 h-6" />
@@ -100,7 +100,7 @@ export const FullPlayer: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-start relative z-10 w-full max-w-sm mx-auto min-h-0 overflow-y-auto pt-4 pb-4 px-6 sm:px-0">
+      <div className="flex-1 flex flex-col items-center justify-center relative z-10 w-full max-w-sm mx-auto min-h-0 pt-16 pb-4 px-6 sm:px-0">
         {/* Dynamic Background Blur */}
         <div className="absolute inset-[-100%] -z-10 pointer-events-none opacity-40">
           <img src={currentTrack.thumbnail} className="w-full h-full object-cover blur-[100px] saturate-200" alt="" />
@@ -119,7 +119,7 @@ export const FullPlayer: React.FC = () => {
           </div>
         ) : (
           <div 
-            className="w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 rounded-full overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] mb-6 relative group flex-shrink-0 animate-[spin_10s_linear_infinite]" 
+            className="w-56 h-56 sm:w-80 sm:h-80 md:w-96 md:h-96 rounded-full overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] mb-4 sm:mb-6 relative group flex-shrink-0 animate-[spin_10s_linear_infinite]" 
             style={{ 
               transform: `scale(calc(1 + var(--vibe-intensity, 0) * 0.1))`, 
               transition: 'transform 0.1s ease-out',
@@ -254,7 +254,7 @@ export const FullPlayer: React.FC = () => {
         </div>
 
         {/* Controls */}
-        <div className="flex items-center justify-between w-full max-w-sm mb-8">
+        <div className="flex items-center justify-between w-full max-w-sm mt-auto sm:mt-0 mb-4 sm:mb-8">
           <button 
             onClick={toggleRepeat}
             className={`p-2 rounded-full transition relative ${repeatMode === 'one' ? 'text-acid-lime' : repeatMode === 'all' ? 'text-white' : 'text-zinc-500'}`}
