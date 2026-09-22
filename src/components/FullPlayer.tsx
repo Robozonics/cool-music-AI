@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, SkipForward, SkipBack, ChevronDown, Download, Plus, X, Repeat, Share2, Video, Blend, ListMusic } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, ChevronDown, Download, Plus, X, Repeat, Share2, Video, Blend, ListMusic, Laptop2 } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
 
 export const FullPlayer: React.FC = () => {
@@ -21,6 +21,7 @@ export const FullPlayer: React.FC = () => {
   const setFullPlayerOpen = usePlayerStore(state => state.setFullPlayerOpen);
   const isLyricsOpen = usePlayerStore(state => state.isLyricsOpen);
   const setLyricsOpen = usePlayerStore(state => state.setLyricsOpen);
+  const setConnectModalOpen = usePlayerStore(state => state.setConnectModalOpen);
   
   const isVideoMode = usePlayerStore(state => state.isVideoMode);
   const toggleVideoMode = usePlayerStore(state => state.toggleVideoMode);
@@ -182,6 +183,14 @@ export const FullPlayer: React.FC = () => {
               title="Lyrics"
             >
               <ListMusic className="w-5 h-5 sm:w-6 sm:h-6" />
+            </button>
+
+            <button 
+              onClick={() => setConnectModalOpen(true)}
+              className="p-2 sm:p-3 rounded-full transition-colors text-gray-400 hover:text-white"
+              title="Connect to a Device"
+            >
+              <Laptop2 className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
           </div>
         </div>

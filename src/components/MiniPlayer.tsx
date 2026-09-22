@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, SkipBack, SkipForward } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Laptop2 } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
 
 export const MiniPlayer: React.FC = () => {
@@ -9,6 +9,7 @@ export const MiniPlayer: React.FC = () => {
   const nextTrack = usePlayerStore(state => state.nextTrack);
   const prevTrack = usePlayerStore(state => state.prevTrack);
   const setFullPlayerOpen = usePlayerStore(state => state.setFullPlayerOpen);
+  const setConnectModalOpen = usePlayerStore(state => state.setConnectModalOpen);
 
   if (!currentTrack) return null;
 
@@ -29,6 +30,12 @@ export const MiniPlayer: React.FC = () => {
         </div>
         
         <div className="flex items-center space-x-1 pr-1 shrink-0" onClick={e => e.stopPropagation()}>
+          <button 
+            onClick={() => setConnectModalOpen(true)}
+            className="p-2 rounded-full text-zinc-400 hover:text-white hover:bg-white/10 transition-colors hidden sm:block"
+          >
+            <Laptop2 className="w-4 h-4" />
+          </button>
           <button 
             onClick={prevTrack}
             className="p-2 rounded-full text-white hover:bg-white/10 transition-colors"
