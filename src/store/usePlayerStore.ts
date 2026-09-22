@@ -522,9 +522,7 @@ export const usePlayerStore = create<PlayerState>()(
          
          // Bless auxiliary audio elements for Mashups
          auxContexts.forEach(a => {
-           a.audio.play().then(() => {
-             if (a.audio.volume === 0) a.audio.pause();
-           }).catch(e => console.warn('Aux bless failed', e));
+           a.audio.play().catch(e => console.warn('Aux bless failed', e));
          });
 
          attemptPlay();
@@ -620,7 +618,7 @@ export const usePlayerStore = create<PlayerState>()(
            // Initialize silent so if the unlock strategy fails, it doesn't blast audio
            aux.volume = 0;
            aux.load();
-           aux.play().then(() => aux.pause()).catch(() => {});
+           // Let the nativeAudio play event or the DJ engine trigger play
         });
       }
 
@@ -663,14 +661,6 @@ export const usePlayerStore = create<PlayerState>()(
         nativeAudio.pause();
         auxContexts.forEach(a => a.audio.pause());
       } else {
-        // Resume any aux tracks that were actively playing, and bless the rest
-        auxContexts.forEach(a => {
-           if (a.audio.volume > 0) {
-              a.audio.play().catch(() => {});
-           } else {
-              a.audio.play().then(() => a.audio.pause()).catch(() => {});
-           }
-        });
         attemptPlay();
       }
     },
