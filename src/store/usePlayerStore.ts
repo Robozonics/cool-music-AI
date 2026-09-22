@@ -694,7 +694,7 @@ export const usePlayerStore = create<PlayerState>()(
         
         const tracksState: Record<string, { volume: number, seekTo?: number, seekTime?: number }> = {};
         
-        currentArrangement.forEach(evt => {
+        currentArrangement.forEach((evt, idx) => {
            if (evt.timestamp <= safeSeconds) {
                if (!tracksState[evt.trackId]) tracksState[evt.trackId] = { volume: 0 };
                
