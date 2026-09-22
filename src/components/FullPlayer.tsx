@@ -66,7 +66,7 @@ export const FullPlayer: React.FC = () => {
       />
       
       {/* Header */}
-      <div className="relative z-10 px-4 pt-[calc(env(safe-area-inset-top,0px)+1rem)] pb-4 sm:px-6 sm:py-6 flex justify-between items-center">
+      <div className="relative z-10 px-4 pt-12 sm:pt-6 pb-4 sm:px-6 sm:py-6 flex justify-between items-center">
         <button 
           onClick={() => setFullPlayerOpen(false)} 
           className="p-2 rounded-full hover:bg-white/10 transition shrink-0"
@@ -118,8 +118,16 @@ export const FullPlayer: React.FC = () => {
             />
           </div>
         ) : (
-          <div className="w-full aspect-square max-h-[40vh] md:max-h-none rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] mb-6 relative group" style={{ transform: `scale(calc(1 + var(--vibe-intensity, 0) * 0.1))`, transition: 'transform 0.1s ease-out' }}>
+          <div 
+            className={`w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 rounded-full overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] mb-6 relative group flex-shrink-0 ${isPlaying ? 'animate-[spin_20s_linear_infinite]' : ''}`} 
+            style={{ 
+              transform: `scale(calc(1 + var(--vibe-intensity, 0) * 0.1))`, 
+              transition: 'transform 0.1s ease-out' 
+            }}
+          >
              <img src={currentTrack.thumbnail} alt={currentTrack.title} className="w-full h-full object-cover" />
+             {/* Optional Vinyl hole in the center */}
+             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 sm:w-12 sm:h-12 bg-black rounded-full shadow-inner border border-zinc-800"></div>
           </div>
         )}
 
