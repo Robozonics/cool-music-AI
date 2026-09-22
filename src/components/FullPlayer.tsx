@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, SkipForward, SkipBack, ChevronDown, Download, Plus, X, Repeat, Share2, Video, Blend, ListMusic, Laptop2 } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, ChevronDown, Download, Plus, X, Repeat, Share2, Video, Blend, ListMusic, Laptop2, Mic, MicOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePlayerStore } from '../store/usePlayerStore';
 
@@ -24,6 +24,8 @@ export const FullPlayer: React.FC = () => {
   const setLyricsOpen = usePlayerStore(state => state.setLyricsOpen);
   const setConnectModalOpen = usePlayerStore(state => state.setConnectModalOpen);
   
+  const isKaraokeMode = usePlayerStore(state => state.isKaraokeMode);
+  const toggleKaraokeMode = usePlayerStore(state => state.toggleKaraokeMode);
   const isVideoMode = usePlayerStore(state => state.isVideoMode);
   const toggleVideoMode = usePlayerStore(state => state.toggleVideoMode);
   const isCrossfadeEnabled = usePlayerStore(state => state.isCrossfadeEnabled);
@@ -193,6 +195,14 @@ export const FullPlayer: React.FC = () => {
               title={isCrossfadeEnabled ? 'Smart Mix Transitions: ON (3s)' : 'Smart Mix Transitions: OFF'}
             >
               <Blend className="w-5 h-5 sm:w-6 sm:h-6" />
+            </button>
+
+            <button 
+              onClick={toggleKaraokeMode}
+              className={`p-2 sm:p-3 rounded-full transition-all ${isKaraokeMode ? 'text-acid-lime bg-acid-lime/10 shadow-[0_0_15px_rgba(204,255,0,0.3)]' : 'text-gray-400 hover:text-white'}`}
+              title={isKaraokeMode ? 'Karaoke Mode: ON (Vocal Suppressed)' : 'Karaoke Mode: OFF'}
+            >
+              {isKaraokeMode ? <MicOff className="w-5 h-5 sm:w-6 sm:h-6" /> : <Mic className="w-5 h-5 sm:w-6 sm:h-6" />}
             </button>
 
             <button 

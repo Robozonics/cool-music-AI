@@ -31,7 +31,7 @@ export let auxContexts: AuxContext[] = [];
 export let currentArrangement: DjEvent[] = [];
 export let processedEvents: Set<string> = new Set();
 
-const initAudioContext = () => {
+const initAudioContext = (forceKaraokeMode?: boolean) => {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
     nativeAudioSource = audioCtx.createMediaElementSource(nativeAudio);
@@ -50,44 +50,106 @@ const initAudioContext = () => {
     nativeAudioSource.connect(nativeBassFilter);
     nativeBassFilter.connect(nativeAudioFilter);
     
+    const isKaraoke = forceKaraokeMode ?? false;
+
     // Normal Mix
     normalGain = audioCtx.createGain();
-    normalGain.gain.value = 1;
+    normalGain.gain.value = isKaraoke ? 0 : 1;
     nativeAudioFilter.connect(normalGain);
     normalGain.connect(audioCtx.destination);
 
-    // Karaoke Mix (Advanced Center Cancellation with Bass Preservation)
+    // Karaoke Mix: Maximum Vocal Suppression Engine
     karaokeGain = audioCtx.createGain();
-    karaokeGain.gain.value = 0;
-    
-    const lowpass = audioCtx.createBiquadFilter();
-    lowpass.type = 'lowpass';
-    lowpass.frequency.value = 300; // Keep bass below 300Hz
-    
-    const highpass = audioCtx.createBiquadFilter();
-    highpass.type = 'highpass';
-    highpass.frequency.value = 300; // Vocals and mids above 300Hz
+    karaokeGain.gain.value = isKaraoke ? 1 : 0;
 
-    nativeAudioFilter.connect(lowpass);
-    nativeAudioFilter.connect(highpass);
+    // 1. Sub-Bass Channel (Steep 24dB/oct @ 90Hz Butterworth lowpass to isolate pure kick & sub-bass without vocal bleed)
+    const bassLp1 = audioCtx.createBiquadFilter();
+    bassLp1.type = 'lowpass';
+    bassLp1.frequency.value = 90;
+    bassLp1.Q.value = 0.707;
 
+    const bassLp2 = audioCtx.createBiquadFilter();
+    bassLp2.type = 'lowpass';
+    bassLp2.frequency.value = 90;
+    bassLp2.Q.value = 0.707;
+
+    nativeAudioFilter.connect(bassLp1);
+    bassLp1.connect(bassLp2);
+
+    const bassGain = audioCtx.createGain();
+    bassGain.gain.value = 1.0;
+    bassLp2.connect(bassGain);
+    bassGain.connect(karaokeGain);
+
+    // 2. Highpass filter to isolate vocal & instrumental spectrum above sub-bass
+    const midHighpass = audioCtx.createBiquadFilter();
+    midHighpass.type = 'highpass';
+    midHighpass.frequency.value = 90;
+    midHighpass.Q.value = 0.707;
+
+    nativeAudioFilter.connect(midHighpass);
+
+    // 3. Stereo Side Matrix Cancellation (L - R)
+    // Subtracts center channel completely, eliminating lead center vocals
     const splitter = audioCtx.createChannelSplitter(2);
     const merger = audioCtx.createChannelMerger(2);
-    const inverter = audioCtx.createGain();
-    inverter.gain.value = -1;
 
-    highpass.connect(splitter);
-    
-    // Center cancellation on mids/highs (L - R)
+    const inverterR = audioCtx.createGain();
+    inverterR.gain.value = -1;
+
+    midHighpass.connect(splitter);
+
+    // Invert Right channel: produces -R
+    splitter.connect(inverterR, 1, 0);
+
+    // Left channel output: L + (-R) = L - R
     splitter.connect(merger, 0, 0);
+    inverterR.connect(merger, 0, 0);
+
+    // Right channel output: L + (-R) = L - R (in-phase with left to prevent mono cancellation and headphone suction)
     splitter.connect(merger, 0, 1);
-    splitter.connect(inverter, 1, 0);
-    inverter.connect(merger, 0, 0);
-    inverter.connect(merger, 0, 1);
-    
-    // Recombine preserved bass and cancelled mids
-    merger.connect(karaokeGain);
-    lowpass.connect(karaokeGain);
+    inverterR.connect(merger, 0, 1);
+
+    // 4. Multi-Stage Vocal Reverb & Formant Notches
+    // Suppresses stereo vocal reverb tails, delays, harmonies, and wide vocal reflections:
+    // Formant 1: Lower vocal throat warmth / reverb boom (420Hz, Q=1.2, -10dB)
+    const vocalDip1 = audioCtx.createBiquadFilter();
+    vocalDip1.type = 'peaking';
+    vocalDip1.frequency.value = 420;
+    vocalDip1.Q.value = 1.2;
+    vocalDip1.gain.value = -10;
+
+    // Formant 2: Vocal core intelligibility & nasal body (1100Hz, Q=1.4, -14dB)
+    const vocalDip2 = audioCtx.createBiquadFilter();
+    vocalDip2.type = 'peaking';
+    vocalDip2.frequency.value = 1100;
+    vocalDip2.Q.value = 1.4;
+    vocalDip2.gain.value = -14;
+
+    // Formant 3: Singer's formant / vocal presence & projection (2700Hz, Q=1.5, -12dB)
+    const vocalDip3 = audioCtx.createBiquadFilter();
+    vocalDip3.type = 'peaking';
+    vocalDip3.frequency.value = 2700;
+    vocalDip3.Q.value = 1.5;
+    vocalDip3.gain.value = -12;
+
+    // Formant 4: Vocal sibilance & breathiness attenuation (6500Hz, high-shelf, -8dB)
+    const vocalShelf = audioCtx.createBiquadFilter();
+    vocalShelf.type = 'highshelf';
+    vocalShelf.frequency.value = 6500;
+    vocalShelf.gain.value = -8;
+
+    // Side gain to restore backing track loudness
+    const sideGain = audioCtx.createGain();
+    sideGain.gain.value = 1.35;
+
+    merger.connect(vocalDip1);
+    vocalDip1.connect(vocalDip2);
+    vocalDip2.connect(vocalDip3);
+    vocalDip3.connect(vocalShelf);
+    vocalShelf.connect(sideGain);
+    sideGain.connect(karaokeGain);
+
     karaokeGain.connect(audioCtx.destination);
   }
   if (audioCtx.state === 'suspended') {
@@ -614,9 +676,22 @@ export const usePlayerStore = create<PlayerState>()(
        const state = get();
        const newMode = !state.isKaraokeMode;
        set({ isKaraokeMode: newMode });
-       if (normalGain && karaokeGain && audioCtx) {
-         normalGain.gain.setTargetAtTime(newMode ? 0 : 1, audioCtx.currentTime, 0.1);
-         karaokeGain.gain.setTargetAtTime(newMode ? 1 : 0, audioCtx.currentTime, 0.1);
+       initAudioContext(newMode);
+       if (audioCtx) {
+         if (audioCtx.state === 'suspended') {
+           audioCtx.resume().catch(e => console.warn('AudioContext resume failed:', e));
+         }
+         const t = audioCtx.currentTime;
+         if (normalGain) {
+           normalGain.gain.cancelScheduledValues(t);
+           normalGain.gain.setValueAtTime(normalGain.gain.value, t);
+           normalGain.gain.linearRampToValueAtTime(newMode ? 0 : 1, t + 0.05);
+         }
+         if (karaokeGain) {
+           karaokeGain.gain.cancelScheduledValues(t);
+           karaokeGain.gain.setValueAtTime(karaokeGain.gain.value, t);
+           karaokeGain.gain.linearRampToValueAtTime(newMode ? 1 : 0, t + 0.05);
+         }
        }
     },
 
@@ -687,11 +762,14 @@ export const usePlayerStore = create<PlayerState>()(
       processedEvents.clear();
       currentArrangement = track.arrangement || [];
       
-      initAudioContext();
-      if (normalGain && karaokeGain) {
-         const mode = get().isKaraokeMode;
-         normalGain.gain.value = mode ? 0 : 1;
-         karaokeGain.gain.value = mode ? 1 : 0;
+      const mode = get().isKaraokeMode;
+      initAudioContext(mode);
+      if (normalGain && karaokeGain && audioCtx) {
+         const t = audioCtx.currentTime;
+         normalGain.gain.cancelScheduledValues(t);
+         karaokeGain.gain.cancelScheduledValues(t);
+         normalGain.gain.setValueAtTime(mode ? 0 : 1, t);
+         karaokeGain.gain.setValueAtTime(mode ? 1 : 0, t);
       }
       
       // Setup new auxiliary audios for mashups
