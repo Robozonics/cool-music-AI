@@ -29,6 +29,14 @@ import { useAICommandProcessor } from './hooks/useAICommandProcessor';
 import { Mic, Layers } from 'lucide-react';
 import { useMashupStore } from './store/useMashupStore';
 import { MashupStudioPanel } from './components/MashupStudioPanel';
+import { motion, AnimatePresence } from 'framer-motion';
+import type { Variants } from 'framer-motion';
+
+const pageVariants: Variants = {
+  initial: { opacity: 0, y: 15, scale: 0.98 },
+  animate: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 300, damping: 25 } },
+  exit: { opacity: 0, scale: 0.96, transition: { duration: 0.2 } }
+};
 
 function App() {
   useAudioAnalyzer();
@@ -161,7 +169,18 @@ function App() {
         </div>
 
         <main className="flex-1 overflow-y-auto overflow-x-hidden relative z-0 pb-40">
-          {renderContent()}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              className="h-full"
+            >
+              {renderContent()}
+            </motion.div>
+          </AnimatePresence>
         </main>
 
         <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />

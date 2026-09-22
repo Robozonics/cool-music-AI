@@ -1,5 +1,6 @@
 import React from 'react';
 import { Play, Pause, SkipForward, SkipBack, ChevronDown, Download, Plus, X, Repeat, Share2, Video, Blend, ListMusic, Laptop2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { usePlayerStore } from '../store/usePlayerStore';
 
 export const FullPlayer: React.FC = () => {
@@ -35,7 +36,7 @@ export const FullPlayer: React.FC = () => {
     else setRepeatMode('off');
   };
 
-  if (!currentTrack || !isFullPlayerOpen) return null;
+  if (!currentTrack) return null;
 
   const formatTime = (time: number) => {
     if (isNaN(time)) return '0:00';
@@ -49,7 +50,15 @@ export const FullPlayer: React.FC = () => {
     : `${currentTrack.title} ${currentTrack.artist || ''} official music video`;
 
   return (
-    <div className={`fixed inset-0 z-50 bg-obsidian flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${isFullPlayerOpen ? 'translate-y-0' : 'translate-y-full'}`}>
+    <AnimatePresence>
+      {isFullPlayerOpen && (
+        <motion.div 
+          initial={{ y: '100%' }}
+          animate={{ y: 0 }}
+          exit={{ y: '100%' }}
+          transition={{ type: 'spring', damping: 28, stiffness: 250 }}
+          className="fixed inset-0 z-50 bg-obsidian flex flex-col"
+        >
       {/* Background blur */}
       <div 
         className="absolute inset-0 bg-cover bg-center opacity-30 blur-[100px] scale-150 transform-gpu"
@@ -246,20 +255,29 @@ export const FullPlayer: React.FC = () => {
             {repeatMode === 'one' && <span className="absolute text-[10px] font-bold right-1 bottom-1">1</span>}
           </button>
           
-          <button onClick={prevTrack} className="p-3 text-white hover:text-acid-lime transition">
-            <SkipBack className="w-8 h-8 fill-current" />
-          </button>
-          
-          <button 
-            onClick={togglePlay}
-            className="w-20 h-20 flex items-center justify-center rounded-full bg-white text-obsidian hover:scale-105 transition-transform shadow-[0_0_20px_rgba(255,255,255,0.3)] shrink-0"
+          <motion.button 
+            whileTap={{ scale: 0.9 }}
+            onClick={prevTrack} 
+            className="p-3 text-white hover:text-emerald-400 transition"
           >
-            {isPlaying ? <Pause className="w-10 h-10 fill-current" /> : <Play className="w-10 h-10 fill-current ml-1" />}
-          </button>
+            <SkipBack className="w-8 h-8 fill-current" />
+          </motion.button>
           
-          <button onClick={nextTrack} className="p-3 text-white hover:text-acid-lime transition">
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={togglePlay}
+            className="p-5 rounded-full bg-emerald-500 text-obsidian hover:scale-105 transition shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+          >
+            {isPlaying ? <Pause className="w-8 h-8 fill-current" /> : <Play className="w-8 h-8 fill-current ml-1" />}
+          </motion.button>
+          
+          <motion.button 
+            whileTap={{ scale: 0.9 }}
+            onClick={nextTrack} 
+            className="p-3 text-white hover:text-emerald-400 transition"
+          >
             <SkipForward className="w-8 h-8 fill-current" />
-          </button>
+          </motion.button>
 
           <button 
             onClick={() => usePlayerStore.getState().setQueueOpen(true)}
@@ -269,7 +287,9 @@ export const FullPlayer: React.FC = () => {
             <ListMusic className="w-6 h-6" />
           </button>
         </div>
-      </div>
-    </div>
+        </div>
+      </motion.div>
+      )}
+    </AnimatePresence>
   );
 };

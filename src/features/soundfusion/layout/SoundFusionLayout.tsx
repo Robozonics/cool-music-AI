@@ -6,7 +6,7 @@ import { usePlayerStore } from '../../../store/usePlayerStore';
 import { useMashupStore } from '../../../store/useMashupStore';
 import { MashupStudioPanel } from '../../../components/MashupStudioPanel';
 import { Camera, Sun, Moon, AudioWaveform, Layers } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 
 interface LayoutProps {
@@ -176,10 +176,17 @@ export const SoundFusionLayout: React.FC<LayoutProps> = ({ children, activeTab, 
 
         {/* 3. Main Content Viewport (Fluid Center) */}
         <main className="flex-1 h-full overflow-y-auto relative z-0">
-          <div className="p-8 relative z-10 pb-32">
-             {/* Dynamic view container switching will happen here */}
-             {children}
-          </div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 15, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 300, damping: 25 } }}
+              exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.2 } }}
+              className="p-8 relative z-10 pb-32 min-h-full"
+            >
+               {children}
+            </motion.div>
+          </AnimatePresence>
         </main>
 
         {/* 4. Right Contextual Sidebar (Fixed Width - 320px, Collapsible) */}

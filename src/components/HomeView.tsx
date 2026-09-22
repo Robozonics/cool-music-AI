@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Play, Loader2, Heart, Sparkles, Plus, MapPin } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { searchUnblocked } from '../services/unblockedMusicService';
 import type { Track } from '../types/music';
 import { usePlayerStore } from '../store/usePlayerStore';
@@ -323,13 +324,28 @@ const GeoDiscoveryBanner: React.FC = () => {
         )}
 
         {localTracks.length > 0 && (
-          <div className="flex gap-3 overflow-x-auto pb-2 snap-x hide-scrollbar text-left mt-4 w-full">
+          <motion.div 
+            initial="hidden"
+            animate="show"
+            variants={{
+              hidden: { opacity: 0 },
+              show: {
+                opacity: 1,
+                transition: { staggerChildren: 0.1 }
+              }
+            }}
+            className="flex gap-3 overflow-x-auto pb-2 snap-x hide-scrollbar text-left mt-4 w-full"
+          >
             {localTracks.map(track => {
               const isLiked = usePlayerStore(state => state.likedTracks.includes(track.id));
               const toggleLike = usePlayerStore(state => state.toggleLikeTrack);
               return (
-              <div 
+              <motion.div 
                 key={track.id} 
+                variants={{
+                  hidden: { opacity: 0, scale: 0.9, x: 20 },
+                  show: { opacity: 1, scale: 1, x: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
+                }}
                 className="w-32 shrink-0 cursor-pointer group/track relative"
               >
                 <div 
@@ -342,18 +358,19 @@ const GeoDiscoveryBanner: React.FC = () => {
                   </div>
                 </div>
                 
-                <button
+                <motion.button
+                  whileTap={{ scale: 0.8 }}
                   onClick={(e) => { e.stopPropagation(); toggleLike(track); }}
                   className="absolute top-2 right-2 p-1.5 rounded-full bg-black/40 backdrop-blur-md opacity-0 group-hover/track:opacity-100 transition-opacity hover:bg-black/60 z-20"
                 >
                   <Heart className={`w-4 h-4 ${isLiked ? 'fill-lime-400 text-lime-400' : 'text-white'}`} />
-                </button>
+                </motion.button>
                 
                 <p className="text-xs font-bold text-white truncate pr-6">{track.title}</p>
                 <p className="text-[10px] text-zinc-400 truncate">{track.artist}</p>
-              </div>
+              </motion.div>
             )})}
-          </div>
+          </motion.div>
         )}
       </div>
     </div>
@@ -519,12 +536,24 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab }) => {
           <div key={section.title}>
             <h2 className="text-sm font-bold tracking-[0.2em] uppercase text-zinc-500 mb-6">{section.title}</h2>
             
-            <div className="flex flex-col space-y-2">
+            <motion.div 
+              initial="hidden"
+              animate="show"
+              variants={{
+                hidden: { opacity: 0 },
+                show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+              }}
+              className="flex flex-col space-y-2"
+            >
               {data.map((track, i) => {
                 const num = (i + 1).toString().padStart(2, '0');
                 return (
-                  <div 
+                  <motion.div 
                     key={track.id}
+                    variants={{
+                      hidden: { opacity: 0, y: 20 },
+                      show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
+                    }}
                     className="group relative flex items-center p-5 rounded-3xl bg-white/5 hover:bg-white/10 transition-all cursor-pointer overflow-hidden border border-white/10 hover:border-acid-lime/50 hover:scale-[1.02] shadow-[0_10px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_15px_40px_rgba(163,230,53,0.15)]"
                     onClick={() => handlePlay(track, data)}
                   >
@@ -546,7 +575,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab }) => {
                     </div>
 
                     <div className="relative z-10 ml-4 shrink-0 flex items-center gap-1">
-                      <button
+                      <motion.button
+                        whileTap={{ scale: 0.8 }}
                         onClick={(e) => {
                           e.stopPropagation();
                           toggleLikeTrack(track);
@@ -555,22 +585,23 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab }) => {
                         title="Like Track"
                       >
                         <Heart className={`w-6 h-6 ${likedTracks.includes(track.id) ? 'fill-pink-500 text-pink-500' : ''}`} />
-                      </button>
-                      <button
+                      </motion.button>
+                      <motion.button
+                        whileTap={{ scale: 0.8 }}
                         onClick={(e) => {
                           e.stopPropagation();
                           usePlayerStore.getState().openAddToPlaylistModal(track);
                         }}
-                        className="p-3 text-zinc-500 hover:text-acid-lime hover:bg-white/10 rounded-full transition-all"
+                        className="p-3 text-zinc-500 hover:text-white hover:bg-white/10 rounded-full transition-all"
                         title="Add to Playlist"
                       >
                         <Plus className="w-6 h-6" />
-                      </button>
+                      </motion.button>
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
-            </div>
+            </motion.div>
           </div>
         );
       })}
