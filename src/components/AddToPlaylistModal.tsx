@@ -47,13 +47,13 @@ export const AddToPlaylistModal: React.FC = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+        className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center sm:p-4 bg-black/80 backdrop-blur-sm"
       >
         <motion.div
-          initial={{ scale: 0.95, opacity: 0, y: 20 }}
+          initial={{ scale: 0.95, opacity: 0, y: 100 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.95, opacity: 0, y: 20 }}
-          className="bg-[#121216] border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl overflow-hidden relative flex flex-col max-h-[80vh]"
+          exit={{ scale: 0.95, opacity: 0, y: 100 }}
+          className="bg-[#121216] border border-white/10 rounded-t-[2rem] sm:rounded-2xl p-6 w-full max-w-md shadow-2xl overflow-hidden relative flex flex-col max-h-[85dvh] sm:max-h-[80vh] pb-10 sm:pb-6"
         >
           {/* Header */}
           <div className="flex justify-between items-center mb-6 shrink-0">
