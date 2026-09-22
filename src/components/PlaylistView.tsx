@@ -49,12 +49,6 @@ const TrackItem = ({ track, playlist, idx, playlistId }: { track: Track, playlis
           setQueue(playlist.tracks);
           playTrack(track);
         }}
-        onPointerUp={(e) => {
-          if (e.pointerType === 'touch') {
-            setQueue(playlist.tracks);
-            playTrack(track);
-          }
-        }}
       >
         <span className={`hidden md:block text-xs font-bold w-4 text-right ${isPlayingThis ? 'text-acid-lime' : 'text-zinc-500 group-hover:text-white'}`}>
           {isPlayingThis ? <Play className="w-3 h-3 fill-acid-lime inline-block" /> : idx + 1}

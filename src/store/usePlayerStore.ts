@@ -343,14 +343,24 @@ export const usePlayerStore = create<PlayerState>()(
         if (error.name === 'NotAllowedError') {
           console.warn('Autoplay blocked. User interaction required.');
           set({ isAutoplayBlocked: true });
+        } else if (error.name === 'AbortError') {
+          // Play request was interrupted by load or source change.
+          // On mobile, retry as soon as the audio has buffered enough data.
+          console.warn('Play aborted by load transition, retrying on canplay...');
+          const onCanPlay = () => {
+            nativeAudio.removeEventListener('canplay', onCanPlay);
+            nativeAudio.play().catch(e => {
+              if (e.name === 'NotAllowedError') {
+                set({ isAutoplayBlocked: true });
+              }
+            });
+          };
+          nativeAudio.addEventListener('canplay', onCanPlay);
         } else {
           console.error('Playback error:', error);
         }
       });
     }
-    
-    // Do NOT auto-play aux tracks here, wait for the 'play' event to unlock them
-    // so they are started with a valid user gesture.
   };
 
 
@@ -434,8 +444,17 @@ export const usePlayerStore = create<PlayerState>()(
     console.warn('Track playback failed (likely CORS or network error).');
     const state = get();
     const track = state.currentTrack;
+
+    // 1. If playback failed with crossOrigin set, retry immediately without crossOrigin
+    if (nativeAudio.crossOrigin) {
+      console.warn('Retrying playback without crossOrigin header...');
+      nativeAudio.removeAttribute('crossOrigin');
+      nativeAudio.load();
+      attemptPlay();
+      return;
+    }
     
-    // Attempt recovery for Saavn tracks (URLs expire)
+    // 2. Attempt recovery for Saavn tracks (URLs expire)
     if (track && track.source === 'saavn' && !track.isOffline && track.id.startsWith('saavn-')) {
        if (!(nativeAudio as any)._isRecovering) {
            console.log("Attempting to fetch fresh URL for expired Saavn track...");
@@ -443,14 +462,8 @@ export const usePlayerStore = create<PlayerState>()(
            fetchFreshSaavnUrl(track.id).then(freshUrl => {
                if (freshUrl && freshUrl !== track.streamUrl) {
                    nativeAudio.src = freshUrl;
-                   const playPromise = nativeAudio.play();
-                   if (playPromise) {
-                       playPromise.catch(err => {
-                          if (err.name === 'NotAllowedError') {
-                             set({ isAutoplayBlocked: true, isPlaying: false, isBuffering: false });
-                          }
-                       });
-                   }
+                   nativeAudio.load();
+                   attemptPlay();
                } else {
                    set({ isPlaying: false, isBuffering: false });
                    (nativeAudio as any)._isRecovering = false;
@@ -658,14 +671,65 @@ export const usePlayerStore = create<PlayerState>()(
         });
       }
 
-      // If not offline and it's a Saavn track, refresh the streamUrl because they expire (causes Next Track bug on Liked Songs)
-      // We now handle this in the 'error' event listener to preserve synchronous user-gesture for mobile autoplay.
       let finalStreamUrl = track.streamUrl;
 
-      nativeAudio.src = finalStreamUrl;
+      // Cleanly prepare nativeAudio for the new track
+      nativeAudio.pause();
       nativeAudio.volume = get().volume;
       nativeAudio.playbackRate = get().playbackRate;
-      attemptPlay();
+
+      if (finalStreamUrl) {
+        if (nativeAudio.src !== finalStreamUrl) {
+          nativeAudio.src = finalStreamUrl;
+          nativeAudio.load();
+        }
+        attemptPlay();
+      }
+
+      // If it is a Saavn track and not offline, verify/refresh URL in background
+      if (track.source === 'saavn' && !track.isOffline && track.id.startsWith('saavn-')) {
+        fetchFreshSaavnUrl(track.id).then(freshUrl => {
+          if (freshUrl && freshUrl !== finalStreamUrl) {
+            set(state => ({
+              currentTrack: state.currentTrack?.id === track.id ? { ...state.currentTrack, streamUrl: freshUrl } : state.currentTrack,
+              queue: state.queue.map(q => q.id === track.id ? { ...q, streamUrl: freshUrl } : q),
+              likedTrackDetails: (state.likedTrackDetails || []).map(q => q.id === track.id ? { ...q, streamUrl: freshUrl } : q),
+              savedPlaylists: state.savedPlaylists.map(p => ({
+                ...p,
+                tracks: p.tracks.map(q => q.id === track.id ? { ...q, streamUrl: freshUrl } : q)
+              }))
+            }));
+            // If the old URL failed or was empty, switch to fresh URL immediately
+            if (!finalStreamUrl || nativeAudio.error || nativeAudio.paused) {
+              nativeAudio.src = freshUrl;
+              nativeAudio.load();
+              attemptPlay();
+            }
+          }
+        }).catch(() => {});
+      }
+
+      // Pre-fetch fresh URL for the NEXT track in queue!
+      // Guarantees that tapping "Next" on mobile has a fresh, valid URL ready instantly
+      const q = get().queue;
+      const curIdx = q.findIndex(t => t.id === track.id);
+      if (curIdx >= 0 && curIdx < q.length - 1) {
+        const nextItem = q[curIdx + 1];
+        if (nextItem.source === 'saavn' && !nextItem.isOffline && nextItem.id.startsWith('saavn-')) {
+          fetchFreshSaavnUrl(nextItem.id).then(nextFreshUrl => {
+            if (nextFreshUrl && nextFreshUrl !== nextItem.streamUrl) {
+              set(state => ({
+                queue: state.queue.map(item => item.id === nextItem.id ? { ...item, streamUrl: nextFreshUrl } : item),
+                likedTrackDetails: (state.likedTrackDetails || []).map(item => item.id === nextItem.id ? { ...item, streamUrl: nextFreshUrl } : item),
+                savedPlaylists: state.savedPlaylists.map(p => ({
+                  ...p,
+                  tracks: p.tracks.map(item => item.id === nextItem.id ? { ...item, streamUrl: nextFreshUrl } : item)
+                }))
+              }));
+            }
+          }).catch(() => {});
+        }
+      }
     },
 
     handleTrackEnd: () => {
@@ -776,24 +840,28 @@ export const usePlayerStore = create<PlayerState>()(
     },
 
     nextTrack: () => {
-      const { queue, currentTrack, playTrack, repeatMode } = get();
-      if (!currentTrack || queue.length === 0) return;
+      const { queue, currentTrack, playTrack } = get();
+      if (!queue || queue.length === 0) return;
+      if (!currentTrack) {
+        playTrack(queue[0]);
+        return;
+      }
       const currentIndex = queue.findIndex(t => t.id === currentTrack.id);
       if (currentIndex >= 0 && currentIndex < queue.length - 1) {
         playTrack(queue[currentIndex + 1]);
-      } else if (repeatMode === 'all' && queue.length > 0) {
-        // Wrap around to beginning
-        playTrack(queue[0]);
       } else {
-        nativeAudio.pause();
-        nativeAudio.src = '';
-        set({ isPlaying: false, currentTime: 0 });
+        // Wrap around to beginning of playlist/queue
+        playTrack(queue[0]);
       }
     },
 
     prevTrack: () => {
       const { queue, currentTrack, playTrack, currentTime } = get();
-      if (!currentTrack) return;
+      if (!queue || queue.length === 0) return;
+      if (!currentTrack) {
+        playTrack(queue[0]);
+        return;
+      }
       if (currentTime > 3) {
         nativeAudio.currentTime = 0;
         return;
@@ -801,6 +869,8 @@ export const usePlayerStore = create<PlayerState>()(
       const currentIndex = queue.findIndex(t => t.id === currentTrack.id);
       if (currentIndex > 0) {
         playTrack(queue[currentIndex - 1]);
+      } else {
+        playTrack(queue[queue.length - 1]);
       }
     },
 
