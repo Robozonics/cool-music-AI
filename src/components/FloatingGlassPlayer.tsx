@@ -73,7 +73,7 @@ export const FloatingGlassPlayer: React.FC = () => {
   if (!currentTrack) return null;
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-6xl px-4 pointer-events-auto">
+    <div className="fixed bottom-24 lg:bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-6xl px-4 pointer-events-auto">
       {/* EQUALIZER OVERLAY POPUP */}
       <AnimatePresence>
         {showEqualizer && (
@@ -136,23 +136,16 @@ export const FloatingGlassPlayer: React.FC = () => {
         <div className="flex items-center space-x-3 min-w-0 z-10 pr-2">
           <div className="relative group overflow-hidden rounded-xl h-14 w-14 lg:h-16 lg:w-16 shrink-0 shadow-2xl">
             <div className="w-full h-full" style={{ transform: `scale(calc(1 + var(--vibe-intensity, 0) * 0.15))`, transition: 'transform 0.1s ease-out' }}>
-              <motion.div
-                animate={{ 
-                  rotate: isPlaying ? [0, -1, 1, -1, 1, 0] : 0,
-                }}
-                transition={{ 
-                  duration: 0.5, 
-                  repeat: isPlaying ? Infinity : 0,
-                  ease: "easeInOut"
-                }}
-                className="w-full h-full"
+              <div
+                className="w-full h-full animate-[spin_10s_linear_infinite]"
+                style={{ animationPlayState: isPlaying ? 'running' : 'paused' }}
               >
                 <img 
                   src={currentTrack.thumbnail} 
                   alt={currentTrack.title}
                   className="object-cover w-full h-full"
                 />
-              </motion.div>
+              </div>
             </div>
             
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">

@@ -708,6 +708,8 @@ export const usePlayerStore = create<PlayerState>()(
                if (evt.type === 'fade_out' || evt.type === 'pause') {
                    tracksState[evt.trackId].volume = 0;
                }
+               const eventId = `${idx}-${evt.timestamp}-${evt.type}-${evt.trackId}`;
+               processedEvents.add(eventId);
            }
         });
 
@@ -724,6 +726,10 @@ export const usePlayerStore = create<PlayerState>()(
                const rawVol = state.volume * get().volume;
                const finalVol = Math.min(1, Math.max(0, Number.isFinite(rawVol) ? rawVol : get().volume));
                rampVolume(aux.audio, aux.audio.volume, finalVol, 150);
+               
+               if (get().isPlaying && aux.audio.paused && finalVol > 0) {
+                   aux.audio.play().catch(e => console.warn('seek play err', e));
+               }
             } else {
                rampVolume(aux.audio, aux.audio.volume, 0, 150);
                aux.audio.currentTime = safeSeconds;

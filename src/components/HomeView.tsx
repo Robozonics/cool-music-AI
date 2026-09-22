@@ -204,6 +204,8 @@ const GeoDiscoveryBanner: React.FC = () => {
   const [isFetching, setIsFetching] = useState(false);
   const playTrack = usePlayerStore(state => state.playTrack);
   const setQueue = usePlayerStore(state => state.setQueue);
+  const likedTracks = usePlayerStore(state => state.likedTracks);
+  const toggleLikeTrack = usePlayerStore(state => state.toggleLikeTrack);
 
   const fetchLocalVibes = () => {
     setIsFetching(true);
@@ -337,8 +339,7 @@ const GeoDiscoveryBanner: React.FC = () => {
             className="flex gap-3 overflow-x-auto pb-2 snap-x hide-scrollbar text-left mt-4 w-full"
           >
             {localTracks.map(track => {
-              const isLiked = usePlayerStore(state => state.likedTracks.includes(track.id));
-              const toggleLike = usePlayerStore(state => state.toggleLikeTrack);
+              const isLiked = likedTracks.includes(track.id);
               return (
               <motion.div 
                 key={track.id} 
@@ -360,7 +361,7 @@ const GeoDiscoveryBanner: React.FC = () => {
                 
                 <motion.button
                   whileTap={{ scale: 0.8 }}
-                  onClick={(e) => { e.stopPropagation(); toggleLike(track); }}
+                  onClick={(e) => { e.stopPropagation(); toggleLikeTrack(track); }}
                   className="absolute top-2 right-2 p-1.5 rounded-full bg-black/40 backdrop-blur-md opacity-0 group-hover/track:opacity-100 transition-opacity hover:bg-black/60 z-20"
                 >
                   <Heart className={`w-4 h-4 ${isLiked ? 'fill-lime-400 text-lime-400' : 'text-white'}`} />
