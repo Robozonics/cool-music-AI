@@ -432,6 +432,38 @@ export const usePlayerStore = create<PlayerState>()(
 
   nativeAudio.addEventListener('error', () => {
     console.warn('Track playback failed (likely CORS or network error).');
+    const state = get();
+    const track = state.currentTrack;
+    
+    // Attempt recovery for Saavn tracks (URLs expire)
+    if (track && track.source === 'saavn' && !track.isOffline && track.id.startsWith('saavn-')) {
+       if (!(nativeAudio as any)._isRecovering) {
+           console.log("Attempting to fetch fresh URL for expired Saavn track...");
+           (nativeAudio as any)._isRecovering = true;
+           fetchFreshSaavnUrl(track.id).then(freshUrl => {
+               if (freshUrl && freshUrl !== track.streamUrl) {
+                   nativeAudio.src = freshUrl;
+                   const playPromise = nativeAudio.play();
+                   if (playPromise) {
+                       playPromise.catch(err => {
+                          if (err.name === 'NotAllowedError') {
+                             set({ isAutoplayBlocked: true, isPlaying: false, isBuffering: false });
+                          }
+                       });
+                   }
+               } else {
+                   set({ isPlaying: false, isBuffering: false });
+                   (nativeAudio as any)._isRecovering = false;
+               }
+           }).catch(() => {
+               set({ isPlaying: false, isBuffering: false });
+               (nativeAudio as any)._isRecovering = false;
+           });
+           return;
+       }
+    }
+    
+    (nativeAudio as any)._isRecovering = false;
     set({ isPlaying: false, isBuffering: false });
   });
 
@@ -563,8 +595,11 @@ export const usePlayerStore = create<PlayerState>()(
 
     setDuration: (duration: number) => set({ duration }),
 
-    playTrack: async (track: Track) => {
+    playTrack: (track: Track) => {
       set({ currentTrack: track, currentTime: 0, duration: track.duration || 0, isAutoplayBlocked: false, isBuffering: false, isCrossfading: false });
+
+      // Reset recovering state for the new track
+      (nativeAudio as any)._isRecovering = false;
 
       // Abort any in-progress crossfade
       crossfadeAudio.pause();
@@ -623,17 +658,9 @@ export const usePlayerStore = create<PlayerState>()(
         });
       }
 
-      // If no arrangement or arrangement doesn't start secondaries, don't auto-play them
-      // The DJ arrangement must contain explicit 'play' or 'fade_in' events for each track
-
       // If not offline and it's a Saavn track, refresh the streamUrl because they expire (causes Next Track bug on Liked Songs)
+      // We now handle this in the 'error' event listener to preserve synchronous user-gesture for mobile autoplay.
       let finalStreamUrl = track.streamUrl;
-      if (track.source === 'saavn' && !track.isOffline && track.id.startsWith('saavn-')) {
-          const freshUrl = await fetchFreshSaavnUrl(track.id);
-          if (freshUrl) {
-              finalStreamUrl = freshUrl;
-          }
-      }
 
       nativeAudio.src = finalStreamUrl;
       nativeAudio.volume = get().volume;

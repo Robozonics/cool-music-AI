@@ -53,7 +53,7 @@ export const AddToPlaylistModal: React.FC = () => {
           initial={{ scale: 0.95, opacity: 0, y: 100 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.95, opacity: 0, y: 100 }}
-          className="bg-[#121216] border border-white/10 rounded-t-[2rem] sm:rounded-2xl p-6 w-full max-w-md shadow-2xl overflow-hidden relative flex flex-col max-h-[85dvh] sm:max-h-[80vh] pb-10 sm:pb-6"
+          className="bg-[#121216] border border-white/10 rounded-t-[2rem] sm:rounded-2xl p-6 w-full max-w-md shadow-2xl overflow-hidden relative flex flex-col max-h-[85dvh] sm:max-h-[80vh] pb-28 sm:pb-6"
         >
           {/* Header */}
           <div className="flex justify-between items-center mb-6 shrink-0">

@@ -73,7 +73,10 @@ const SampleCard: React.FC<SampleCardProps> = ({ track, isActive, isMuted, onAdd
         audio.currentTime = Math.floor((track.duration || 180) * 0.20);
       }
       setIsLoading(true);
-      audio.play().catch(() => setIsLoading(false));
+      audio.play().catch(() => {
+        setIsLoading(false);
+        setIsPlaying(false);
+      });
     } else {
       audio.pause();
     }
@@ -145,7 +148,20 @@ const SampleCard: React.FC<SampleCardProps> = ({ track, isActive, isMuted, onAdd
 
       {/* Play/Pause indicators */}
       <AnimatePresence>
-        {showPlayIndicator && (
+        {(!isPlaying && isActive && !isLoading) && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.2 }}
+            className="absolute inset-0 z-10 flex flex-col items-center justify-center pointer-events-none"
+          >
+            <div className="w-20 h-20 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.2)]">
+               <Play className="w-10 h-10 text-white fill-white translate-x-1" />
+            </div>
+          </motion.div>
+        )}
+        {showPlayIndicator && isPlaying && (
           <motion.div
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -174,7 +190,7 @@ const SampleCard: React.FC<SampleCardProps> = ({ track, isActive, isMuted, onAdd
       </AnimatePresence>
 
       {/* Right Action Rail */}
-      <div className="absolute right-4 bottom-[20dvh] md:bottom-32 flex flex-col items-center gap-7 z-20">
+      <div className="absolute right-4 bottom-32 flex flex-col items-center gap-7 z-20">
         <motion.button
           whileTap={{ scale: 0.85 }}
           onClick={handleLike}
@@ -235,7 +251,7 @@ const SampleCard: React.FC<SampleCardProps> = ({ track, isActive, isMuted, onAdd
       </div>
 
       {/* Track Info (Bottom Left) */}
-      <div className="absolute left-4 bottom-[15dvh] md:bottom-24 right-24 z-20 pointer-events-none flex flex-col items-start">
+      <div className="absolute left-4 bottom-24 right-24 z-20 pointer-events-none flex flex-col items-start">
          <h3 className="text-white font-black text-2xl md:text-3xl leading-tight drop-shadow-lg line-clamp-2">{track.title}</h3>
          <p className="text-white/90 font-medium mt-2 text-base drop-shadow-md">@{track.artist}</p>
          
