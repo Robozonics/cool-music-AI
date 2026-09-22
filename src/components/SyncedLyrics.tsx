@@ -142,7 +142,7 @@ export const SyncedLyrics: React.FC<{ inline?: boolean }> = ({ inline = false })
               }`}
             >
               {isKaraokeMode ? <MicOff className="w-3 h-3" /> : <Mic className="w-3 h-3" />}
-              <span className="hidden sm:inline">{isKaraokeMode ? 'Karaoke On' : 'Karaoke'}</span>
+              <span>{isKaraokeMode ? 'Karaoke On' : 'Full Karaoke Mode'}</span>
             </motion.button>
 
             {/* Translation Toolbar */}

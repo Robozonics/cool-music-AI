@@ -78,7 +78,7 @@ export const FullPlayer: React.FC = () => {
           Now Playing
         </span>
         
-        <div className="flex items-center space-x-2 shrink-0">
+        <div className="flex items-center space-x-2 shrink-0 pointer-events-auto">
           <button 
             onClick={toggleVideoMode}
             className={`px-4 py-2 rounded-full font-bold text-xs uppercase tracking-widest transition-all ${

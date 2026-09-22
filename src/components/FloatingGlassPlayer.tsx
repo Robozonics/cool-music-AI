@@ -134,7 +134,7 @@ export const FloatingGlassPlayer: React.FC = () => {
 
         {/* LEFT SECTION: Track Details & Album Art */}
         <div className="flex items-center space-x-3 min-w-0 z-10 pr-2">
-          <div className="relative group overflow-hidden rounded-xl h-14 w-14 lg:h-16 lg:w-16 shrink-0 shadow-2xl">
+          <div className="relative group overflow-hidden rounded-full h-14 w-14 lg:h-16 lg:w-16 shrink-0 shadow-2xl">
             <div className="w-full h-full" style={{ transform: `scale(calc(1 + var(--vibe-intensity, 0) * 0.15))`, transition: 'transform 0.1s ease-out' }}>
               <div
                 className="w-full h-full animate-[spin_10s_linear_infinite]"
