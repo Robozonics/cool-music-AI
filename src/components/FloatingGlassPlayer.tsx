@@ -137,7 +137,7 @@ export const FloatingGlassPlayer: React.FC = () => {
           <div className="relative group overflow-hidden rounded-full h-14 w-14 lg:h-16 lg:w-16 shrink-0 shadow-2xl">
             <div className="w-full h-full" style={{ transform: `scale(calc(1 + var(--vibe-intensity, 0) * 0.15))`, transition: 'transform 0.1s ease-out' }}>
               <div
-                className="w-full h-full animate-[spin_10s_linear_infinite]"
+                className="w-full h-full force-spin-animation"
                 style={{ animationPlayState: isPlaying ? 'running' : 'paused' }}
               >
                 <img 

@@ -119,7 +119,7 @@ export const FullPlayer: React.FC = () => {
           </div>
         ) : (
           <div 
-            className="w-56 h-56 sm:w-80 sm:h-80 md:w-96 md:h-96 rounded-full overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] mb-4 sm:mb-6 relative group flex-shrink-0 animate-[spin_10s_linear_infinite]" 
+            className="w-56 h-56 sm:w-80 sm:h-80 md:w-96 md:h-96 rounded-full overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] mb-4 sm:mb-6 relative group flex-shrink-0 force-spin-animation" 
             style={{ 
               transform: `scale(calc(1 + var(--vibe-intensity, 0) * 0.1))`, 
               transition: 'transform 0.1s ease-out',

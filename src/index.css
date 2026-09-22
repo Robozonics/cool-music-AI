@@ -231,3 +231,12 @@ html, body {
   0% { transform: scaleY(0.3); }
   100% { transform: scaleY(1); }
 }
+
+@keyframes force-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.force-spin-animation {
+  animation: force-spin 10s linear infinite;
+}
