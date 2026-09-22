@@ -296,14 +296,14 @@ const GeoDiscoveryBanner: React.FC = () => {
         <MapPin className="w-10 h-10 text-emerald-400" />
       </div>
 
-      <div className="relative z-10 flex-1 text-center md:text-left">
+      <div className="relative z-10 flex-1 w-full min-w-0 text-center md:text-left">
         <h2 className="text-xs font-bold tracking-[0.2em] uppercase text-emerald-400 mb-2">Geo-Tagged Discovery</h2>
         {locationName ? (
           <h3 className="text-2xl font-black text-white mb-2">Trending in {locationName}</h3>
         ) : (
           <h3 className="text-2xl font-black text-white mb-2">Find Local Vibes</h3>
         )}
-        <p className="text-sm text-zinc-400 mb-4 max-w-md">
+        <p className="text-sm text-zinc-400 mb-4 max-w-md mx-auto md:mx-0">
           Discover the tracks everyone is listening to around your exact physical location right now.
         </p>
 
@@ -317,29 +317,42 @@ const GeoDiscoveryBanner: React.FC = () => {
         )}
         
         {isFetching && (
-          <div className="flex items-center gap-2 text-emerald-400 text-sm font-bold">
+          <div className="flex items-center justify-center md:justify-start gap-2 text-emerald-400 text-sm font-bold">
             <Loader2 className="w-5 h-5 animate-spin" /> Scanning radar...
           </div>
         )}
 
         {localTracks.length > 0 && (
-          <div className="flex gap-3 overflow-x-auto pb-2 snap-x hide-scrollbar">
-            {localTracks.map(track => (
+          <div className="flex gap-3 overflow-x-auto pb-2 snap-x hide-scrollbar text-left mt-4 w-full">
+            {localTracks.map(track => {
+              const isLiked = usePlayerStore(state => state.likedTracks.includes(track.id));
+              const toggleLike = usePlayerStore(state => state.toggleLikeTrack);
+              return (
               <div 
                 key={track.id} 
-                onClick={() => { setQueue(localTracks); playTrack(track); }}
-                className="w-32 shrink-0 cursor-pointer group/track"
+                className="w-32 shrink-0 cursor-pointer group/track relative"
               >
-                <div className="relative w-full aspect-square rounded-xl overflow-hidden mb-2">
+                <div 
+                  onClick={() => { setQueue(localTracks); playTrack(track); }}
+                  className="relative w-full aspect-square rounded-xl overflow-hidden mb-2"
+                >
                   <img src={track.thumbnail} alt={track.title} className="w-full h-full object-cover group-hover/track:scale-110 transition-transform" />
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/track:opacity-100 flex items-center justify-center transition-opacity">
                     <Play className="w-8 h-8 text-emerald-400 fill-emerald-400" />
                   </div>
                 </div>
-                <p className="text-xs font-bold text-white truncate">{track.title}</p>
+                
+                <button
+                  onClick={(e) => { e.stopPropagation(); toggleLike(track); }}
+                  className="absolute top-2 right-2 p-1.5 rounded-full bg-black/40 backdrop-blur-md opacity-0 group-hover/track:opacity-100 transition-opacity hover:bg-black/60 z-20"
+                >
+                  <Heart className={`w-4 h-4 ${isLiked ? 'fill-lime-400 text-lime-400' : 'text-white'}`} />
+                </button>
+                
+                <p className="text-xs font-bold text-white truncate pr-6">{track.title}</p>
                 <p className="text-[10px] text-zinc-400 truncate">{track.artist}</p>
               </div>
-            ))}
+            )})}
           </div>
         )}
       </div>
