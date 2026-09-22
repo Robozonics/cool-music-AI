@@ -120,24 +120,24 @@ const DiscoverWeeklyBanner: React.FC = () => {
 
   if (needsRefresh) {
     return (
-      <div className="relative overflow-hidden rounded-[2rem] p-8 bg-[#0f0f11] border border-white/5 shadow-2xl flex flex-col md:flex-row items-center gap-8 group">
+      <div className="relative overflow-hidden rounded-3xl p-6 md:p-8 bg-[#0f0f11] border border-white/5 shadow-2xl flex flex-col md:flex-row items-center gap-6 md:gap-8 group">
         <div className="absolute inset-0 opacity-20 group-hover:opacity-30 transition-opacity duration-1000">
            <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-600 rounded-full blur-[120px]" />
            <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-purple-600 rounded-full blur-[120px]" />
         </div>
         
-        <div className="relative z-10 w-32 h-32 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center shadow-[0_0_50px_rgba(59,130,246,0.3)] shrink-0 group-hover:scale-105 transition-transform duration-500">
+        <div className="relative z-10 w-24 h-24 md:w-32 md:h-32 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center shadow-[0_0_50px_rgba(59,130,246,0.3)] shrink-0 group-hover:scale-105 transition-transform duration-500">
           <div className="absolute inset-0 bg-white/20 rounded-full animate-ping" style={{ animationDuration: '3s' }} />
-          <Sparkles className="w-12 h-12 text-white" />
+          <Sparkles className="w-8 h-8 md:w-12 md:h-12 text-white" />
         </div>
         
         <div className="relative z-10 flex-1 text-center md:text-left">
-          <h4 className="text-sm font-bold tracking-[0.3em] uppercase text-blue-400 mb-2">Monday Drop</h4>
-          <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter mb-4">Discover Weekly</h2>
-          <p className="text-zinc-400 text-base mb-6 max-w-lg">Your custom AI-curated sonic aura is ready. 30 fresh tracks based on your recent vibes.</p>
+          <h4 className="text-xs md:text-sm font-bold tracking-[0.3em] uppercase text-blue-400 mb-1 md:mb-2">Monday Drop</h4>
+          <h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter mb-3 md:mb-4">Discover Weekly</h2>
+          <p className="text-zinc-400 text-sm md:text-base mb-5 md:mb-6 max-w-lg">Your custom AI-curated sonic aura is ready. 30 fresh tracks based on your recent vibes.</p>
           <button 
             onClick={handleGenerate}
-            className="px-8 py-4 rounded-full bg-blue-600 text-white font-black uppercase tracking-wider text-sm hover:bg-blue-500 hover:scale-105 active:scale-95 transition-all shadow-[0_0_30px_rgba(59,130,246,0.5)]"
+            className="px-6 md:px-8 py-3 md:py-4 rounded-full bg-blue-600 text-white font-black uppercase tracking-wider text-xs md:text-sm hover:bg-blue-500 hover:scale-105 active:scale-95 transition-all shadow-[0_0_30px_rgba(59,130,246,0.5)]"
           >
             Analyze My Aura
           </button>
@@ -149,7 +149,7 @@ const DiscoverWeeklyBanner: React.FC = () => {
   const auraColor = discoverWeekly.vibeColor || '#8B5CF6';
 
   return (
-    <div className="relative overflow-hidden rounded-[2rem] p-6 md:p-10 bg-[#0a0a0a] border border-white/10 shadow-2xl flex flex-col md:flex-row items-center gap-8 group min-h-[300px]">
+    <div className="relative overflow-hidden rounded-3xl p-6 md:p-10 bg-[#0a0a0a] border border-white/10 shadow-2xl flex flex-col md:flex-row items-center gap-6 md:gap-8 group min-h-[300px]">
       {/* Dynamic Background Blob based on Aura Color */}
       <div className="absolute inset-0 opacity-30 mix-blend-screen pointer-events-none transition-opacity duration-700 group-hover:opacity-50">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] blur-[120px] rounded-full animate-spin-slow" 
@@ -159,38 +159,36 @@ const DiscoverWeeklyBanner: React.FC = () => {
       {/* Dark overlay to keep text readable */}
       <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] pointer-events-none" />
 
-      <div className="relative z-10 w-40 h-40 md:w-56 md:h-56 rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] shrink-0 group-hover:scale-105 transition-transform duration-700">
+      <div className="relative z-10 w-32 h-32 md:w-56 md:h-56 rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] shrink-0 group-hover:scale-105 transition-transform duration-700">
         <div className="absolute inset-0" style={{ backgroundColor: auraColor, opacity: 0.8 }} />
         <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 opacity-50 mix-blend-overlay">
           {discoverWeekly?.tracks.slice(0, 4).map((t, i) => (
             <img key={i} src={t.thumbnail} className="w-full h-full object-cover" alt="" />
           ))}
         </div>
-        <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center bg-black/20 backdrop-blur-sm">
-          <span className="text-white/90 font-black text-xs uppercase tracking-widest mb-1">Weekly</span>
-          <span className="text-white font-black text-3xl leading-none shadow-black drop-shadow-lg">AURA</span>
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-2 md:p-4 text-center bg-black/20 backdrop-blur-sm">
+          <span className="text-white/90 font-black text-[10px] md:text-xs uppercase tracking-widest mb-1">Weekly</span>
+          <span className="text-white font-black text-xl md:text-3xl leading-none shadow-black drop-shadow-lg">AURA</span>
         </div>
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all cursor-pointer backdrop-blur-md" onClick={handlePlay}>
-          <Play className="w-16 h-16 text-white fill-current shadow-2xl drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]" />
+          <Play className="w-12 h-12 md:w-16 md:h-16 text-white fill-current shadow-2xl drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]" />
         </div>
       </div>
       
       <div className="relative z-10 flex-1 text-center md:text-left flex flex-col justify-center">
-        <h2 className="text-xs font-black tracking-[0.3em] uppercase mb-3" style={{ color: auraColor }}>
+        <h2 className="text-[10px] md:text-xs font-black tracking-[0.3em] uppercase mb-2 md:mb-3" style={{ color: auraColor }}>
           Discover Weekly • {discoverWeekly.tracks.length} Tracks
         </h2>
-        <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter mb-4 leading-tight">
-          {discoverWeekly.vibeTitle || 'AURA ANALYSIS'}
-        </h1>
-        <p className="text-zinc-300 text-sm md:text-base mb-8 max-w-xl leading-relaxed">
+        <h3 className="text-3xl md:text-5xl font-black text-white tracking-tighter mb-2">{discoverWeekly.vibeTitle || 'AURA ANALYSIS'}</h3>
+        <p className="text-zinc-300 text-sm md:text-base mb-4 md:mb-6 max-w-lg leading-relaxed hidden md:block">
           {discoverWeekly.vibeDescription || 'Fresh tracks curated specifically for your unique sonic footprint.'}
         </p>
         <button 
           onClick={handlePlay}
-          className="px-10 py-4 rounded-full text-white font-black uppercase tracking-widest text-sm hover:scale-105 active:scale-95 transition-all flex items-center gap-3 mx-auto md:mx-0 justify-center group/btn shadow-2xl"
+          className="px-6 md:px-8 py-3 md:py-4 rounded-full text-black font-black uppercase tracking-widest text-xs md:text-sm hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 md:gap-3 mx-auto md:mx-0 shadow-lg"
           style={{ backgroundColor: auraColor, boxShadow: `0 10px 40px ${auraColor}60` }}
         >
-          <Play className="w-5 h-5 fill-current" /> 
+          <Play className="w-4 h-4 md:w-5 md:h-5 fill-current" /> 
           <span>Play My Aura</span>
         </button>
       </div>
@@ -290,21 +288,21 @@ const GeoDiscoveryBanner: React.FC = () => {
   };
 
   return (
-    <div className="relative overflow-hidden rounded-[2rem] p-6 md:p-8 bg-gradient-to-br from-emerald-900/40 to-teal-900/20 border border-emerald-500/20 shadow-2xl flex flex-col md:flex-row items-center gap-6 group">
+    <div className="relative overflow-hidden rounded-3xl p-6 md:p-8 bg-gradient-to-br from-emerald-900/40 to-teal-900/20 border border-emerald-500/20 shadow-2xl flex flex-col md:flex-row items-center gap-6 group">
       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay pointer-events-none" />
       
-      <div className="relative z-10 w-24 h-24 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0 border border-emerald-500/30">
-        <MapPin className="w-10 h-10 text-emerald-400" />
+      <div className="relative z-10 w-16 h-16 md:w-24 md:h-24 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0 border border-emerald-500/30">
+        <MapPin className="w-8 h-8 md:w-10 md:h-10 text-emerald-400" />
       </div>
 
       <div className="relative z-10 flex-1 w-full min-w-0 text-center md:text-left">
         <h2 className="text-xs font-bold tracking-[0.2em] uppercase text-emerald-400 mb-2">Geo-Tagged Discovery</h2>
         {locationName ? (
-          <h3 className="text-2xl font-black text-white mb-2">Trending in {locationName}</h3>
+          <h3 className="text-xl md:text-2xl font-black text-white mb-2">Trending in {locationName}</h3>
         ) : (
-          <h3 className="text-2xl font-black text-white mb-2">Find Local Vibes</h3>
+          <h3 className="text-xl md:text-2xl font-black text-white mb-2">Find Local Vibes</h3>
         )}
-        <p className="text-sm text-zinc-400 mb-4 max-w-md mx-auto md:mx-0">
+        <p className="text-xs md:text-sm text-zinc-400 mb-4 max-w-md mx-auto md:mx-0">
           Discover the tracks everyone is listening to around your exact physical location right now.
         </p>
 
@@ -451,7 +449,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab }) => {
   }
 
   return (
-    <div className="space-y-12 pb-32">
+    <div className="space-y-8 md:space-y-12 pb-32 pt-2 md:pt-4">
       {/* AI Playlist Modal */}
       <AIPlaylistModal isOpen={isAIPlaylistOpen} onClose={() => setIsAIPlaylistOpen(false)} onNavigateToPlaylist={(id) => setActiveTab && setActiveTab(`playlist:${id}`)} />
 
@@ -467,18 +465,18 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab }) => {
       {/* AI Playlist Generator CTA Card */}
       <div
         onClick={() => setIsAIPlaylistOpen(true)}
-        className="relative cursor-pointer group overflow-hidden rounded-3xl p-5 bg-gradient-to-r from-purple-600/20 via-pink-600/15 to-violet-600/10 border border-purple-500/25 hover:border-purple-500/50 transition-all shadow-[0_8px_40px_rgba(139,92,246,0.2)] hover:shadow-[0_8px_50px_rgba(139,92,246,0.35)]"
+        className="relative cursor-pointer group overflow-hidden rounded-2xl md:rounded-3xl p-4 md:p-5 bg-gradient-to-r from-purple-600/20 via-pink-600/15 to-violet-600/10 border border-purple-500/25 hover:border-purple-500/50 transition-all shadow-[0_8px_40px_rgba(139,92,246,0.2)] hover:shadow-[0_8px_50px_rgba(139,92,246,0.35)]"
       >
         <div className="absolute inset-0 bg-gradient-to-r from-purple-600/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-        <div className="relative z-10 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-[0_0_20px_rgba(139,92,246,0.5)] shrink-0">
-            <Sparkles className="w-6 h-6 text-white" />
+        <div className="relative z-10 flex flex-row items-center gap-3 md:gap-4">
+          <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-[0_0_20px_rgba(139,92,246,0.5)] shrink-0">
+            <Sparkles className="w-5 h-5 md:w-6 md:h-6 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="font-black text-white text-base">AI Playlist Generator (W Rizz)</h3>
-            <p className="text-zinc-400 text-xs mt-0.5">Drop a seed track → get a skibidi 30-song journey</p>
+            <h3 className="font-black text-white text-sm md:text-base">AI Playlist Generator (W Rizz)</h3>
+            <p className="text-zinc-400 text-[10px] md:text-xs mt-0.5">Drop a seed track → get a skibidi 30-song journey</p>
           </div>
-          <div className="shrink-0 px-3 py-1.5 rounded-full bg-purple-500/20 border border-purple-500/40 text-purple-300 text-xs font-bold">
+          <div className="hidden sm:block shrink-0 px-3 py-1.5 rounded-full bg-purple-500/20 border border-purple-500/40 text-purple-300 text-xs font-bold">
             Try it
           </div>
         </div>
