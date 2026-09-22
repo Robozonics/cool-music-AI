@@ -28,8 +28,69 @@ export const isCompatibleKey = (key: string, targetKey: string): boolean =>
 const barToSeconds = (bar: number, bpm: number): number =>
   ((bar - 1) * 4 * 60) / bpm;
 
+// ── Safe Track ID & Alias Resolver ───────────────────────────────────────────
+export const resolveTrack = (rawIdOrTitle: any, allTracks: Track[]): Track => {
+  if (!allTracks || allTracks.length === 0) {
+    return { id: 'fallback', title: 'Unknown', artist: '', thumbnail: '', duration: 180, streamUrl: '', source: 'saavn' };
+  }
+  if (rawIdOrTitle === null || rawIdOrTitle === undefined) {
+    return allTracks[0];
+  }
+  const query = String(rawIdOrTitle).trim();
+  const lower = query.toLowerCase();
+
+  // 1. Direct ID match (exact or case-insensitive)
+  const exact = allTracks.find(t => t.id === query || t.id.toLowerCase() === lower);
+  if (exact) return exact;
+
+  // 2. Numeric 1-based index (e.g., "1" or 1 refers to track 1, "2" to track 2)
+  const num = parseInt(query, 10);
+  if (!isNaN(num) && String(num) === query && num >= 1 && num <= allTracks.length) {
+    return allTracks[num - 1];
+  }
+
+  // 3. Anchor / primary / secondary aliases
+  if (lower.includes('anchor') || lower.includes('primary') || lower.includes('main')) {
+    return allTracks[0];
+  }
+  if ((lower.includes('secondary') || lower.includes('second')) && allTracks.length > 1) {
+    return allTracks[1];
+  }
+
+  // 4. Substring / Title match
+  const titleMatch = allTracks.find(t => {
+    const tTitle = t.title.toLowerCase();
+    return tTitle.includes(lower) || lower.includes(tTitle);
+  });
+  if (titleMatch) return titleMatch;
+
+  // 5. Artist match
+  const artistMatch = allTracks.find(t => {
+    const tArtist = (t.artist || '').toLowerCase();
+    return tArtist.length > 0 && (tArtist.includes(lower) || lower.includes(tArtist));
+  });
+  if (artistMatch) return artistMatch;
+
+  // Fallback
+  return allTracks[0];
+};
+
 // ── dB to linear volume ───────────────────────────────────────────────────────
-const dbToLinear = (db: number): number => Math.pow(10, db / 20);
+export const dbToLinear = (db: any): number => {
+  if (db === null || db === undefined) return 1;
+  let val: number;
+  if (typeof db === 'string') {
+    const cleaned = db.replace(/[^\d.-]/g, '');
+    val = parseFloat(cleaned);
+  } else {
+    val = Number(db);
+  }
+  if (!Number.isFinite(val) || isNaN(val)) {
+    return 1;
+  }
+  const clampedDb = Math.min(6, Math.max(-60, val));
+  return Math.pow(10, clampedDb / 20);
+};
 
 // ── Blueprint → DjEvent[] converter ──────────────────────────────────────────
 export const blueprintToDjEvents = (
@@ -49,13 +110,7 @@ export const blueprintToDjEvents = (
 
     // Collect which tracks are active in this block
     const blockTrackIds = new Set(
-      block.active_stems.map(s => {
-        // AI might hallucinate IDs, try to match by ID first, then by title
-        const matched = allTracks.find(t => t.id === s.track_id) 
-                     || allTracks.find(t => t.title.toLowerCase().includes(s.track_id.toLowerCase()))
-                     || allTracks[0];
-        return matched.id;
-      })
+      block.active_stems.map(s => resolveTrack(s.track_id, allTracks).id)
     );
 
     // Fade out tracks that are leaving
@@ -74,7 +129,7 @@ export const blueprintToDjEvents = (
     // Process transition effects at block boundary
     if (block.effects?.transition_type === 'high_pass_sweep' && block.effects.filter_cutoff_hz) {
       for (const stem of block.active_stems) {
-        const matched = allTracks.find(t => t.id === stem.track_id) || allTracks.find(t => t.title.toLowerCase().includes(stem.track_id.toLowerCase())) || allTracks[0];
+        const matched = resolveTrack(stem.track_id, allTracks);
         events.push({
           timestamp: blockStartSec,
           trackId: matched.id,
@@ -90,7 +145,7 @@ export const blueprintToDjEvents = (
       }
     } else if (block.effects?.transition_type === 'low_pass_sweep' && block.effects.filter_cutoff_hz) {
       for (const stem of block.active_stems) {
-        const matched = allTracks.find(t => t.id === stem.track_id) || allTracks.find(t => t.title.toLowerCase().includes(stem.track_id.toLowerCase())) || allTracks[0];
+        const matched = resolveTrack(stem.track_id, allTracks);
         events.push({
           timestamp: blockStartSec,
           trackId: matched.id,
@@ -107,9 +162,9 @@ export const blueprintToDjEvents = (
 
     // Process stems in this block
     for (const stem of block.active_stems) {
-      const matched = allTracks.find(t => t.id === stem.track_id) || allTracks.find(t => t.title.toLowerCase().includes(stem.track_id.toLowerCase())) || allTracks[0];
+      const matched = resolveTrack(stem.track_id, allTracks);
       const tid = matched.id;
-      const linearVol = Math.min(1, Math.max(0, dbToLinear(stem.volume_db ?? 0)));
+      const linearVol = Math.min(1, Math.max(0, dbToLinear(stem.volume_db)));
 
       if (!activeTrackIds.has(tid)) {
         // New track entering
@@ -156,8 +211,8 @@ export const blueprintToDjEvents = (
       }
 
       // Stem-role based vocal/bass ducking
-      const hasVocals = block.active_stems.some(s => s.stem_type === 'vocals' && (allTracks.find(t => t.id === s.track_id) || allTracks.find(t => t.title.toLowerCase().includes(s.track_id.toLowerCase())) || allTracks[0]).id !== tid);
-      const hasBass   = block.active_stems.some(s => s.stem_type === 'bass' && (allTracks.find(t => t.id === s.track_id) || allTracks.find(t => t.title.toLowerCase().includes(s.track_id.toLowerCase())) || allTracks[0]).id !== tid);
+      const hasVocals = block.active_stems.some(s => s.stem_type === 'vocals' && resolveTrack(s.track_id, allTracks).id !== tid);
+      const hasBass   = block.active_stems.some(s => s.stem_type === 'bass' && resolveTrack(s.track_id, allTracks).id !== tid);
 
       if (stem.stem_type === 'vocals' && hasVocals) {
         // Another track also has vocals — cut this track's mids to avoid clash
@@ -373,10 +428,9 @@ Output ONLY the raw JSON, starting with { and ending with }.`;
   const mashupTitle = `🎛️ ${tracks.map(t => t.title.split(' ')[0]).join(' × ')}`;
 
   // Compute pitch-corrected playback rates for aux tracks (ALL tracks are aux now)
-  const allTracks = [anchorTrack, ...secondaryTracks];
   const mashupStreamUrls = allTracks.map(t => {
     // Estimate original BPM from Gemini's blueprint stems
-    const stemBlocks = blueprint!.timeline_blocks.flatMap(b => b.active_stems.filter(s => s.track_id === t.id));
+    const stemBlocks = blueprint!.timeline_blocks.flatMap(b => b.active_stems.filter(s => resolveTrack(s.track_id, allTracks).id === t.id));
     const semitones = stemBlocks[0]?.pitch_shift_semitones ?? 0;
     // playbackRate = 2^(semitones/12) for pitch + BPM ratio for tempo
     const pitchRate = Math.pow(2, semitones / 12);

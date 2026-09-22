@@ -101,15 +101,17 @@ export const rampVolume = (
   durationMs: number,
   onComplete?: () => void
 ) => {
+  const safeFrom = Number.isFinite(from) ? Math.min(1, Math.max(0, from)) : 0;
+  const safeTo = Number.isFinite(to) ? Math.min(1, Math.max(0, to)) : 1;
   const startTime = performance.now();
   const tick = (now: number) => {
     const elapsed = now - startTime;
-    const progress = Math.min(elapsed / durationMs, 1);
-    audio.volume = from + (to - from) * progress;
+    const progress = Math.min(elapsed / Math.max(1, durationMs), 1);
+    audio.volume = Math.min(1, Math.max(0, safeFrom + (safeTo - safeFrom) * progress));
     if (progress < 1) {
       requestAnimationFrame(tick);
     } else {
-      audio.volume = to;
+      audio.volume = safeTo;
       onComplete?.();
     }
   };
@@ -137,17 +139,20 @@ const executeDjEvent = (evt: DjEvent, volume: number) => {
   
   switch (evt.type) {
     case 'seek':
-      if (evt.seekTo !== undefined) {
-        targetAudio.currentTime = evt.seekTo;
+      if (evt.seekTo !== undefined && Number.isFinite(evt.seekTo)) {
+        targetAudio.currentTime = Math.max(0, evt.seekTo);
       }
       break;
     case 'set_volume':
       if (evt.volume !== undefined) {
-        rampVolume(targetAudio, targetAudio.volume, evt.volume * volume, 500);
+        const safeVol = Number.isFinite(evt.volume) ? evt.volume : 1;
+        const targetVol = Math.min(1, Math.max(0, safeVol * (Number.isFinite(volume) ? volume : 1)));
+        rampVolume(targetAudio, targetAudio.volume, targetVol, 500);
       }
       break;
     case 'play':
-      const targetVol = evt.volume !== undefined ? evt.volume * volume : volume;
+      const rawPlayVol = evt.volume !== undefined ? evt.volume * volume : volume;
+      const targetVol = Math.min(1, Math.max(0, Number.isFinite(rawPlayVol) ? rawPlayVol : volume));
       targetAudio.volume = targetVol;
       targetAudio.play().catch((err) => {
         if (err.name === 'NotAllowedError') {
@@ -162,8 +167,8 @@ const executeDjEvent = (evt: DjEvent, volume: number) => {
       });
       break;
     case 'fade_in':
-      if (evt.seekTo !== undefined) {
-        targetAudio.currentTime = evt.seekTo;
+      if (evt.seekTo !== undefined && Number.isFinite(evt.seekTo)) {
+        targetAudio.currentTime = Math.max(0, evt.seekTo);
       }
       targetAudio.volume = 0;
       targetAudio.play().catch((err) => {
@@ -172,7 +177,8 @@ const executeDjEvent = (evt: DjEvent, volume: number) => {
           nativeAudio.pause();
         }
       });
-      const finalFadeVol = evt.volume !== undefined ? evt.volume * volume : volume;
+      const rawFadeVol = evt.volume !== undefined ? evt.volume * volume : volume;
+      const finalFadeVol = Math.min(1, Math.max(0, Number.isFinite(rawFadeVol) ? rawFadeVol : volume));
       rampVolume(targetAudio, 0, finalFadeVol, 3000);
       break;
     case 'fade_out':
@@ -687,12 +693,65 @@ export const usePlayerStore = create<PlayerState>()(
     },
 
     seek: (seconds: number) => {
-      const { currentTrack } = get();
+      const { currentTrack, volume, isPlaying } = get();
       if (!currentTrack) return;
-      nativeAudio.currentTime = seconds;
-      auxContexts.forEach(a => a.audio.currentTime = seconds);
-      processedEvents.clear(); // Reset processed events so it re-evaluates
-      set({ currentTime: seconds });
+      const safeSeconds = Math.max(0, Number.isFinite(seconds) ? seconds : 0);
+      nativeAudio.currentTime = safeSeconds;
+
+      if (currentArrangement && currentArrangement.length > 0) {
+        // Reset processed events: mark past events (timestamp <= safeSeconds) as processed
+        // so they don't re-fire initial seek/fade triggers
+        processedEvents.clear();
+        currentArrangement.forEach((evt, idx) => {
+          const eventId = `${idx}-${evt.timestamp}-${evt.type}-${evt.trackId}`;
+          if (evt.timestamp <= safeSeconds) {
+            processedEvents.add(eventId);
+          }
+        });
+
+        // Reconcile auxiliary audio positions and active states
+        auxContexts.forEach(aux => {
+          const trackEvents = currentArrangement.filter(e => e.trackId === aux.trackId && e.timestamp <= safeSeconds);
+          if (trackEvents.length === 0) {
+            // Track hasn't entered the timeline yet
+            aux.audio.pause();
+            aux.audio.volume = 0;
+            aux.audio.currentTime = 0;
+            return;
+          }
+
+          const lastEvent = trackEvents[trackEvents.length - 1];
+          if (lastEvent.type === 'pause' || lastEvent.type === 'fade_out') {
+            // Inactive at this position
+            aux.audio.pause();
+            aux.audio.volume = 0;
+          } else {
+            // Track is active in current block
+            let segmentStartEvent = lastEvent;
+            for (let i = trackEvents.length - 1; i >= 0; i--) {
+              const e = trackEvents[i];
+              if (e.type === 'play' || e.type === 'fade_in') {
+                segmentStartEvent = e;
+                break;
+              }
+            }
+            const offset = segmentStartEvent.seekTo ?? 0;
+            const elapsed = Math.max(0, safeSeconds - segmentStartEvent.timestamp);
+            aux.audio.currentTime = offset + elapsed;
+            const targetVol = (lastEvent.volume !== undefined && Number.isFinite(lastEvent.volume))
+              ? Math.min(1, Math.max(0, lastEvent.volume * volume))
+              : volume;
+            aux.audio.volume = targetVol;
+            if (isPlaying) {
+              aux.audio.play().catch(() => {});
+            }
+          }
+        });
+      } else {
+        auxContexts.forEach(a => a.audio.currentTime = safeSeconds);
+      }
+
+      set({ currentTime: safeSeconds });
     },
 
     nextTrack: () => {
