@@ -1,4 +1,4 @@
-import { Track, DjEvent } from '../types/music';
+import type { Track, DjEvent } from '../types/music';
 
 // ── 1. AI AUDIO ANALYSIS & METADATA EXTRACTION ──────────────────────────────
 export interface StructuralMarkers {
