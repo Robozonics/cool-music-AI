@@ -275,14 +275,82 @@ export const generateAiMashup = async (tracks: Track[], anchorTrackId: string): 
 
   setStatus('extracting', 10);
 
+  let analyzedTracks = [];
+
   try {
-    // 1. AI Analysis & Stems (Simulated Backend to avoid 504 Gateway Timeout)
-    setStatus('syncing', 40);
-    const analyzedTracks = await AdvancedMashupEngine.analyzeAndSeparateStems(allTracks);
+    // 1. AI Analysis & Stems via Gemini (Fast High-Level Prompt to avoid 504)
+    setStatus('syncing', 30);
     
-    // 2. Dynamic Timeline Generation
+    const promptText = `You are a Grammy-winning DJ and Audio Data Scientist. 
+Analyze these songs and determine their musical structure (BPM, Camelot Key) and exact timestamp markers (in seconds) for a mashup. 
+The user wants you to decide how long the mashup should be and where the best drop/cut points are.
+
+TRACKS:
+1 (ANCHOR): ${anchorTrack.title} by ${anchorTrack.artist} (Duration: ${anchorTrack.duration}s)
+${secondaryTracks.map((t, i) => `${i + 2}: ${t.title} by ${t.artist} (Duration: ${t.duration}s)`).join('\n')}
+
+OUTPUT STRICT JSON ONLY:
+[
+  {
+    "id": "track_id",
+    "bpm": 120,
+    "key": "8A",
+    "markers": {
+      "intro_end": 15,
+      "verse_start": 15,
+      "chorus_start": 45,
+      "chorus_end": 75,
+      "bridge_start": 120,
+      "outro_end": 160
+    }
+  }
+]
+(Generate this object for EVERY track provided, using their actual track IDs: ${allTracks.map(t=>t.id).join(', ')}). Make sure markers fit within their duration.`;
+
+    const res = await fetch('/api/gemini', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'mashup', prompt: promptText }),
+    });
+
+    if (!res.ok) throw new Error(`Gemini API error: ${res.statusText}`);
+    
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    let aiData = data.blueprint;
+    if (!Array.isArray(aiData)) {
+      throw new Error('Gemini did not return an array of analyzed tracks');
+    }
+
+    // Merge AI suggestions with our Track objects
+    analyzedTracks = allTracks.map(t => {
+      const ai = aiData.find((a: any) => a.id === t.id) || { bpm: 120, key: '8A', markers: {} };
+      const d = t.duration || 180;
+      return {
+        ...t,
+        bpm: ai.bpm || 120,
+        key: ai.key || '8A',
+        markers: {
+          intro_end: ai.markers?.intro_end || d * 0.1,
+          verse_start: ai.markers?.verse_start || d * 0.1,
+          chorus_start: ai.markers?.chorus_start || d * 0.3,
+          chorus_end: ai.markers?.chorus_end || d * 0.5,
+          bridge_start: ai.markers?.bridge_start || d * 0.7,
+          outro_end: ai.markers?.outro_end || d * 0.9,
+        }
+      };
+    });
+
+  } catch (e) {
+    console.error('[Mashup] Gemini AI Analysis failed, falling back to algorithmic analysis:', e);
+    analyzedTracks = await AdvancedMashupEngine.analyzeAndSeparateStems(allTracks);
+  }
+
+  try {
+    // 2. Dynamic Timeline Generation based on AI Markers
     setStatus('mastering', 80);
-    const arrangement = AdvancedMashupEngine.calculateDynamicTimeline(analyzedTracks);
+    const arrangement = AdvancedMashupEngine.calculateDynamicTimeline(analyzedTracks as any);
     
     setStatus('complete', 100);
 
@@ -301,7 +369,7 @@ export const generateAiMashup = async (tracks: Track[], anchorTrackId: string): 
     const generatedTrack: Track = {
       id: `mashup-${Date.now()}`,
       title: mashupTitle,
-      artist: `Advanced AI Engine`,
+      artist: `AI DJ Engine`,
       thumbnail: anchorTrack.thumbnail || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=500',
       duration: combinedDuration,
       streamUrl: generateSilentAudio(combinedDuration),
@@ -314,7 +382,7 @@ export const generateAiMashup = async (tracks: Track[], anchorTrackId: string): 
     console.log('[Mashup] Final arrangement:', arrangement.length, 'events over', generatedTrack.duration.toFixed(0), 'seconds');
     return generatedTrack;
   } catch (e) {
-    console.error('[Mashup] Engine failed:', e);
+    console.error('[Mashup] Engine timeline generation failed:', e);
     throw e;
   }
 };
