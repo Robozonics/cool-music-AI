@@ -195,7 +195,7 @@ export const rampVolume = (
   requestAnimationFrame(tick);
 };
 
-const executeDjEvent = (evt: DjEvent, volume: number) => {
+const executeDjEvent = (evt: DjEvent, volume: number, globalPlaybackRate: number = 1) => {
   let targetAudio: HTMLAudioElement | null = null;
   let targetFilter: BiquadFilterNode | null = null;
   let targetBassFilter: BiquadFilterNode | null = null;
@@ -313,7 +313,7 @@ const executeDjEvent = (evt: DjEvent, volume: number) => {
       break;
     case 'set_tempo':
       if (evt.playbackRate !== undefined && Number.isFinite(evt.playbackRate)) {
-        targetAudio.playbackRate = evt.playbackRate * (Number.isFinite(get().playbackRate) ? get().playbackRate : 1);
+        targetAudio.playbackRate = evt.playbackRate * (Number.isFinite(globalPlaybackRate) ? globalPlaybackRate : 1);
       }
       break;
   }
@@ -528,7 +528,7 @@ export const usePlayerStore = create<PlayerState>()(
         if (t >= evt.timestamp && !processedEvents.has(eventId)) {
           processedEvents.add(eventId);
           console.log(`[DJ] t=${t.toFixed(1)}s firing event:`, evt.type, 'track:', evt.trackId.slice(-8), evt.seekTo !== undefined ? `seekTo:${evt.seekTo}` : '');
-          executeDjEvent(evt, state.volume);
+          executeDjEvent(evt, state.volume, state.playbackRate);
         }
       });
     }
