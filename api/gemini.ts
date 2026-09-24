@@ -195,14 +195,9 @@ Output ONLY valid JSON. No markdown, no commentary.`;
           // Strip markdown code blocks if Gemini wraps them
           text = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
           
-          const isObj = type === 'mashup';
-          if (isObj) {
-            const jsonStart = text.indexOf('{');
-            if (jsonStart > 0) text = text.slice(jsonStart);
-          } else {
-            const jsonStart = text.indexOf('[');
-            if (jsonStart > 0) text = text.slice(jsonStart);
-          }
+          // All current types (mood, search, playlist, translate, mashup) return an ARRAY.
+          const jsonStart = text.indexOf('[');
+          if (jsonStart > 0) text = text.slice(jsonStart);
 
           const parsed = JSON.parse(text);
 

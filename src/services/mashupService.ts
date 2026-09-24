@@ -342,8 +342,8 @@ OUTPUT STRICT JSON ONLY:
       };
     });
 
-  } catch (e) {
-    console.error('[Mashup] Gemini AI Analysis failed, falling back to algorithmic analysis:', e);
+  } catch (e: any) {
+    console.error('[Mashup] Gemini AI Analysis failed, falling back to algorithmic analysis:', e.message || e);
     analyzedTracks = await AdvancedMashupEngine.analyzeAndSeparateStems(allTracks);
   }
 
@@ -381,8 +381,8 @@ OUTPUT STRICT JSON ONLY:
 
     console.log('[Mashup] Final arrangement:', arrangement.length, 'events over', generatedTrack.duration.toFixed(0), 'seconds');
     return generatedTrack;
-  } catch (e) {
-    console.error('[Mashup] Engine timeline generation failed:', e);
+  } catch (e: any) {
+    console.error('[Mashup] Engine timeline generation failed:', e.message || e);
     throw e;
   }
 };
