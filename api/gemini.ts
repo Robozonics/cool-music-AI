@@ -39,6 +39,7 @@ export default async function handler(req: Request) {
 
     const keys = [
       process.env.GEMINI_API_KEY,
+      process.env.VITE_GEMINI_API_KEY,
       ...reversedKeys.map(k => k.split('').reverse().join(''))
     ].filter(Boolean) as string[];
 

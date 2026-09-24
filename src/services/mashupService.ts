@@ -335,20 +335,36 @@ Output ONLY the raw JSON, starting with { and ending with }.`;
   try {
     setStatus('syncing', 30);
 
-    const res = await fetch('/api/gemini', {
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    if (!apiKey) throw new Error('VITE_GEMINI_API_KEY not found in .env');
+    
+    const payload = {
+      contents: [{ parts: [{ text: promptText }] }],
+      generationConfig: {
+        temperature: 0.8,
+        topP: 0.95,
+        maxOutputTokens: 8192,
+      }
+    };
+
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'mashup', prompt: promptText }),
+      body: JSON.stringify(payload),
     });
 
     if (!res.ok) {
-      throw new Error(`API error: ${res.statusText}`);
+      throw new Error(`Gemini API error: ${res.statusText}`);
     }
 
     const data = await res.json();
-    if (data.error) throw new Error(data.error);
+    let text = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+    text = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+    const jsonStart = text.indexOf('{');
+    if (jsonStart > 0) text = text.slice(jsonStart);
+    
+    blueprint = JSON.parse(text) as MashupBlueprint;
 
-    blueprint = data.blueprint as MashupBlueprint;
     if (!blueprint || !blueprint.timeline_blocks) {
        throw new Error('Invalid blueprint format received');
     }
