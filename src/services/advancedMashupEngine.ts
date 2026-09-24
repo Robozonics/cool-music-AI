@@ -78,7 +78,6 @@ export class AdvancedMashupEngine {
     // For each secondary track, we overlay its vocals/hooks over the anchor track
     for (let i = 0; i < secondaryTracks.length; i++) {
       const secTrack = secondaryTracks[i];
-      const secDuration = secTrack.duration || 180;
       
       // Calculate where to drop the secondary track. 
       // Example: Drop track 2's vocal on track 1's chorus
