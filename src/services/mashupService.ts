@@ -347,14 +347,32 @@ Output ONLY the raw JSON, starting with { and ending with }.`;
       }
     };
 
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+    const MAX_RETRIES = 3;
+    let res: Response | null = null;
+    
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
 
-    if (!res.ok) {
-      throw new Error(`Gemini API error: ${res.statusText}`);
+        if (res.status === 503) {
+          console.warn(`[Mashup] Gemini API overloaded (503). Attempt ${attempt} failed. Retrying...`);
+          await new Promise(resolve => setTimeout(resolve, attempt * 1500));
+          continue;
+        }
+        
+        break;
+      } catch (err) {
+        if (attempt === MAX_RETRIES) throw err;
+        await new Promise(resolve => setTimeout(resolve, attempt * 1500));
+      }
+    }
+
+    if (!res || !res.ok) {
+      throw new Error(`Gemini API error: ${res ? res.statusText : 'Network failure'}`);
     }
 
     const data = await res.json();
