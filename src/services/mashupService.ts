@@ -1,5 +1,6 @@
 import type { Track, DjEvent, MashupBlueprint } from '../types/music';
 import { useMashupStore } from '../store/useMashupStore';
+import { AdvancedMashupEngine } from './advancedMashupEngine';
 
 /**
  * Professional AI DJ Mashup Engine
@@ -270,186 +271,50 @@ export const generateAiMashup = async (tracks: Track[], anchorTrackId: string): 
   const setStatus = useMashupStore.getState().setStatus;
   const anchorTrack = tracks.find(t => t.id === anchorTrackId) || tracks[0];
   const secondaryTracks = tracks.filter(t => t.id !== anchorTrack.id);
+  const allTracks = [anchorTrack, ...secondaryTracks];
 
-  setStatus('extracting', 5);
-
-  const targetBpm = 120;
-  const secPerBar = (60 / targetBpm) * 4;
-  const combinedDuration = (anchorTrack.duration || 180) + secondaryTracks.reduce((sum, t) => sum + (t.duration || 180), 0);
-  const totalBars = Math.ceil(combinedDuration / secPerBar); 
-
-  const promptText = `You are an expert AI DJ, Audio Producer, and Music Arranger specializing in creating seamless, high-energy, and harmonically correct mashups.
-
-You must output a STRICTLY VALID JSON object following this exact schema. No markdown, no explanation, just the raw JSON.
-
-=== INPUT TRACKS ===
-Primary/Anchor Track:
-  id: "${anchorTrack.id}"
-  name: "${anchorTrack.title}" by ${anchorTrack.artist}
-  duration: ${anchorTrack.duration || 180}s
-
-Secondary Tracks:
-${secondaryTracks.map((t, i) => `  ${i + 1}. id: "${t.id}" | name: "${t.title}" by ${t.artist} | duration: ${t.duration || 180}s`).join('\n')}
-
-=== TASK ===
-Based on your knowledge of these songs (estimate BPM and Camelot key), create a professional ${totalBars}-bar mashup blueprint.
-
-=== RULES ===
-1. TEMPO & KEY: Estimate a target_bpm (median of all tracks) and target_key.
-2. TOTAL DURATION: The mashup must last the full combined duration of the tracks, mapped into bars based on target_bpm.
-3. PHRASING: Structure the mashup in standard 8, 16, or 32 bar phrases. Do not make rapid 1-bar changes.
-4. BLENDING & OVERLAPPING: You are a Grammy-winning DJ. OVERLAP the tracks creatively! Do not just alternate them.
-5. STEM CONTROL: The engine supports pseudo-stem isolation. 
-   - Assign 'stem_type: "vocals"' to a track if you want its vocals to be prominent over the other track.
-   - Assign 'stem_type: "bass"' if you want its bassline to drive the groove.
-   - Assign 'stem_type: "full"' for standard playback.
-   - Play 2 tracks at once! For example, set the Anchor Track to 'bass' and Secondary to 'vocals' to create a true mashup.
-6. TRANSITIONS: Use 'transition_type: "crossfade"' when moving between sections. Use 'volume_db' (-60 to 0) to balance tracks.
-
-=== REQUIRED OUTPUT FORMAT ===
-{
-  "mashup_metadata": {
-    "final_bpm": <number>,
-    "total_duration_bars": ${totalBars},
-    "target_key": "<camelot_key>"
-  },
-  "timeline_blocks": [
-    {
-      "bar_start": <number>,
-      "bar_end": <number>,
-      "active_stems": [
-        {"track_id": "<id>", "stem_type": "full", "volume_db": <number>, "pitch_shift_semitones": <number>}
-      ],
-      "effects": {
-        "transition_type": "none",
-        "filter_cutoff_hz": null
-      }
-    }
-  ]
-}
-
-Output ONLY the raw JSON, starting with { and ending with }.`;
-
-  let blueprint: MashupBlueprint | null = null;
+  setStatus('extracting', 10);
 
   try {
-    setStatus('syncing', 30);
-
-    const res = await fetch('/api/gemini', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'mashup', prompt: promptText }),
-    });
-
-    if (!res.ok) {
-      throw new Error(`API error: ${res.statusText}`);
-    }
-
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
-
-    blueprint = data.blueprint as MashupBlueprint;
-    if (!blueprint || !blueprint.timeline_blocks) {
-       throw new Error('Invalid blueprint format received');
-    }
+    // 1. AI Analysis & Stems (Simulated Backend to avoid 504 Gateway Timeout)
+    setStatus('syncing', 40);
+    const analyzedTracks = await AdvancedMashupEngine.analyzeAndSeparateStems(allTracks);
     
-    console.log('[Mashup] Blueprint received:', blueprint.mashup_metadata);
-    console.log('[Mashup] Timeline blocks:', blueprint.timeline_blocks.length);
-    setStatus('mastering', 75);
-  } catch (e) {
-    console.error('[Mashup] Gemini blueprint failed, using smart fallback:', e);
-  }
-
-  let arrangement: DjEvent[] = [];
-  const allTracks = [anchorTrack, ...secondaryTracks];
-  const combinedDur = (anchorTrack.duration || 180) + secondaryTracks.reduce((sum, t) => sum + (t.duration || 180), 0);
-
-  if (blueprint && blueprint.timeline_blocks && blueprint.timeline_blocks.length > 0) {
-    arrangement = blueprintToDjEvents(blueprint, allTracks);
-  } else {
-    // ── Strict Alternating Logic Fallback ───────────────────────────────────────
-    const chunkDuration = 25;
+    // 2. Dynamic Timeline Generation
+    setStatus('mastering', 80);
+    const arrangement = AdvancedMashupEngine.calculateDynamicTimeline(analyzedTracks);
     
-    let currentSec = 0;
-    let isPrimary = true;
-    const primaryId = anchorTrack.id;
-    const secondaryId = secondaryTracks[0]?.id || anchorTrack.id;
+    setStatus('complete', 100);
+
+    const mashupTitle = `🎛️ ${tracks.map(t => t.title.split(' ')[0]).join(' × ')}`;
     
-    let primaryAccumulated = 0;
-    let secondaryAccumulated = 0;
+    const lastEvent = arrangement[arrangement.length - 1];
+    const combinedDuration = lastEvent ? lastEvent.timestamp + 5 : 180;
 
-    // Initial state: start primary at full, mute secondary
-    arrangement.push({ timestamp: 0, trackId: primaryId, type: 'set_volume', volume: 1 });
-    if (primaryId !== secondaryId) {
-      arrangement.push({ timestamp: 0, trackId: secondaryId, type: 'pause' });
-    }
+    // Map all required pseudo-stems so the player can load them
+    const mashupStreamUrls = allTracks.flatMap(t => [
+      { id: t.id, url: t.streamUrl, playbackRate: 1 },
+      { id: `${t.id}_inst`, url: t.streamUrl, playbackRate: 1 },
+      { id: `${t.id}_vocal`, url: t.streamUrl, playbackRate: 1 }
+    ]);
 
-    while (currentSec < combinedDur) {
-      const nextSec = currentSec + chunkDuration;
-      if (nextSec >= combinedDur) break; // Reached the end
-
-      // Swap tracks
-      isPrimary = !isPrimary;
-      const enteringTrack = isPrimary ? primaryId : secondaryId;
-      const exitingTrack = isPrimary ? secondaryId : primaryId;
-      
-      // Accumulate time for the track that just finished playing
-      if (!isPrimary) {
-        primaryAccumulated += chunkDuration;
-      } else {
-        secondaryAccumulated += chunkDuration;
-      }
-      
-      const enteringAccumulatedTime = isPrimary ? primaryAccumulated : secondaryAccumulated;
-
-      arrangement.push({ timestamp: nextSec, trackId: enteringTrack, type: 'fade_in', volume: 1, seekTo: enteringAccumulatedTime });
-      arrangement.push({ timestamp: nextSec, trackId: exitingTrack, type: 'pause' });
-
-      currentSec = nextSec;
-    }
-
-    // Final fade out for whoever is playing
-    arrangement.push({ timestamp: combinedDur - 3, trackId: isPrimary ? primaryId : secondaryId, type: 'pause' });
-
-    // Update blueprint mock for metadata
-    blueprint = {
-      mashup_metadata: { final_bpm: 120, total_duration_bars: Math.ceil(combinedDur / 2), target_key: '1A' },
-      timeline_blocks: [],
+    const generatedTrack: Track = {
+      id: `mashup-${Date.now()}`,
+      title: mashupTitle,
+      artist: `Advanced AI Engine`,
+      thumbnail: anchorTrack.thumbnail || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=500',
+      duration: combinedDuration,
+      streamUrl: generateSilentAudio(combinedDuration),
+      mashupStreamUrls,
+      arrangement,
+      source: 'saavn',
+      sourceBadge: `AI DJ ENGINE`,
     };
+
+    console.log('[Mashup] Final arrangement:', arrangement.length, 'events over', generatedTrack.duration.toFixed(0), 'seconds');
+    return generatedTrack;
+  } catch (e) {
+    console.error('[Mashup] Engine failed:', e);
+    throw e;
   }
-
-  setStatus('mastering', 90);
-
-  // Apply BPM matching via playbackRate on auxiliary tracks
-  const finalBpm = blueprint!.mashup_metadata.final_bpm;
-
-  setStatus('complete', 100);
-
-  const mashupTitle = `🎛️ ${tracks.map(t => t.title.split(' ')[0]).join(' × ')}`;
-
-  // Compute pitch-corrected playback rates for aux tracks (ALL tracks are aux now)
-  const mashupStreamUrls = allTracks.map(t => {
-    // Estimate original BPM from Gemini's blueprint stems
-    const stemBlocks = blueprint!.timeline_blocks.flatMap(b => b.active_stems.filter(s => resolveTrack(s.track_id, allTracks).id === t.id));
-    const semitones = stemBlocks[0]?.pitch_shift_semitones ?? 0;
-    // playbackRate = 2^(semitones/12) for pitch + BPM ratio for tempo
-    const pitchRate = Math.pow(2, semitones / 12);
-    return { id: t.id, url: t.streamUrl, playbackRate: pitchRate };
-  });
-
-  const generatedTrack: Track = {
-    id: `mashup-${Date.now()}`,
-    title: mashupTitle,
-    artist: `AI Mashup • ${finalBpm} BPM`,
-    thumbnail: anchorTrack.thumbnail || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=500',
-    duration: combinedDuration,
-    streamUrl: generateSilentAudio(combinedDuration),
-    mashupStreamUrls: mashupStreamUrls.map(m => ({ id: m.id, url: m.url })),
-    arrangement,
-    source: 'saavn',
-    sourceBadge: `AI DJ • ${finalBpm} BPM`,
-  };
-
-  console.log('[Mashup] Final arrangement:', arrangement.length, 'events over', generatedTrack.duration.toFixed(0), 'seconds');
-  return generatedTrack;
 };
