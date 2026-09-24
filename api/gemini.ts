@@ -157,14 +157,17 @@ Output ONLY valid JSON. No markdown, no commentary.`;
     const MAX_RETRIES_PER_KEY = 2;
 
     for (const apiKey of keys) {
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent`;
       let keyFailed = false;
 
       for (let attempt = 1; attempt <= MAX_RETRIES_PER_KEY; attempt++) {
         try {
           const response = await fetch(endpoint, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              'x-goog-api-key': apiKey
+            },
             body: JSON.stringify(payload)
           });
 

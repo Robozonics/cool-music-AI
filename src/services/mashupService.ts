@@ -352,9 +352,12 @@ Output ONLY the raw JSON, starting with { and ending with }.`;
     
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {
-        res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`, {
+        res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey
+          },
           body: JSON.stringify(payload),
         });
 
