@@ -4,7 +4,7 @@ export type PlaylistSegment = 'foundation' | 'peak' | 'cooldown';
 export interface DjEvent {
   timestamp: number; // in seconds - when this event fires in the mashup timeline
   trackId: string;
-  type: 'play' | 'pause' | 'fade_in' | 'fade_out' | 'cut_vocals' | 'restore_vocals' | 'cut_bass' | 'restore_bass' | 'seek' | 'set_volume' | 'highpass' | 'lowpass' | 'filter_reset' | 'set_tempo';
+  type: 'play' | 'pause' | 'fade_in' | 'fade_out' | 'cut_vocals' | 'restore_vocals' | 'cut_bass' | 'restore_bass' | 'seek' | 'set_volume' | 'highpass' | 'lowpass' | 'filter_reset' | 'set_tempo' | 'brake_pitch';
   seekTo?: number;
   volume?: number;
   filterHz?: number;   // for highpass/lowpass events

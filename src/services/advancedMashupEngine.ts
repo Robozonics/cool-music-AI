@@ -172,7 +172,7 @@ export class AdvancedMashupEngine {
       events.push({
         timestamp: finaleDropTime - 1.5,
         trackId: anchor.id,
-        type: 'brake_pitch' as any
+        type: 'brake_pitch'
       });
 
       // Crossfade out anchor
@@ -306,6 +306,37 @@ export class WebAudioMashupPlayer {
         }
         break;
 
+      case 'set_tempo':
+        if (node && event.playbackRate !== undefined) {
+          node.source.playbackRate.setValueAtTime(event.playbackRate, absoluteTime);
+          if (node.source.detune) {
+            // Mathematically perfect pitch & tempo sync:
+            // 1 octave = 1200 cents = 2x speed.
+            // Formula: cents = 1200 * log2(playbackRate)
+            // Negate it to counteract the pitch shift caused by playbackRate.
+            const centsShift = 1200 * Math.log2(event.playbackRate);
+            node.source.detune.setValueAtTime(-centsShift, absoluteTime);
+          }
+        }
+        break;
+
+      case 'cut_vocals':
+        if (node) {
+          node.filter.type = 'peaking';
+          node.filter.frequency.setValueAtTime(1000, absoluteTime);
+          node.filter.Q.setValueAtTime(1.5, absoluteTime);
+          node.filter.gain.setTargetAtTime(-12, absoluteTime, 0.3); // Duck mids
+        }
+        break;
+
+      case 'restore_vocals':
+        if (node) {
+          if (node.filter.type === 'peaking') {
+            node.filter.gain.setTargetAtTime(0, absoluteTime, 0.3);
+          }
+        }
+        break;
+
       case 'fade_out':
         if (node) {
           const currentVol = node.gain.gain.value;
@@ -327,7 +358,7 @@ export class WebAudioMashupPlayer {
         }
         break;
         
-      case 'brake_pitch' as any:
+      case 'brake_pitch':
         if (node) {
           // Brief half-speed time-stretch / pitch-down effect simulating a DJ turntable brake
           const currentRate = node.source.playbackRate.value;

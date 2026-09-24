@@ -6,10 +6,24 @@ import { fetchFreshSaavnUrl } from '../services/unblockedMusicService';
 // Global native audio instance for Direct CDNs
 export const nativeAudio = new Audio();
 nativeAudio.crossOrigin = "anonymous";
+if ('preservesPitch' in nativeAudio) {
+  (nativeAudio as any).preservesPitch = false;
+} else if ('webkitPreservesPitch' in nativeAudio) {
+  (nativeAudio as any).webkitPreservesPitch = false;
+} else if ('mozPreservesPitch' in nativeAudio) {
+  (nativeAudio as any).mozPreservesPitch = false;
+}
 
 // Secondary audio instance for crossfade — lives here at module scope so it persists
 export const crossfadeAudio = new Audio();
 crossfadeAudio.crossOrigin = "anonymous";
+if ('preservesPitch' in crossfadeAudio) {
+  (crossfadeAudio as any).preservesPitch = false;
+} else if ('webkitPreservesPitch' in crossfadeAudio) {
+  (crossfadeAudio as any).webkitPreservesPitch = false;
+} else if ('mozPreservesPitch' in crossfadeAudio) {
+  (crossfadeAudio as any).mozPreservesPitch = false;
+}
 
 // DJ Arrangement Web Audio State
 export let audioCtx: AudioContext | null = null;
@@ -780,6 +794,14 @@ export const usePlayerStore = create<PlayerState>()(
            aux.crossOrigin = "anonymous";
            aux.volume = get().volume;
            aux.playbackRate = get().playbackRate;
+           
+           if ('preservesPitch' in aux) {
+             (aux as any).preservesPitch = false;
+           } else if ('webkitPreservesPitch' in aux) {
+             (aux as any).webkitPreservesPitch = false;
+           } else if ('mozPreservesPitch' in aux) {
+             (aux as any).mozPreservesPitch = false;
+           }
            
            let source = null;
            let filter = null;
