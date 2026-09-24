@@ -335,57 +335,20 @@ Output ONLY the raw JSON, starting with { and ending with }.`;
   try {
     setStatus('syncing', 30);
 
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-    if (!apiKey) throw new Error('VITE_GEMINI_API_KEY not found in .env');
-    
-    const payload = {
-      contents: [{ parts: [{ text: promptText }] }],
-      generationConfig: {
-        temperature: 0.8,
-        topP: 0.95,
-        maxOutputTokens: 8192,
-      }
-    };
+    const res = await fetch('/api/gemini', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'mashup', prompt: promptText }),
+    });
 
-    const MAX_RETRIES = 3;
-    let res: Response | null = null;
-    
-    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-      try {
-        res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent`, {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'x-goog-api-key': apiKey
-          },
-          body: JSON.stringify(payload),
-        });
-
-        if (res.status === 503) {
-          console.warn(`[Mashup] Gemini API overloaded (503). Attempt ${attempt} failed. Retrying...`);
-          await new Promise(resolve => setTimeout(resolve, attempt * 1500));
-          continue;
-        }
-        
-        break;
-      } catch (err) {
-        if (attempt === MAX_RETRIES) throw err;
-        await new Promise(resolve => setTimeout(resolve, attempt * 1500));
-      }
-    }
-
-    if (!res || !res.ok) {
-      throw new Error(`Gemini API error: ${res ? res.statusText : 'Network failure'}`);
+    if (!res.ok) {
+      throw new Error(`API error: ${res.statusText}`);
     }
 
     const data = await res.json();
-    let text = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
-    text = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
-    const jsonStart = text.indexOf('{');
-    if (jsonStart > 0) text = text.slice(jsonStart);
-    
-    blueprint = JSON.parse(text) as MashupBlueprint;
+    if (data.error) throw new Error(data.error);
 
+    blueprint = data.blueprint as MashupBlueprint;
     if (!blueprint || !blueprint.timeline_blocks) {
        throw new Error('Invalid blueprint format received');
     }
