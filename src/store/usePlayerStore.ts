@@ -297,6 +297,11 @@ const executeDjEvent = (evt: DjEvent, volume: number) => {
         targetBassFilter.gain.setTargetAtTime(0, audioCtx.currentTime, 0.3);
       }
       break;
+    case 'set_tempo':
+      if (evt.playbackRate !== undefined && Number.isFinite(evt.playbackRate)) {
+        targetAudio.playbackRate = evt.playbackRate * (Number.isFinite(get().playbackRate) ? get().playbackRate : 1);
+      }
+      break;
   }
 };
 

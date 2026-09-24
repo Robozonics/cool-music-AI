@@ -63,6 +63,9 @@ export class AdvancedMashupEngine {
     const anchor = analyzedTracks[0];
     const secondaryTracks = analyzedTracks.slice(1);
 
+    // Tempo Sync Logic: Everything matches the Anchor's BPM
+    const anchorBpm = anchor.bpm || 120;
+
     // Anchor Track (The Foundation) plays continuously for its whole duration
     // We use the full track for the anchor to maintain the beat
     events.push({
@@ -72,12 +75,25 @@ export class AdvancedMashupEngine {
       seekTo: 0,
       volume: 1.0
     });
+    
+    // Ensure anchor plays at normal 1.0 relative speed
+    events.push({
+      timestamp: currentTime,
+      trackId: anchor.id,
+      type: 'set_tempo',
+      playbackRate: 1.0
+    });
 
     const anchorDuration = anchor.duration || 180;
 
     // For each secondary track, we overlay its vocals/hooks over the anchor track
     for (let i = 0; i < secondaryTracks.length; i++) {
       const secTrack = secondaryTracks[i];
+      const secBpm = secTrack.bpm || 120;
+      
+      // Calculate how much we need to stretch/compress the secondary track to match the anchor
+      // If Anchor is 120 and Secondary is 100, playback rate is 1.2
+      const requiredPlaybackRate = anchorBpm / secBpm;
       
       // Calculate where to drop the secondary track. 
       // Example: Drop track 2's vocal on track 1's chorus
@@ -85,6 +101,14 @@ export class AdvancedMashupEngine {
       const dropTime = anchor.markers.chorus_start + (i * 30);
       
       if (dropTime < anchorDuration) {
+        // Tempo sync event
+        events.push({
+          timestamp: 0, // apply tempo right at the start before it even plays
+          trackId: `${secTrack.id}_vocal`,
+          type: 'set_tempo',
+          playbackRate: requiredPlaybackRate
+        });
+
         // Overlay secondary vocals starting from its verse
         events.push({
           timestamp: dropTime,
@@ -101,8 +125,11 @@ export class AdvancedMashupEngine {
           type: 'cut_vocals'
         });
 
-        const vocalDuration = secTrack.markers.chorus_end - secTrack.markers.verse_start;
-        const endVocalTime = dropTime + vocalDuration;
+        // The duration of the vocal stem needs to be adjusted by the playback rate
+        // since it's playing faster or slower!
+        const vocalRawDuration = secTrack.markers.chorus_end - secTrack.markers.verse_start;
+        const adjustedVocalDuration = vocalRawDuration / requiredPlaybackRate;
+        const endVocalTime = dropTime + adjustedVocalDuration;
 
         // Fade out secondary vocals
         events.push({
@@ -124,8 +151,17 @@ export class AdvancedMashupEngine {
     // Grand Finale: Let the last secondary track take over the instrumental at the bridge
     const finaleTrack = secondaryTracks[secondaryTracks.length - 1];
     const finaleDropTime = anchor.markers.bridge_start;
+    const finaleRequiredRate = anchorBpm / (finaleTrack.bpm || 120);
 
     if (finaleDropTime < anchorDuration) {
+      // Tempo sync finale track
+      events.push({
+        timestamp: 0,
+        trackId: finaleTrack.id,
+        type: 'set_tempo',
+        playbackRate: finaleRequiredRate
+      });
+
       // Brake the anchor track
       events.push({
         timestamp: finaleDropTime - 1.5,
@@ -157,8 +193,11 @@ export class AdvancedMashupEngine {
       });
 
       // End of Mashup
+      const finaleRawDuration = finaleTrack.markers.outro_end - finaleTrack.markers.chorus_start;
+      const adjustedFinaleDuration = finaleRawDuration / finaleRequiredRate;
+      
       events.push({
-        timestamp: finaleDropTime + (finaleTrack.markers.outro_end - finaleTrack.markers.chorus_start),
+        timestamp: finaleDropTime + adjustedFinaleDuration,
         trackId: finaleTrack.id,
         type: 'fade_out',
         volume: 0.0
