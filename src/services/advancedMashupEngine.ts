@@ -60,110 +60,119 @@ export class AdvancedMashupEngine {
     const events: DjEvent[] = [];
     let currentTime = 0;
 
-    // Song 1 (The Foundation)
-    const song1 = analyzedTracks[0];
-    
-    // Play Song 1 Instrumental (Master Bed) from intro_end
+    const anchor = analyzedTracks[0];
+    const secondaryTracks = analyzedTracks.slice(1);
+
+    // Anchor Track (The Foundation) plays continuously for its whole duration
+    // We use the full track for the anchor to maintain the beat
     events.push({
       timestamp: currentTime,
-      trackId: `${song1.id}_inst`, // using custom ID to represent the instrumental stem
+      trackId: anchor.id, // Play full anchor track
       type: 'play',
-      seekTo: song1.markers.intro_end,
+      seekTo: 0,
       volume: 1.0
     });
 
-    // Duration until Song 1's chorus_start where we swap to Song 2
-    const foundationDuration = song1.markers.chorus_start - song1.markers.intro_end;
-    currentTime += foundationDuration;
+    const anchorDuration = anchor.duration || 180;
 
-    // Songs 2 to N-1 (The Core Vocal Swaps)
-    for (let i = 1; i < analyzedTracks.length - 1; i++) {
-      const intermediateSong = analyzedTracks[i];
-      const vocalDuration = intermediateSong.markers.chorus_end - intermediateSong.markers.chorus_start;
+    // For each secondary track, we overlay its vocals/hooks over the anchor track
+    for (let i = 0; i < secondaryTracks.length; i++) {
+      const secTrack = secondaryTracks[i];
+      const secDuration = secTrack.duration || 180;
       
-      // Start isolated vocal stem exactly at chorus_start
+      // Calculate where to drop the secondary track. 
+      // Example: Drop track 2's vocal on track 1's chorus
+      // If we have multiple secondary tracks, stagger them
+      const dropTime = anchor.markers.chorus_start + (i * 30);
+      
+      if (dropTime < anchorDuration) {
+        // Overlay secondary vocals starting from its verse
+        events.push({
+          timestamp: dropTime,
+          trackId: `${secTrack.id}_vocal`,
+          type: 'fade_in',
+          seekTo: secTrack.markers.verse_start,
+          volume: 0.9 // slightly lower than anchor
+        });
+
+        // Duck anchor bass/mids slightly to make room
+        events.push({
+          timestamp: dropTime,
+          trackId: anchor.id,
+          type: 'cut_vocals'
+        });
+
+        const vocalDuration = secTrack.markers.chorus_end - secTrack.markers.verse_start;
+        const endVocalTime = dropTime + vocalDuration;
+
+        // Fade out secondary vocals
+        events.push({
+          timestamp: endVocalTime,
+          trackId: `${secTrack.id}_vocal`,
+          type: 'fade_out',
+          volume: 0.0
+        });
+
+        // Restore anchor
+        events.push({
+          timestamp: endVocalTime,
+          trackId: anchor.id,
+          type: 'restore_vocals'
+        });
+      }
+    }
+
+    // Grand Finale: Let the last secondary track take over the instrumental at the bridge
+    const finaleTrack = secondaryTracks[secondaryTracks.length - 1];
+    const finaleDropTime = anchor.markers.bridge_start;
+
+    if (finaleDropTime < anchorDuration) {
+      // Brake the anchor track
       events.push({
-        timestamp: currentTime,
-        trackId: `${intermediateSong.id}_vocal`,
-        type: 'play',
-        seekTo: intermediateSong.markers.chorus_start,
-        volume: 1.0
+        timestamp: finaleDropTime - 1.5,
+        trackId: anchor.id,
+        type: 'lowpass',
+        filterHz: 400
+      });
+      events.push({
+        timestamp: finaleDropTime - 1.5,
+        trackId: anchor.id,
+        type: 'brake_pitch' as any
       });
 
-      // Duck the backing track by -3dB automatically when vocals enter
+      // Crossfade out anchor
       events.push({
-        timestamp: currentTime,
-        trackId: `${song1.id}_inst`,
-        type: 'set_volume',
-        volume: 0.707 // -3dB linear equivalent
-      });
-
-      // Stop vocal stem exactly at chorus_end
-      events.push({
-        timestamp: currentTime + vocalDuration,
-        trackId: `${intermediateSong.id}_vocal`,
+        timestamp: finaleDropTime,
+        trackId: anchor.id,
         type: 'fade_out',
         volume: 0.0
       });
 
-      // Restore backing track volume
+      // Bring in the full finale track
       events.push({
-        timestamp: currentTime + vocalDuration,
-        trackId: `${song1.id}_inst`,
-        type: 'set_volume',
+        timestamp: finaleDropTime,
+        trackId: finaleTrack.id,
+        type: 'fade_in',
+        seekTo: finaleTrack.markers.chorus_start,
         volume: 1.0
       });
 
-      currentTime += vocalDuration;
+      // End of Mashup
+      events.push({
+        timestamp: finaleDropTime + (finaleTrack.markers.outro_end - finaleTrack.markers.chorus_start),
+        trackId: finaleTrack.id,
+        type: 'fade_out',
+        volume: 0.0
+      });
+    } else {
+      // If anchor ends first, just fade it out
+      events.push({
+        timestamp: anchorDuration - 5,
+        trackId: anchor.id,
+        type: 'fade_out',
+        volume: 0.0
+      });
     }
-
-    // Song N (The Grand Finale Outro)
-    const finaleSong = analyzedTracks[analyzedTracks.length - 1];
-
-    // WHERE TO SLOW (The Audio Brake): Exactly 1.5 seconds before transitioning
-    const brakeTime = Math.max(0, currentTime - 1.5);
-    events.push({
-      timestamp: brakeTime,
-      trackId: `${song1.id}_inst`, // Brake the active master bed
-      type: 'lowpass', // Apply low-pass sweep
-      filterHz: 400
-    });
-    
-    // Also simulate the half-speed pitch down by throwing a custom 'brake_pitch' event
-    // that the execution engine will map to playbackRate dropping
-    events.push({
-      timestamp: brakeTime,
-      trackId: `${song1.id}_inst`,
-      type: 'brake_pitch' as any // We will handle this in execution
-    });
-
-    // Crossfade out the master bed smoothly over 2 seconds at the exact transition point
-    events.push({
-      timestamp: currentTime,
-      trackId: `${song1.id}_inst`,
-      type: 'fade_out',
-      volume: 0.0
-    });
-
-    // Play Song N starting from bridge_start through to outro_end
-    events.push({
-      timestamp: currentTime,
-      trackId: finaleSong.id,
-      type: 'fade_in',
-      seekTo: finaleSong.markers.bridge_start,
-      volume: 1.0
-    });
-
-    const finaleDuration = finaleSong.markers.outro_end - finaleSong.markers.bridge_start;
-    currentTime += finaleDuration;
-
-    // Fade out Grand Finale
-    events.push({
-      timestamp: currentTime,
-      trackId: finaleSong.id,
-      type: 'fade_out',
-      volume: 0.0
-    });
 
     // Sort timeline
     return events.sort((a, b) => a.timestamp - b.timestamp);
