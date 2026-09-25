@@ -324,8 +324,8 @@ export class WebAudioMashupPlayer {
         if (node) {
           node.filter.type = 'peaking';
           node.filter.frequency.setValueAtTime(1000, absoluteTime);
-          node.filter.Q.setValueAtTime(1.5, absoluteTime);
-          node.filter.gain.setTargetAtTime(-12, absoluteTime, 0.3); // Duck mids
+          node.filter.Q.setValueAtTime(1.0, absoluteTime); // wider mid cut
+          node.filter.gain.setTargetAtTime(-18, absoluteTime, 0.3); // Aggressive duck for fake instrumental
         }
         break;
 
@@ -355,6 +355,23 @@ export class WebAudioMashupPlayer {
           node.filter.type = 'lowpass';
           node.filter.frequency.setValueAtTime(20000, absoluteTime);
           node.filter.frequency.exponentialRampToValueAtTime(event.filterHz, absoluteTime + 1.5);
+        }
+        break;
+
+      case 'highpass':
+        if (node && event.filterHz) {
+          // Cuts the lows (bass/kick drum) to isolate vocals
+          node.filter.type = 'highpass';
+          node.filter.frequency.setValueAtTime(event.filterHz, absoluteTime);
+          node.filter.Q.setValueAtTime(1.0, absoluteTime);
+        }
+        break;
+
+      case 'filter_reset':
+        if (node) {
+          // Resets all filters back to transparent
+          node.filter.type = 'allpass';
+          node.filter.gain.setTargetAtTime(0, absoluteTime, 0.1);
         }
         break;
         

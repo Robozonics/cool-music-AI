@@ -15,7 +15,7 @@ export interface DjEvent {
 
 export interface ActiveStem {
   track_id: string;
-  stem_type: 'drums' | 'bass' | 'vocals' | 'other' | 'full';
+  stem_type: 'drums' | 'bass' | 'vocals' | 'other' | 'full' | 'instrumental';
   volume_db: number;
   pitch_shift_semitones: number;
 }

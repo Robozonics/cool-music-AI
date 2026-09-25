@@ -221,21 +221,16 @@ export const blueprintToDjEvents = (
         });
       }
 
-      // Stem-role based vocal/bass ducking
-      const hasVocals = block.active_stems.some(s => s.stem_type === 'vocals' && resolveTrack(s.track_id, allTracks).id !== tid);
-      const hasBass   = block.active_stems.some(s => s.stem_type === 'bass' && resolveTrack(s.track_id, allTracks).id !== tid);
-
-      if (stem.stem_type === 'vocals' && hasVocals) {
-        // Another track also has vocals — cut this track's mids to avoid clash
+      // Extreme EQ for pseudo-stem isolation (since we only have full tracks)
+      if (stem.stem_type === 'vocals') {
+        // Isolate vocals: Cut the lows (bass/kick) aggressively
+        events.push({ timestamp: blockStartSec, trackId: tid, type: 'highpass', filterHz: 300 });
+      } else if (stem.stem_type === 'instrumental' || stem.stem_type === 'drums' || stem.stem_type === 'bass') {
+        // Isolate instrumental: Cut the mids (vocals) aggressively
         events.push({ timestamp: blockStartSec, trackId: tid, type: 'cut_vocals' });
-      } else if (stem.stem_type === 'vocals') {
-        events.push({ timestamp: blockStartSec, trackId: tid, type: 'restore_vocals' });
-      }
-
-      if (stem.stem_type === 'bass' && hasBass) {
-        events.push({ timestamp: blockStartSec, trackId: tid, type: 'cut_bass' });
-      } else if (stem.stem_type === 'bass') {
-        events.push({ timestamp: blockStartSec, trackId: tid, type: 'restore_bass' });
+      } else {
+        // Full track or 'other': reset filters
+        events.push({ timestamp: blockStartSec, trackId: tid, type: 'filter_reset' });
       }
     }
   }
@@ -298,6 +293,12 @@ Instead of a rigid drop, interweave the vocals and instrumentals. For example:
 - Blend the choruses, perhaps cutting the bass or mids of one track to make room for the other.
 - Create a climax where elements from both tracks play off each other.
 - End with a beautiful, echoing cooldown.
+
+CRITICAL: Since this is an automated Web Audio engine, playing two "full" tracks at the same time will cause a loud, muddy mess. 
+To avoid clashing, you MUST use the \`stem_type\` field to isolate frequencies:
+- If a track is providing the beat/melody, set its \`stem_type\` to "instrumental" or "drums" (this ducks its vocals).
+- If a track is providing the singing, set its \`stem_type\` to "vocals" (this cuts its bass/kick drum).
+NEVER have two tracks active with \`stem_type: "full"\` at the same time unless one is heavily faded out.
 
 TRACKS:
 1 (ANCHOR): ${anchorTrack.title} by ${anchorTrack.artist} (Duration: ${anchorTrack.duration}s)
