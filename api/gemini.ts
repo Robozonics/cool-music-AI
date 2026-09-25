@@ -255,6 +255,12 @@ Output ONLY valid JSON. No markdown, no commentary.`;
           });
         } else {
            console.error('Groq API error:', groqResponse.statusText);
+           return new Response(JSON.stringify({ 
+             error: groqResponse.status === 429 ? 'Groq AI is rate-limited. Please wait a minute.' : `Groq API error: ${groqResponse.statusText}` 
+           }), {
+             status: groqResponse.status,
+             headers: { 'Content-Type': 'application/json' }
+           });
         }
       } catch (e) {
         console.error('Groq fallback crashed:', e);

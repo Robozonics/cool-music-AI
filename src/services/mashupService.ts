@@ -339,10 +339,13 @@ Return ONLY the valid JSON object. No markdown formatting.`;
       body: JSON.stringify({ type: 'mashup', prompt: promptText }),
     });
 
-    if (!res.ok) throw new Error(`Gemini API error: ${res.statusText}`);
+    const data = await res.json().catch(() => null);
     
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
+    if (!res.ok) {
+      throw new Error(data?.error || `Gemini API error: ${res.status || res.statusText}`);
+    }
+    
+    if (data?.error) throw new Error(data.error);
 
     let blueprint = data.blueprint;
     
