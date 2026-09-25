@@ -36,6 +36,7 @@ export interface MashupBlueprint {
     final_bpm: number;
     total_duration_bars: number;
     target_key?: string;
+    track_bpms?: Record<string, number>;
   };
   timeline_blocks: TimelineBlock[];
 }

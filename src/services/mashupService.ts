@@ -1,6 +1,5 @@
 import type { Track, DjEvent, MashupBlueprint } from '../types/music';
 import { useMashupStore } from '../store/useMashupStore';
-import { AdvancedMashupEngine } from './advancedMashupEngine';
 
 /**
  * Professional AI DJ Mashup Engine
@@ -181,6 +180,17 @@ export const blueprintToDjEvents = (
             type: 'seek',
             seekTo: 0,
           });
+
+          // Sync tempo with the final bpm
+          const trackBpm = blueprint.mashup_metadata.track_bpms?.[tid] || final_bpm;
+          const playbackRate = final_bpm / trackBpm;
+          
+          events.push({
+            timestamp: Math.max(0, blockStartSec - 0.1),
+            trackId: tid,
+            type: 'set_tempo',
+            playbackRate: playbackRate,
+          });
         }
         
         events.push({
@@ -275,37 +285,52 @@ export const generateAiMashup = async (tracks: Track[], anchorTrackId: string): 
 
   setStatus('extracting', 10);
 
-  let analyzedTracks = [];
-
   try {
-    // 1. AI Analysis & Stems via Gemini (Fast High-Level Prompt to avoid 504)
+    // 1. AI Analysis & Blueprint Generation via Gemini
     setStatus('syncing', 30);
     
-    const promptText = `You are a Grammy-winning DJ and Audio Data Scientist. 
-Analyze these songs and determine their musical structure (BPM, Camelot Key) and exact timestamp markers (in seconds) for a mashup. 
-The user wants you to decide how long the mashup should be and where the best drop/cut points are.
+    const promptText = `You are a Grammy-winning DJ, music producer, and Audio Data Scientist. 
+The user wants a highly emotional, beautifully intertwined mashup (like the viral Saiyara x Sahiba mashup).
+You must sequence these tracks musically over a bar-based timeline. 
+Instead of a rigid drop, interweave the vocals and instrumentals. For example:
+- Start with a moody instrumental intro from the anchor track.
+- Bring in the verse vocals of Track 2 over the anchor's instrumental.
+- Blend the choruses, perhaps cutting the bass or mids of one track to make room for the other.
+- Create a climax where elements from both tracks play off each other.
+- End with a beautiful, echoing cooldown.
 
 TRACKS:
 1 (ANCHOR): ${anchorTrack.title} by ${anchorTrack.artist} (Duration: ${anchorTrack.duration}s)
 ${secondaryTracks.map((t, i) => `${i + 2}: ${t.title} by ${t.artist} (Duration: ${t.duration}s)`).join('\n')}
 
-OUTPUT STRICT JSON ONLY:
-[
-  {
-    "id": "track_id",
-    "bpm": 120,
-    "key": "8A",
-    "markers": {
-      "intro_end": 15,
-      "verse_start": 15,
-      "chorus_start": 45,
-      "chorus_end": 75,
-      "bridge_start": 120,
-      "outro_end": 160
+Assume a fitting tempo (e.g., final_bpm around 100-120 depending on the songs). 1 bar = 4 beats. 
+You must return a STRICT JSON object representing a 'MashupBlueprint'. Do not wrap it in an array.
+Make the arrangement at least 64 bars long.
+Track IDs MUST match the ones provided.
+
+SCHEMA:
+{
+  "mashup_metadata": {
+    "final_bpm": 110,
+    "total_duration_bars": 80,
+    "target_key": "8A",
+    "track_bpms": {
+      "${anchorTrack.id}": 110
     }
-  }
-]
-(Generate this object for EVERY track provided, using their actual track IDs: ${allTracks.map(t=>t.id).join(', ')}). Make sure markers fit within their duration.`;
+  },
+  "timeline_blocks": [
+    {
+      "bar_start": 1,
+      "bar_end": 8,
+      "active_stems": [
+        { "track_id": "${anchorTrack.id}", "stem_type": "instrumental", "volume_db": 0, "pitch_shift_semitones": 0 }
+      ],
+      "effects": { "transition_type": "none" }
+    }
+  ]
+}
+
+Return ONLY the valid JSON object. No markdown formatting.`;
 
     const res = await fetch('/api/gemini', {
       method: 'POST',
@@ -318,39 +343,19 @@ OUTPUT STRICT JSON ONLY:
     const data = await res.json();
     if (data.error) throw new Error(data.error);
 
-    let aiData = data.blueprint;
-    if (!Array.isArray(aiData)) {
-      throw new Error('Gemini did not return an array of analyzed tracks');
+    let blueprint = data.blueprint;
+    
+    // In gemini.ts, if it's parsed, we get it directly. If it was inside an array, extract it.
+    if (Array.isArray(blueprint)) {
+      blueprint = blueprint[0];
+    }
+    
+    if (!blueprint || !blueprint.timeline_blocks) {
+      throw new Error('Gemini did not return a valid MashupBlueprint');
     }
 
-    // Merge AI suggestions with our Track objects
-    analyzedTracks = allTracks.map(t => {
-      const ai = aiData.find((a: any) => a.id === t.id) || { bpm: 120, key: '8A', markers: {} };
-      const d = t.duration || 180;
-      return {
-        ...t,
-        bpm: ai.bpm || 120,
-        key: ai.key || '8A',
-        markers: {
-          intro_end: ai.markers?.intro_end || d * 0.1,
-          verse_start: ai.markers?.verse_start || d * 0.1,
-          chorus_start: ai.markers?.chorus_start || d * 0.3,
-          chorus_end: ai.markers?.chorus_end || d * 0.5,
-          bridge_start: ai.markers?.bridge_start || d * 0.7,
-          outro_end: ai.markers?.outro_end || d * 0.9,
-        }
-      };
-    });
-
-  } catch (e: any) {
-    console.error('[Mashup] Gemini AI Analysis failed, falling back to algorithmic analysis:', e.message || e);
-    analyzedTracks = await AdvancedMashupEngine.analyzeAndSeparateStems(allTracks);
-  }
-
-  try {
-    // 2. Dynamic Timeline Generation based on AI Markers
     setStatus('mastering', 80);
-    const arrangement = AdvancedMashupEngine.calculateDynamicTimeline(analyzedTracks as any);
+    const arrangement = blueprintToDjEvents(blueprint, allTracks);
     
     setStatus('complete', 100);
 
