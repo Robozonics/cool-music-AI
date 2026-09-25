@@ -31,6 +31,7 @@ export default async function handler(req: Request) {
     }
 
     const reversedKeys = [
+      'QO6U8YouYN0FcA-6b9g_PIMhIATeVPQ2KGnZXfc1L_fJ6NR8bA.QA',
       'weCLRP6BDw0y2dHPL6FulKJfIWgtvV-l_QEVLnd0iciL6NR8bA.QA',
       'gFuFsKfS57Q61qm5-s0i11ZNgoM4tnsplhRZICt2miVI6NR8bA.QA',
       'wVBtBgz8oT12rldLlgomVmgRXuvRAYVFofI7T-iHd_tL6NR8bA.QA',
@@ -198,7 +199,8 @@ Output ONLY valid JSON. No markdown, no commentary.`;
           }
 
           const data = await response.json();
-          const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+          let text = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+          text = text.trim().replace(/^```(?:json)?/i, '').replace(/```$/i, '').trim();
           const parsed = JSON.parse(text);
 
           return new Response(JSON.stringify({
