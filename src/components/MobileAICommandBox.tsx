@@ -103,12 +103,13 @@ export const MobileAICommandBox = ({ isOpen, onClose }: { isOpen: boolean, onClo
               </button>
             )}
             
-            {/* Close button */}
+            {/* Close button inside the bar */}
             <button 
               onClick={onClose} 
-              className="absolute -top-2 -right-2 bg-zinc-800 text-zinc-400 p-1 rounded-full border border-white/10 hover:text-white hover:bg-zinc-700"
+              className="p-2 text-zinc-400 hover:text-white hover:bg-white/10 rounded-xl transition-all shrink-0 ml-1"
+              title="Close"
             >
-               <X className="w-3 h-3" />
+               <X className="w-5 h-5" />
             </button>
           </div>
         </motion.div>

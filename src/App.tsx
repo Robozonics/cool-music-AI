@@ -168,7 +168,7 @@ function App() {
           <MobileAICommandBox isOpen={isAiCommandOpen} onClose={() => setAiCommandOpen(false)} />
         </div>
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden relative z-0 pb-40">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden relative z-0 pb-48">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}

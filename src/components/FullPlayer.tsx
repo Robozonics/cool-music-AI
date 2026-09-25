@@ -59,7 +59,7 @@ export const FullPlayer: React.FC = () => {
           animate={{ y: 0 }}
           exit={{ y: '100%' }}
           transition={{ type: 'spring', damping: 28, stiffness: 250 }}
-          className="fixed inset-0 z-50 bg-obsidian flex flex-col"
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-3xl flex flex-col"
         >
       {/* Background blur */}
       <div 
