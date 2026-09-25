@@ -219,8 +219,49 @@ Output ONLY valid JSON. No markdown, no commentary.`;
         continue; // Move to the next key in the outer loop
       }
     }
+    
+    // ── Fallback to Groq if all Gemini keys fail ─────────────────────────────
+    const groqKey = process.env.GROQ_API_KEY || process.env.VITE_GROQ_API_KEY;
+    if (groqKey) {
+      try {
+        console.log('Gemini failed, falling back to Groq...');
+        const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${groqKey}`
+          },
+          body: JSON.stringify({
+            model: 'llama3-70b-8192',
+            messages: [{ role: 'user', content: promptText }],
+            response_format: { type: 'json_object' },
+            temperature: type === 'playlist' ? 0.7 : (type === 'mashup' ? 0.8 : 0.9)
+          })
+        });
 
-    // If we exhaust all keys
+        if (groqResponse.ok) {
+          const data = await groqResponse.json();
+          const text = data.choices?.[0]?.message?.content || '{}';
+          const parsed = JSON.parse(text);
+
+          return new Response(JSON.stringify({
+            success: true,
+            recommendations: Array.isArray(parsed) ? parsed : [],
+            translated: type === 'translate' ? parsed : undefined,
+            blueprint: type === 'mashup' ? parsed : undefined,
+          }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        } else {
+           console.error('Groq API error:', groqResponse.statusText);
+        }
+      } catch (e) {
+        console.error('Groq fallback crashed:', e);
+      }
+    }
+
+    // If we exhaust all keys and Groq fails/is not configured
     const errorMsg = lastResponse?.status === 429 
       ? 'All Google AI keys are currently rate-limited. Please wait a minute and try again.' 
       : `Gemini API error: ${lastResponse?.statusText || 'Internal Server Error'}`;
