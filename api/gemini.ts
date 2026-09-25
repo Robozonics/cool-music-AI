@@ -232,7 +232,7 @@ Output ONLY valid JSON. No markdown, no commentary.`;
             'Authorization': `Bearer ${groqKey}`
           },
           body: JSON.stringify({
-            model: 'qwen-2.5-32b',
+            model: 'qwen/qwen3.8-27b',
             messages: [{ role: 'user', content: promptText }],
             temperature: type === 'playlist' ? 0.7 : (type === 'mashup' ? 0.8 : 0.9)
           })
