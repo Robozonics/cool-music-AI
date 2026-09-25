@@ -32,6 +32,7 @@ export let nativeAudioFilter: BiquadFilterNode | null = null;
 export let nativeBassFilter: BiquadFilterNode | null = null;
 export let normalGain: GainNode | null = null;
 export let karaokeGain: GainNode | null = null;
+export let masterCompressor: DynamicsCompressorNode | null = null;
 
 interface AuxContext {
   audio: HTMLAudioElement;
@@ -70,7 +71,17 @@ const initAudioContext = (forceKaraokeMode?: boolean) => {
     normalGain = audioCtx.createGain();
     normalGain.gain.value = isKaraoke ? 0 : 1;
     nativeAudioFilter.connect(normalGain);
-    normalGain.connect(audioCtx.destination);
+
+    // Master Glue Compressor (DJ Style)
+    masterCompressor = audioCtx.createDynamicsCompressor();
+    masterCompressor.threshold.value = -20;
+    masterCompressor.knee.value = 10;
+    masterCompressor.ratio.value = 4;
+    masterCompressor.attack.value = 0.01;
+    masterCompressor.release.value = 0.25;
+
+    normalGain.connect(masterCompressor);
+    masterCompressor.connect(audioCtx.destination);
 
     // Karaoke Mix: Maximum Vocal Suppression Engine
     karaokeGain = audioCtx.createGain();
@@ -164,7 +175,7 @@ const initAudioContext = (forceKaraokeMode?: boolean) => {
     vocalShelf.connect(sideGain);
     sideGain.connect(karaokeGain);
 
-    karaokeGain.connect(audioCtx.destination);
+    karaokeGain.connect(masterCompressor!);
   }
   if (audioCtx.state === 'suspended') {
     audioCtx.resume();
@@ -269,7 +280,11 @@ const executeDjEvent = (evt: DjEvent, volume: number, globalPlaybackRate: number
       break;
     case 'cut_vocals':
       if (targetFilter && audioCtx) {
-        targetFilter.gain.setTargetAtTime(-24, audioCtx.currentTime, 0.5);
+        // Professional Instrumental Isolation (scoop out 1kHz - 3kHz range entirely)
+        targetFilter.type = 'peaking';
+        targetFilter.frequency.setValueAtTime(2000, audioCtx.currentTime);
+        targetFilter.Q.setValueAtTime(0.3, audioCtx.currentTime); // Very wide scoop
+        targetFilter.gain.setTargetAtTime(-35, audioCtx.currentTime, 0.5); // Massive cut
       }
       break;
     case 'restore_vocals':
@@ -279,7 +294,9 @@ const executeDjEvent = (evt: DjEvent, volume: number, globalPlaybackRate: number
       break;
     case 'cut_bass':
       if (targetBassFilter && audioCtx) {
-        targetBassFilter.gain.setTargetAtTime(-24, audioCtx.currentTime, 0.5);
+        targetBassFilter.type = 'lowshelf';
+        targetBassFilter.frequency.setValueAtTime(250, audioCtx.currentTime);
+        targetBassFilter.gain.setTargetAtTime(-35, audioCtx.currentTime, 0.5);
       }
       break;
     case 'restore_bass':
@@ -289,10 +306,10 @@ const executeDjEvent = (evt: DjEvent, volume: number, globalPlaybackRate: number
       break;
     case 'highpass':
       if (audioCtx && targetBassFilter) {
-        // Repurpose the bass filter into an aggressive high-pass
+        // Highpass for Vocal Isolation (kills kick and sub-bass completely)
         targetBassFilter.type = 'highpass';
         targetBassFilter.frequency.setValueAtTime(evt.filterHz ?? 300, audioCtx.currentTime);
-        targetBassFilter.Q.setValueAtTime(1.5, audioCtx.currentTime);
+        targetBassFilter.Q.setValueAtTime(1.0, audioCtx.currentTime);
       }
       break;
     case 'lowpass':
@@ -828,7 +845,12 @@ export const usePlayerStore = create<PlayerState>()(
 
              source.connect(bassFilter);
              bassFilter.connect(filter);
-             filter.connect(audioCtx.destination);
+             // Route through the master glue compressor to perfectly glue the mashup
+             if (masterCompressor) {
+               filter.connect(masterCompressor);
+             } else {
+               filter.connect(audioCtx.destination);
+             }
            }
            
            auxContexts.push({ audio: aux, source, filter, bassFilter, trackId: item.id });

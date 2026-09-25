@@ -193,14 +193,15 @@ export const blueprintToDjEvents = (
           });
         }
         
+        const transType = block.effects?.transition_type;
         events.push({
           timestamp: blockStartSec,
           trackId: tid,
-          type: blockStartSec === 0 ? 'play' : 'fade_in',
+          type: transType === 'crossfade' ? 'fade_in' : 'play',
           volume: linearVol,
         });
 
-        // Apply pitch shift approximation via a note in volume
+        // Apply pitch shift approximation via a note in volume (handled natively now if preservesPitch is toggled, but leaving for legacy)
         if (stem.pitch_shift_semitones !== 0) {
           events.push({
             timestamp: blockStartSec,
@@ -294,11 +295,14 @@ Instead of a rigid drop, interweave the vocals and instrumentals. For example:
 - Create a climax where elements from both tracks play off each other.
 - End with a beautiful, echoing cooldown.
 
-CRITICAL: Since this is an automated Web Audio engine, playing two "full" tracks at the same time will cause a loud, muddy mess. 
-To avoid clashing, you MUST use the \`stem_type\` field to isolate frequencies:
-- If a track is providing the beat/melody, set its \`stem_type\` to "instrumental" or "drums" (this ducks its vocals).
-- If a track is providing the singing, set its \`stem_type\` to "vocals" (this cuts its bass/kick drum).
-NEVER have two tracks active with \`stem_type: "full"\` at the same time unless one is heavily faded out.
+CRITICAL AUDIO ENGINEERING RULES:
+1. **Key Clashing:** We cannot shift the pitch of the audio. If the two tracks are in incompatible musical keys, DO NOT layer their melodies/vocals together simultaneously! Instead, use one track purely for its "drums" (which have no key) while the other plays "vocals" or "instrumental". 
+2. **Frequency Clashing:** Since this is an automated Web Audio engine, playing two "full" tracks at the same time will cause a loud, muddy mess. 
+   - You MUST use the \`stem_type\` field to isolate frequencies.
+   - If a track is providing the beat/melody, set its \`stem_type\` to "instrumental" or "drums" (this completely scoops out its vocal frequencies).
+   - If a track is providing the singing, set its \`stem_type\` to "vocals" (this aggressively cuts its bass/kick drum).
+3. NEVER have two tracks active with \`stem_type: "full"\` at the same time unless one is heavily faded out.
+4. **Mastering:** I have added a Master Glue Compressor to the engine. If you isolate the stems properly, the compressor will perfectly duck the instrumental when the vocals hit, creating a studio-quality sidechain effect.
 
 TRACKS:
 1 (ANCHOR): ${anchorTrack.title} by ${anchorTrack.artist} (Duration: ${anchorTrack.duration}s)
