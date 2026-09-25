@@ -239,7 +239,7 @@ export const blueprintToDjEvents = (
   const lastBlock = blocks[blocks.length - 1];
   const totalSec = lastBlock ? barToSeconds(lastBlock.bar_end + 1, final_bpm) : barToSeconds(64, final_bpm);
   for (const tid of activeTrackIds) {
-    events.push({ timestamp: totalSec - 3, trackId: tid, type: 'fade_out' });
+    events.push({ timestamp: Math.max(0, totalSec - 6), trackId: tid, type: 'fade_out' });
   }
 
   // Sort all events by timestamp

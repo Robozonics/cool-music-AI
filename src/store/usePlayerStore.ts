@@ -259,7 +259,13 @@ const executeDjEvent = (evt: DjEvent, volume: number, globalPlaybackRate: number
       rampVolume(targetAudio, 0, finalFadeVol, 3000);
       break;
     case 'fade_out':
-      rampVolume(targetAudio, targetAudio.volume, 0, 3000);
+      rampVolume(targetAudio, targetAudio.volume, 0, 6000); // cinematic 6s fade
+      if (audioCtx && targetFilter) {
+         // Create a cinematic muffling effect as it fades out
+         targetFilter.type = 'lowpass';
+         targetFilter.frequency.setValueAtTime(20000, audioCtx.currentTime);
+         targetFilter.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 5.0);
+      }
       break;
     case 'cut_vocals':
       if (targetFilter && audioCtx) {
@@ -282,32 +288,31 @@ const executeDjEvent = (evt: DjEvent, volume: number, globalPlaybackRate: number
       }
       break;
     case 'highpass':
-      if (audioCtx) {
-        // Apply a high-pass filter sweep to cut low-end on entry
-        const hpFilter = audioCtx.createBiquadFilter();
-        hpFilter.type = 'highpass';
-        hpFilter.frequency.value = evt.filterHz ?? 800;
-        hpFilter.Q.value = 0.5;
-        // Sweep: ramp frequency from filterHz down to 20Hz over 4s
-        hpFilter.frequency.setTargetAtTime(20, audioCtx.currentTime, 2.0);
+      if (audioCtx && targetBassFilter) {
+        // Repurpose the bass filter into an aggressive high-pass
+        targetBassFilter.type = 'highpass';
+        targetBassFilter.frequency.setValueAtTime(evt.filterHz ?? 300, audioCtx.currentTime);
+        targetBassFilter.Q.setValueAtTime(1.5, audioCtx.currentTime);
       }
       break;
     case 'lowpass':
-      if (audioCtx) {
-        const lpFilter = audioCtx.createBiquadFilter();
-        lpFilter.type = 'lowpass';
-        lpFilter.frequency.value = evt.filterHz ?? 1200;
-        lpFilter.Q.value = 0.5;
-        // Sweep: ramp frequency from filterHz up to 20000Hz over 4s
-        lpFilter.frequency.setTargetAtTime(20000, audioCtx.currentTime, 2.0);
+      if (audioCtx && targetFilter) {
+        // Repurpose the filter into a low-pass sweep
+        targetFilter.type = 'lowpass';
+        targetFilter.frequency.setValueAtTime(20000, audioCtx.currentTime);
+        targetFilter.frequency.exponentialRampToValueAtTime(evt.filterHz ?? 500, audioCtx.currentTime + 1.5);
       }
       break;
     case 'filter_reset':
       // Restore filters to neutral
       if (targetFilter && audioCtx) {
+        targetFilter.type = 'peaking';
+        targetFilter.frequency.setValueAtTime(1000, audioCtx.currentTime);
         targetFilter.gain.setTargetAtTime(0, audioCtx.currentTime, 0.3);
       }
       if (targetBassFilter && audioCtx) {
+        targetBassFilter.type = 'lowshelf';
+        targetBassFilter.frequency.setValueAtTime(200, audioCtx.currentTime);
         targetBassFilter.gain.setTargetAtTime(0, audioCtx.currentTime, 0.3);
       }
       break;
