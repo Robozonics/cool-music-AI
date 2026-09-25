@@ -232,16 +232,17 @@ Output ONLY valid JSON. No markdown, no commentary.`;
             'Authorization': `Bearer ${groqKey}`
           },
           body: JSON.stringify({
-            model: 'qwen-2.5-32b',
+            model: 'qwen-2.5-32b-it',
             messages: [{ role: 'user', content: promptText }],
-            response_format: { type: 'json_object' },
             temperature: type === 'playlist' ? 0.7 : (type === 'mashup' ? 0.8 : 0.9)
           })
         });
 
         if (groqResponse.ok) {
           const data = await groqResponse.json();
-          const text = data.choices?.[0]?.message?.content || '{}';
+          let text = data.choices?.[0]?.message?.content || '{}';
+          // Strip potential markdown JSON formatting
+          text = text.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
           const parsed = JSON.parse(text);
 
           return new Response(JSON.stringify({
