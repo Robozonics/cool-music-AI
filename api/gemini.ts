@@ -150,6 +150,7 @@ Output ONLY valid JSON. No markdown, no commentary.`;
         temperature: type === 'playlist' ? 0.7 : (type === 'mashup' ? 0.8 : 0.9),
         topP: 0.95,
         maxOutputTokens: (type === 'playlist' || type === 'translate' || type === 'mashup') ? 8192 : 2048,
+        responseMimeType: 'application/json',
       }
     };
 
@@ -190,26 +191,7 @@ Output ONLY valid JSON. No markdown, no commentary.`;
           }
 
           const data = await response.json();
-          let text = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
-
-          // Strip markdown code blocks if Gemini wraps them
-          text = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
-          
-          // Find the first JSON array or object
-          const arrayStart = text.indexOf('[');
-          const objStart = text.indexOf('{');
-          
-          let jsonStart = -1;
-          if (arrayStart !== -1 && objStart !== -1) {
-            jsonStart = Math.min(arrayStart, objStart);
-          } else if (arrayStart !== -1) {
-            jsonStart = arrayStart;
-          } else if (objStart !== -1) {
-            jsonStart = objStart;
-          }
-
-          if (jsonStart > 0) text = text.slice(jsonStart);
-
+          const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
           const parsed = JSON.parse(text);
 
           return new Response(JSON.stringify({

@@ -305,14 +305,14 @@ ${secondaryTracks.map((t, i) => `${i + 2}: ${t.title} by ${t.artist} (Duration: 
 
 Assume a fitting tempo (e.g., final_bpm around 100-120 depending on the songs). 1 bar = 4 beats. 
 You must return a STRICT JSON object representing a 'MashupBlueprint'. Do not wrap it in an array.
-Make the arrangement at least 64 bars long.
+Keep the arrangement concise (exactly 32 bars long) to ensure fast generation.
 Track IDs MUST match the ones provided.
 
 SCHEMA:
 {
   "mashup_metadata": {
     "final_bpm": 110,
-    "total_duration_bars": 80,
+    "total_duration_bars": 32,
     "target_key": "8A",
     "track_bpms": {
       "${anchorTrack.id}": 110
