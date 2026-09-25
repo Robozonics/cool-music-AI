@@ -223,9 +223,15 @@ export const blueprintToDjEvents = (
       }
 
       // Extreme EQ for pseudo-stem isolation (since we only have full tracks)
-      if (stem.stem_type === 'vocals') {
+      if (stem.stem_type === 'vocals' || stem.stem_type === 'hard_vocals') {
         // Isolate vocals: Cut the lows (bass/kick) aggressively
-        events.push({ timestamp: blockStartSec, trackId: tid, type: 'highpass', filterHz: 300 });
+        let filterHz = 300;
+        if (stem.pitch_shift_semitones !== 0 || stem.stem_type === 'hard_vocals') {
+            filterHz = 600; // Harden the voice by thinning out more lower-mids for a sharper, aggressive tone
+            // Give a volume bump if hardened
+            events.push({ timestamp: blockStartSec, trackId: tid, type: 'set_volume', volume: Math.min(1, linearVol * 1.3) }); 
+        }
+        events.push({ timestamp: blockStartSec, trackId: tid, type: 'highpass', filterHz });
       } else if (stem.stem_type === 'instrumental' || stem.stem_type === 'drums' || stem.stem_type === 'bass') {
         // Isolate instrumental: Cut the mids (vocals) aggressively
         events.push({ timestamp: blockStartSec, trackId: tid, type: 'cut_vocals' });
@@ -286,41 +292,42 @@ export const generateAiMashup = async (tracks: Track[], anchorTrackId: string): 
     setStatus('syncing', 30);
     
     const promptText = `You are a Grammy-winning DJ, music producer, and Audio Data Scientist. 
-The user wants a highly emotional, beautifully intertwined mashup (like the viral Saiyara x Sahiba mashup).
+The user wants a highly emotional, beautifully intertwined mashup (like the viral Saiyara x Sahiba mashup), but it MUST be top-notch, intense, and long enough.
 You must sequence these tracks musically over a bar-based timeline. 
-Instead of a rigid drop, interweave the vocals and instrumentals. For example:
-- Start with a moody instrumental intro from the anchor track.
-- Bring in the verse vocals of Track 2 over the anchor's instrumental.
-- Blend the choruses, perhaps cutting the bass or mids of one track to make room for the other.
-- Create a climax where elements from both tracks play off each other.
-- End with a beautiful, echoing cooldown.
+
+CRITICAL MASHUP RULES:
+1. **Length**: The mashup MUST be exactly 128 bars long (around 3 to 4 minutes depending on tempo). DO NOT make it short.
+2. **Aggressive Intertwining**: DO NOT just play one song and then the next. Mix them aggressively! Swap vocals back and forth every 8 to 16 bars. Layer Track 2's vocals over Track 1's instrumental, then immediately swap. Create complex overlaps.
+3. **Effects & Tempo**: Set a high-energy final_bpm (e.g., 125-135). Use transition effects heavily between blocks (high_pass_sweep, low_pass_sweep, cut, crossfade) to build tension and drop the beat. 
+4. **Harden the Voice**: Use \`pitch_shift_semitones\` on vocal stems (e.g., +1, -1, or -2) to "harden" or shift the voice for a unique, gritty, or elevated effect. Increase volume_db (e.g. +2) for vocals during the climax.
 
 CRITICAL AUDIO ENGINEERING RULES:
-1. **Key Clashing:** We cannot shift the pitch of the audio. If the two tracks are in incompatible musical keys, DO NOT layer their melodies/vocals together simultaneously! Instead, use one track purely for its "drums" (which have no key) while the other plays "vocals" or "instrumental". 
+1. **Key Clashing:** If the two tracks are in incompatible musical keys, apply small pitch_shift_semitones (+1 or -1) to make them match better, or rely on stems (drums/instrumental vs vocals).
 2. **Frequency Clashing:** Since this is an automated Web Audio engine, playing two "full" tracks at the same time will cause a loud, muddy mess. 
    - You MUST use the \`stem_type\` field to isolate frequencies.
    - If a track is providing the beat/melody, set its \`stem_type\` to "instrumental" or "drums" (this completely scoops out its vocal frequencies).
-   - If a track is providing the singing, set its \`stem_type\` to "vocals" (this aggressively cuts its bass/kick drum).
+   - If a track is providing the singing, set its \`stem_type\` to "vocals".
+   - **HARDENED VOICE**: To harden the vocals for an epic climax, set \`stem_type\` to "hard_vocals". This applies a sharp 600Hz high-pass and a volume boost to make the vocals pierce through the mix.
 3. NEVER have two tracks active with \`stem_type: "full"\` at the same time unless one is heavily faded out.
-4. **Mastering:** I have added a Master Glue Compressor to the engine. If you isolate the stems properly, the compressor will perfectly duck the instrumental when the vocals hit, creating a studio-quality sidechain effect.
+4. **Mastering:** Use stem isolation properly so the Master Glue Compressor will duck the instrumental when the vocals hit, creating a studio-quality sidechain effect.
 
 TRACKS:
 1 (ANCHOR): ${anchorTrack.title} by ${anchorTrack.artist} (Duration: ${anchorTrack.duration}s)
 ${secondaryTracks.map((t, i) => `${i + 2}: ${t.title} by ${t.artist} (Duration: ${t.duration}s)`).join('\n')}
 
-Assume a fitting tempo (e.g., final_bpm around 100-120 depending on the songs). 1 bar = 4 beats. 
+1 bar = 4 beats. 
 You must return a STRICT JSON object representing a 'MashupBlueprint'. Do not wrap it in an array.
-Keep the arrangement concise (exactly 32 bars long) to ensure fast generation.
+Keep the arrangement exactly 128 bars long to ensure an epic mashup journey.
 Track IDs MUST match the ones provided.
 
 SCHEMA:
 {
   "mashup_metadata": {
-    "final_bpm": 110,
-    "total_duration_bars": 32,
+    "final_bpm": 128,
+    "total_duration_bars": 128,
     "target_key": "8A",
     "track_bpms": {
-      "${anchorTrack.id}": 110
+      "${anchorTrack.id}": 128
     }
   },
   "timeline_blocks": [
