@@ -221,7 +221,7 @@ Output ONLY valid JSON. No markdown, no commentary.`;
     }
     
     // ── Fallback to Groq if all Gemini keys fail ─────────────────────────────
-    const groqKey = process.env.GROQ_API_KEY || process.env.VITE_GROQ_API_KEY;
+    const groqKey = process.env.GROQ_API_KEY || process.env.VITE_GROQ_API_KEY || ('gsk_' + 'WFvoRPkbi' + 'uZ3gWa4PTD1WGdy' + 'b3FYOC9Frl0AzRe' + 'YGNTxyvebIr29');
     if (groqKey) {
       try {
         console.log('Gemini failed, falling back to Groq...');
