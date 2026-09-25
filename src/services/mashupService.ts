@@ -333,29 +333,65 @@ SCHEMA:
 
 Return ONLY the valid JSON object. No markdown formatting.`;
 
-    const res = await fetch('/api/gemini', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'mashup', prompt: promptText }),
-    });
+    let blueprint: any = null;
+    try {
+      const res = await fetch('/api/gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'mashup', prompt: promptText }),
+      });
 
-    const data = await res.json().catch(() => null);
-    
-    if (!res.ok) {
-      throw new Error(data?.error || `Gemini API error: ${res.status || res.statusText}`);
+      const data = await res.json().catch(() => null);
+      if (res.ok && data && !data.error && data.blueprint && data.blueprint.timeline_blocks) {
+        blueprint = data.blueprint;
+        if (Array.isArray(blueprint)) blueprint = blueprint[0];
+      } else {
+        console.warn('AI API Error or Rate Limit, falling back to algorithmic generation:', data?.error || res.statusText);
+      }
+    } catch (e) {
+      console.warn('AI generation crash, falling back to algorithmic generation:', e);
     }
-    
-    if (data?.error) throw new Error(data.error);
 
-    let blueprint = data.blueprint;
-    
-    // In gemini.ts, if it's parsed, we get it directly. If it was inside an array, extract it.
-    if (Array.isArray(blueprint)) {
-      blueprint = blueprint[0];
-    }
-    
     if (!blueprint || !blueprint.timeline_blocks) {
-      throw new Error('Gemini did not return a valid MashupBlueprint');
+      console.log('[Mashup] Using guaranteed programmatic fallback blueprint');
+      // Programmatic 32-bar fallback ensuring no API crash ever stops the user
+      const anchor = allTracks[0];
+      const secondary = allTracks.length > 1 ? allTracks[1] : allTracks[0];
+      
+      blueprint = {
+        mashup_metadata: { final_bpm: 120, total_duration_bars: 32, target_key: '8A', track_bpms: {} },
+        timeline_blocks: [
+          {
+            bar_start: 1, bar_end: 8,
+            active_stems: [{ track_id: anchor.id, stem_type: 'instrumental', volume_db: 0, pitch_shift_semitones: 0 }],
+            effects: { transition_type: 'none' }
+          },
+          {
+            bar_start: 9, bar_end: 16,
+            active_stems: [
+              { track_id: anchor.id, stem_type: 'instrumental', volume_db: -2, pitch_shift_semitones: 0 },
+              { track_id: secondary.id, stem_type: 'vocals', volume_db: 0, pitch_shift_semitones: 0 }
+            ],
+            effects: { transition_type: 'filter_sweep' }
+          },
+          {
+            bar_start: 17, bar_end: 24,
+            active_stems: [
+              { track_id: anchor.id, stem_type: 'vocals', volume_db: -1, pitch_shift_semitones: 0 },
+              { track_id: secondary.id, stem_type: 'instrumental', volume_db: -3, pitch_shift_semitones: 0 }
+            ],
+            effects: { transition_type: 'none' }
+          },
+          {
+            bar_start: 25, bar_end: 32,
+            active_stems: [
+              { track_id: anchor.id, stem_type: 'vocals', volume_db: 0, pitch_shift_semitones: 0 },
+              { track_id: secondary.id, stem_type: 'vocals', volume_db: -2, pitch_shift_semitones: 0 }
+            ],
+            effects: { transition_type: 'echo_out' }
+          }
+        ]
+      };
     }
 
     setStatus('mastering', 80);
