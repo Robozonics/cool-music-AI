@@ -156,13 +156,16 @@ Output ONLY valid JSON. No markdown, no commentary.`;
 
     let lastResponse: Response | null = null;
     const MAX_RETRIES_PER_KEY = 2;
-
     for (const apiKey of keys) {
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent`;
       let keyFailed = false;
 
       for (let attempt = 1; attempt <= MAX_RETRIES_PER_KEY; attempt++) {
         try {
+          const isRetryOnAlternativeModel = attempt === 2;
+          const endpoint = isRetryOnAlternativeModel 
+            ? `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent`
+            : `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent`;
+
           const response = await fetch(endpoint, {
             method: 'POST',
             headers: { 
@@ -175,7 +178,11 @@ Output ONLY valid JSON. No markdown, no commentary.`;
           if (!response.ok) {
             lastResponse = response;
             if (response.status === 429) {
-              console.warn(`Key ending in ${apiKey.slice(-5)} rate limited (429). Switching to next key...`);
+              if (attempt === 1) {
+                 console.warn(`Key rate limited on primary model. Trying gemini-3.7-flash...`);
+                 continue; // try attempt 2 with alternative model
+              }
+              console.warn(`Key rate limited on BOTH models. Switching to next key...`);
               keyFailed = true;
               break; // Break inner loop, try next key
             }
