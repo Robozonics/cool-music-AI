@@ -296,29 +296,25 @@ The user wants a highly emotional, beautifully intertwined mashup (like the vira
 You must sequence these tracks musically over a bar-based timeline. 
 
 CRITICAL MASHUP RULES:
-1. **Length**: The mashup MUST be exactly 96 bars long (around 3 to 4 minutes depending on tempo). DO NOT make it short.
-2. **Aggressive Intertwining**: DO NOT just play one song and then the next. Mix them aggressively! Swap vocals back and forth every 8 to 16 bars. Layer Track 2's vocals over Track 1's instrumental, then immediately swap. Create complex overlaps.
-3. **Effects & Tempo**: Set a high-energy final_bpm (e.g., 125-135). Use transition effects heavily between blocks (high_pass_sweep, low_pass_sweep, cut, crossfade) to build tension and drop the beat. 
-4. **Harden the Voice**: Use \`pitch_shift_semitones\` on vocal stems (e.g., +1, -1, or -2) to "harden" or shift the voice for a unique, gritty, or elevated effect. Increase volume_db (e.g. +2) for vocals during the climax.
+1. **Length**: The mashup MUST be exactly 96 bars long.
+2. **Aggressive Intertwining**: Swap vocals back and forth every 8 to 16 bars. Layer Track 2's vocals over Track 1's instrumental, then immediately swap.
+3. **Effects & Tempo**: Set a high-energy final_bpm (e.g., 125-135). Use transition effects heavily between blocks (high_pass_sweep, low_pass_sweep, cut, crossfade) to build tension. 
+4. **Harden the Voice**: Use \`pitch_shift_semitones\` on vocal stems (e.g., +1, -1, or -2) to "harden" or shift the voice for a unique effect. Increase volume_db (e.g. +2) for vocals during the climax.
 
 CRITICAL AUDIO ENGINEERING RULES:
-1. **Key Clashing:** If the two tracks are in incompatible musical keys, apply small pitch_shift_semitones (+1 or -1) to make them match better, or rely on stems (drums/instrumental vs vocals).
-2. **Frequency Clashing:** Since this is an automated Web Audio engine, playing two "full" tracks at the same time will cause a loud, muddy mess. 
-   - You MUST use the \`stem_type\` field to isolate frequencies.
-   - If a track is providing the beat/melody, set its \`stem_type\` to "instrumental" or "drums" (this completely scoops out its vocal frequencies).
-   - If a track is providing the singing, set its \`stem_type\` to "vocals".
-   - **HARDENED VOICE**: To harden the vocals for an epic climax, set \`stem_type\` to "hard_vocals". This applies a sharp 600Hz high-pass and a volume boost to make the vocals pierce through the mix.
-3. NEVER have two tracks active with \`stem_type: "full"\` at the same time unless one is heavily faded out.
-4. **Mastering:** Use stem isolation properly so the Master Glue Compressor will duck the instrumental when the vocals hit, creating a studio-quality sidechain effect.
+1. **Key Clashing:** If keys are incompatible, apply small pitch_shift_semitones (+1 or -1) to match them.
+2. **Frequency Clashing:** You MUST use the \`stem_type\` field to isolate frequencies to avoid mud.
+   - Beat/Melody: "instrumental" or "drums"
+   - Singing: "vocals"
+   - Epic Climax Singing: "hard_vocals" (applies a 600Hz high-pass and volume boost).
+3. NEVER have two tracks active with \`stem_type: "full"\` at the same time.
+4. **Mastering:** Use stem isolation properly for a sidechain effect.
+
+CRITICAL PERFORMANCE RULE (PREVENT TIMEOUTS):
+To keep the JSON efficient, you MUST cover the 96 bars using exactly 6 to 12 \`timeline_blocks\`. Group the arrangement into 8-bar or 16-bar chunks (e.g., 1-8, 9-24, 25-32). DO NOT create a new block for every single bar. 
 
 TRACKS:
-1 (ANCHOR): ${anchorTrack.title} by ${anchorTrack.artist} (Duration: ${anchorTrack.duration}s)
-${secondaryTracks.map((t, i) => `${i + 2}: ${t.title} by ${t.artist} (Duration: ${t.duration}s)`).join('\n')}
-
-1 bar = 4 beats. 
-You must return a STRICT JSON object representing a 'MashupBlueprint'. Do not wrap it in an array.
-Keep the arrangement exactly 96 bars long to ensure an epic mashup journey.
-Track IDs MUST match the ones provided.
+1 (ANCHOR): ${anchorTrack.title} by${anchorTrack.artist} (Duration: ${anchorTrack.duration}s)${secondaryTracks.map((t, i) => `${i + 2}: ${t.title} by ${t.artist} (Duration: ${t.duration}s)`).join('\n')}
 
 SCHEMA:
 {
@@ -342,7 +338,7 @@ SCHEMA:
   ]
 }
 
-Return ONLY the valid JSON object. No markdown formatting.`;
+Return ONLY the valid JSON object. No markdown formatting, no backticks, no explanations.`;
 
     let blueprint: any = null;
     const res = await fetch('/api/gemini', {
