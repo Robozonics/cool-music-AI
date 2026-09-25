@@ -195,8 +195,19 @@ Output ONLY valid JSON. No markdown, no commentary.`;
           // Strip markdown code blocks if Gemini wraps them
           text = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
           
-          // All current types (mood, search, playlist, translate, mashup) return an ARRAY.
-          const jsonStart = text.indexOf('[');
+          // Find the first JSON array or object
+          const arrayStart = text.indexOf('[');
+          const objStart = text.indexOf('{');
+          
+          let jsonStart = -1;
+          if (arrayStart !== -1 && objStart !== -1) {
+            jsonStart = Math.min(arrayStart, objStart);
+          } else if (arrayStart !== -1) {
+            jsonStart = arrayStart;
+          } else if (objStart !== -1) {
+            jsonStart = objStart;
+          }
+
           if (jsonStart > 0) text = text.slice(jsonStart);
 
           const parsed = JSON.parse(text);
