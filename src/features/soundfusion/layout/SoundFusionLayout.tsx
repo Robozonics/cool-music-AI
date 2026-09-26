@@ -5,7 +5,8 @@ import { SyncedLyrics } from '../../../components/SyncedLyrics';
 import { usePlayerStore } from '../../../store/usePlayerStore';
 import { useMashupStore } from '../../../store/useMashupStore';
 import { MashupStudioPanel } from '../../../components/MashupStudioPanel';
-import { Camera, Sun, Moon, AudioWaveform, Layers } from 'lucide-react';
+import { CollabPlaylistModal } from '../../../components/CollabPlaylistModal';
+import { Camera, Sun, Moon, AudioWaveform, Layers, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 
@@ -23,6 +24,7 @@ export const SoundFusionLayout: React.FC<LayoutProps> = ({ children, activeTab, 
   const isMashupOpen = useMashupStore(state => state.isOpen);
   const setMashupOpen = useMashupStore(state => state.setIsOpen);
   const [isDark, setIsDark] = useState(true);
+  const [isCollabOpen, setIsCollabOpen] = useState(false);
 
   // Toggle dark/light theme class on document body
   useEffect(() => {
@@ -96,6 +98,15 @@ export const SoundFusionLayout: React.FC<LayoutProps> = ({ children, activeTab, 
             <Camera className="w-4 h-4" />
             <span>Share Snippet</span>
           </motion.button>
+
+          {/* Party / Collab session */}
+          <button
+            onClick={() => setIsCollabOpen(true)}
+            className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${isDark ? 'bg-white/10 hover:bg-fuchsia-500/20 hover:text-fuchsia-300 text-white' : 'bg-black/10 hover:bg-fuchsia-500/10 text-black'}`}
+            title="Group Listening Session"
+          >
+            <Users className="w-4 h-4" />
+          </button>
           
           <button 
             onClick={() => setMashupOpen(!isMashupOpen)}
@@ -214,6 +225,9 @@ export const SoundFusionLayout: React.FC<LayoutProps> = ({ children, activeTab, 
       
       {/* Gen Z Floating Glass Player Bar */}
       <FloatingGlassPlayer />
+
+      {/* Collab session modal */}
+      <CollabPlaylistModal isOpen={isCollabOpen} onClose={() => setIsCollabOpen(false)} />
     </div>
   );
 };

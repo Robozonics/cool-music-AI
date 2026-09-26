@@ -236,7 +236,7 @@ export const SyncedLyrics: React.FC<{ inline?: boolean }> = ({ inline = false })
             <p className="text-acid-lime/70 animate-pulse mt-4 font-bold tracking-widest uppercase">Syncing Vibes...</p>
           </div>
         ) : displayLines ? (
-          <div className="flex flex-col space-y-6 pb-64">
+          <div className="flex flex-col space-y-4 pb-64">
             {displayLines.map((line, i) => {
               const isActive = i === activeIndex;
               const isPast = i < activeIndex;
@@ -247,18 +247,46 @@ export const SyncedLyrics: React.FC<{ inline?: boolean }> = ({ inline = false })
                   key={i}
                   ref={el => { lineRefs.current[i] = el; }}
                   onClick={() => seek(line.time)}
-                  className={`cursor-pointer transition-all duration-500 ease-out origin-left ${
-                    isActive
-                      ? 'text-3xl sm:text-4xl font-black text-acid-lime scale-105 drop-shadow-[0_0_15px_rgba(204,255,0,0.6)] py-2'
-                      : isPast
-                        ? 'text-neutral-500 hover:text-neutral-300'
-                        : 'text-neutral-500 hover:text-neutral-300'
-                  }`}
+                  className={`cursor-pointer transition-all duration-500 ease-out ${isActive ? 'py-2' : ''}`}
                 >
-                  {/* Original lyric line */}
-                  <span>{line.text}</span>
+                  {/* Main lyric line */}
+                  <div
+                    className={`leading-tight transition-all duration-500 ${
+                      isActive
+                        ? 'text-3xl sm:text-4xl font-black bg-gradient-to-r from-acid-lime via-[#e0ff80] to-cyan-300 bg-clip-text text-transparent drop-shadow-[0_0_20px_rgba(204,255,0,0.5)] scale-105 origin-left'
+                        : isPast
+                        ? 'text-base sm:text-lg font-semibold text-neutral-600 hover:text-neutral-400'
+                        : 'text-base sm:text-lg font-semibold text-neutral-500 hover:text-neutral-300'
+                    }`}
+                    style={{ transform: isActive ? 'scale(1.05)' : 'scale(1)', transformOrigin: 'left center', display: 'inline-block' }}
+                  >
+                    {isKaraokeMode && isActive ? (
+                      // Word-by-word glow effect for karaoke
+                      line.text.split(' ').map((word, wi) => (
+                        <motion.span
+                          key={wi}
+                          initial={{ opacity: 0.4, textShadow: 'none' }}
+                          animate={{ opacity: 1, textShadow: '0 0 20px rgba(204,255,0,0.8)' }}
+                          transition={{ delay: wi * 0.12, duration: 0.3 }}
+                          className="mr-2 inline-block"
+                        >
+                          {word}
+                        </motion.span>
+                      ))
+                    ) : (
+                      <span>{line.text}</span>
+                    )}
+                  </div>
 
-                  {/* Translation — Feature 5c: inline beneath each line */}
+                  {/* Active line accent bar */}
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeLyricBar"
+                      className="mt-1.5 h-0.5 w-16 bg-gradient-to-r from-acid-lime to-cyan-400 rounded-full"
+                    />
+                  )}
+
+                  {/* Translation beneath active line */}
                   <AnimatePresence>
                     {showTranslation && translLine.translation && translLine.translation !== line.text && (
                       <motion.div
@@ -267,7 +295,7 @@ export const SyncedLyrics: React.FC<{ inline?: boolean }> = ({ inline = false })
                         exit={{ opacity: 0, height: 0 }}
                         className={`overflow-hidden mt-1 ${
                           isActive
-                            ? 'text-lg sm:text-xl font-medium text-acid-lime/70'
+                            ? 'text-lg sm:text-xl font-medium text-acid-lime/60'
                             : 'text-sm text-neutral-600'
                         }`}
                       >

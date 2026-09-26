@@ -19,7 +19,9 @@ import {
   Blend,
   Video,
   X,
+  Users,
 } from 'lucide-react';
+import { CollabPlaylistModal } from './CollabPlaylistModal';
 import { usePlayerStore } from '../store/usePlayerStore';
 
 export const FloatingGlassPlayer: React.FC = () => {
@@ -62,6 +64,7 @@ export const FloatingGlassPlayer: React.FC = () => {
   const [showQueue, setShowQueue] = useState<boolean>(false);
   const [showEqualizer, setShowEqualizer] = useState<boolean>(false);
   const [eqPreset] = useState<string>('Bass Boost');
+  const [isCollabOpen, setIsCollabOpen] = useState<boolean>(false);
 
   const formatTime = (seconds: number): string => {
     if (isNaN(seconds)) return '0:00';
@@ -349,27 +352,39 @@ export const FloatingGlassPlayer: React.FC = () => {
             <ListMusic className="w-3 h-3 lg:w-4 lg:h-4" />
           </motion.button>
 
-          {/* Spotify Connect Toggle */}
+          {/* Musify Connect */}
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={() => setConnectModalOpen(true)}
             className={`hidden xl:block p-1.5 lg:p-2 rounded-xl transition-all text-zinc-400 hover:text-white shrink-0`}
+            title="Musify Connect – Switch Devices"
           >
             <Laptop2 className="w-3 h-3 lg:w-4 lg:h-4" />
           </motion.button>
 
-          {/* Crossfade Toggle — Feature 3b */}
+          {/* Collab / Party Session */}
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={() => setIsCollabOpen(true)}
+            title="Group Listening Session"
+            className="hidden xl:flex items-center gap-1 p-1.5 lg:p-2 rounded-xl transition-all text-zinc-400 hover:text-purple-400 shrink-0"
+          >
+            <Users className="w-3 h-3 lg:w-4 lg:h-4" />
+          </motion.button>
+
+          {/* Crossfade Toggle — Visual pill showing ON/OFF */}
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={toggleCrossfade}
-            title={isCrossfadeEnabled ? 'Smart Mix Transitions: ON (3s)' : 'Smart Mix Transitions: OFF'}
-            className={`hidden lg:block p-1.5 lg:p-2 rounded-xl transition-all shrink-0 ${
+            title={isCrossfadeEnabled ? 'Crossfade & Gapless: ON' : 'Crossfade & Gapless: OFF'}
+            className={`hidden lg:flex items-center gap-1 px-2 py-1 rounded-xl transition-all shrink-0 text-[10px] font-bold ${
               isCrossfadeEnabled
-                ? 'bg-lime-400/20 text-lime-400 border border-lime-400/40 shadow-[0_0_10px_rgba(163,230,53,0.2)]'
-                : 'text-zinc-400 hover:text-white'
+                ? 'bg-lime-400/15 text-lime-400 border border-lime-400/30 shadow-[0_0_10px_rgba(163,230,53,0.15)]'
+                : 'bg-white/5 text-zinc-500 hover:text-white border border-white/10'
             }`}
           >
-            <Blend className="w-3 h-3 lg:w-4 lg:h-4" />
+            <Blend className="w-3 h-3" />
+            <span className="hidden xl:inline">{isCrossfadeEnabled ? 'XFADE' : 'XFADE'}</span>
           </motion.button>
 
           {/* Equalizer Popover Trigger */}
@@ -446,6 +461,9 @@ export const FloatingGlassPlayer: React.FC = () => {
           </motion.button>
         </div>
       </motion.div>
+
+      {/* Collab modal */}
+      <CollabPlaylistModal isOpen={isCollabOpen} onClose={() => setIsCollabOpen(false)} />
     </div>
   );
 };

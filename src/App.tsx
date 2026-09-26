@@ -18,15 +18,14 @@ import { ConnectDeviceModal } from './components/ConnectDeviceModal';
 import { SamplesFeed } from './components/SamplesFeed';
 import { QueuePanel } from './components/QueuePanel';
 import { MobileAICommandBox } from './components/MobileAICommandBox';
+import { CollabPlaylistModal } from './components/CollabPlaylistModal';
 import { usePlayerStore } from './store/usePlayerStore';
-import { WifiOff, AlertTriangle, Settings, Sparkles } from 'lucide-react';
-
+import { WifiOff, AlertTriangle, Settings, Sparkles, Mic, Layers, Users } from 'lucide-react';
 import { useAudioAnalyzer } from './store/useAudioAnalyzer';
 import { SoundFusionLayout } from './features/soundfusion/layout/SoundFusionLayout';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useWakeWord } from './hooks/useWakeWord';
 import { useAICommandProcessor } from './hooks/useAICommandProcessor';
-import { Mic, Layers } from 'lucide-react';
 import { useMashupStore } from './store/useMashupStore';
 import { MashupStudioPanel } from './components/MashupStudioPanel';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -51,6 +50,7 @@ function App() {
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [isAiCommandOpen, setAiCommandOpen] = useState(false);
+  const [isCollabOpen, setIsCollabOpen] = useState(false);
   const isMashupOpen = useMashupStore(state => state.isOpen);
   const setMashupOpen = useMashupStore(state => state.setIsOpen);
 
@@ -149,6 +149,13 @@ function App() {
             >
               <Sparkles className="w-6 h-6" />
             </button>
+            <button
+              onClick={() => setIsCollabOpen(true)}
+              className="p-2 text-fuchsia-400 hover:text-fuchsia-300 transition"
+              title="Group Listening Session"
+            >
+              <Users className="w-5 h-5" />
+            </button>
             <button 
               onClick={() => setMashupOpen(!isMashupOpen)}
               className={`p-2 transition rounded-full ${isMashupOpen ? 'text-acid-lime bg-acid-lime/10 shadow-[0_0_15px_rgba(204,255,0,0.4)]' : 'text-gray-400 hover:text-white'}`}
@@ -200,6 +207,7 @@ function App() {
       <VisualCanvasEngine />
       <AddToPlaylistModal />
       <QueuePanel />
+      <CollabPlaylistModal isOpen={isCollabOpen} onClose={() => setIsCollabOpen(false)} />
       
       {/* Premium Texture Overlay */}
       <div className="noise-overlay" />
