@@ -9,19 +9,13 @@ import {
 } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
 
-// ── Mock party session data ───────────────────────────────────────────
-const MOCK_PARTICIPANTS = [
+// ── Initial mock data (will be synced via BroadcastChannel) ─────────────
+const INITIAL_PARTICIPANTS = [
   { id: 'p1', name: 'You', emoji: '🎧', isHost: true, isListening: true },
-  { id: 'p2', name: 'Alex', emoji: '🎸', isHost: false, isListening: true },
-  { id: 'p3', name: 'Sara', emoji: '🎤', isHost: false, isListening: true },
-  { id: 'p4', name: 'Dev', emoji: '🎹', isHost: false, isListening: false },
 ];
 
-const MOCK_ACTIVITY = [
-  { id: 'a1', user: 'Alex', emoji: '🎸', action: 'added to queue', track: 'Blinding Lights', time: '2m ago' },
-  { id: 'a2', user: 'Sara', emoji: '🎤', action: 'liked', track: 'As It Was', time: '5m ago' },
-  { id: 'a3', user: 'Dev', emoji: '🎹', action: 'removed', track: 'Bad Guy', time: '8m ago' },
-  { id: 'a4', user: 'You', emoji: '🎧', action: 'added to queue', track: 'Levitating', time: '12m ago' },
+const INITIAL_ACTIVITY = [
+  { id: 'a1', user: 'System', emoji: '🤖', action: 'started', track: 'the session', time: 'just now' },
 ];
 
 const EMOJI_REACTIONS = ['🔥', '💯', '🎉', '❤️', '😍', '🤩', '👏', '✨'];
@@ -49,6 +43,52 @@ export const CollabPlaylistModal: React.FC<Props> = ({ isOpen, onClose }) => {
   const [showReactions, setShowReactions] = useState(false);
   const [isPrivate, setIsPrivate] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [participants, setParticipants] = useState(INITIAL_PARTICIPANTS);
+  const [activities, setActivities] = useState(INITIAL_ACTIVITY);
+  const channelRef = useRef<BroadcastChannel | null>(null);
+
+  useEffect(() => {
+    if (isOpen && !channelRef.current) {
+      const channel = new BroadcastChannel('musify-collab-session');
+      channelRef.current = channel;
+
+      channel.onmessage = (event) => {
+        const { type, payload } = event.data;
+        if (type === 'NEW_MESSAGE') {
+          setMessages(prev => [...prev, payload]);
+        } else if (type === 'NEW_REACTION') {
+          setReactions(prev => ({ ...prev, [payload.emoji]: (prev[payload.emoji] || 0) + 1 }));
+          showFloatingReaction(payload.emoji);
+        } else if (type === 'NEW_PARTICIPANT') {
+          setParticipants(prev => {
+            if (prev.find(p => p.id === payload.id)) return prev;
+            return [...prev, payload];
+          });
+        }
+      };
+
+      // Broadcast our presence when we open the modal
+      channel.postMessage({
+        type: 'NEW_PARTICIPANT',
+        payload: { id: Math.random().toString(), name: 'Collab User', emoji: '😎', isHost: false, isListening: true }
+      });
+    }
+
+    return () => {
+      if (!isOpen && channelRef.current) {
+        channelRef.current.close();
+        channelRef.current = null;
+      }
+    };
+  }, [isOpen]);
+
+  const showFloatingReaction = (emoji: string) => {
+    const el = document.createElement('div');
+    el.textContent = emoji;
+    el.style.cssText = 'position:fixed;bottom:200px;right:60px;font-size:2rem;z-index:9999;pointer-events:none;animation:floatUp 1.5s ease-out forwards';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1600);
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -56,25 +96,23 @@ export const CollabPlaylistModal: React.FC<Props> = ({ isOpen, onClose }) => {
 
   const handleSendMessage = () => {
     if (!message.trim()) return;
-    setMessages(prev => [...prev, {
+    const newMsg = {
       id: Date.now().toString(),
       user: 'You',
       emoji: '🎧',
       text: message.trim(),
       time: 'now',
-    }]);
+    };
+    setMessages(prev => [...prev, newMsg]);
+    channelRef.current?.postMessage({ type: 'NEW_MESSAGE', payload: { ...newMsg, user: 'Collab User' } });
     setMessage('');
   };
 
   const handleReact = (emoji: string) => {
     setReactions(prev => ({ ...prev, [emoji]: (prev[emoji] || 0) + 1 }));
     setShowReactions(false);
-    // Show floating reaction animation
-    const el = document.createElement('div');
-    el.textContent = emoji;
-    el.style.cssText = 'position:fixed;bottom:200px;right:60px;font-size:2rem;z-index:9999;pointer-events:none;animation:floatUp 1.5s ease-out forwards';
-    document.body.appendChild(el);
-    setTimeout(() => el.remove(), 1600);
+    showFloatingReaction(emoji);
+    channelRef.current?.postMessage({ type: 'NEW_REACTION', payload: { emoji } });
   };
 
   const handleCopyCode = () => {
@@ -126,7 +164,7 @@ export const CollabPlaylistModal: React.FC<Props> = ({ isOpen, onClose }) => {
                   <div className="flex items-center gap-2">
                     <div className="w-1.5 h-1.5 bg-purple-400 rounded-full animate-pulse" />
                     <span className="text-[10px] text-zinc-500 font-medium">
-                      {MOCK_PARTICIPANTS.filter(p => p.isListening).length} listening now
+                      {participants.filter(p => p.isListening).length} listening now
                     </span>
                     <button
                       onClick={() => setIsPrivate(!isPrivate)}
@@ -156,7 +194,7 @@ export const CollabPlaylistModal: React.FC<Props> = ({ isOpen, onClose }) => {
             {/* Participants row */}
             <div className="flex items-center gap-2 mb-4">
               <div className="flex -space-x-2">
-                {MOCK_PARTICIPANTS.map(p => (
+                {participants.map(p => (
                   <div
                     key={p.id}
                     className={`w-8 h-8 rounded-full bg-gradient-to-br from-purple-500/40 to-fuchsia-500/30 border-2 flex items-center justify-center text-sm z-10 relative ${
@@ -267,7 +305,7 @@ export const CollabPlaylistModal: React.FC<Props> = ({ isOpen, onClose }) => {
 
               {/* Chat */}
               {tab === 'party' && (
-                <motion.div key="chat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col overflow-hidden">
+                <motion.div key="chat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col min-h-0">
                   <div className="flex-1 overflow-y-auto p-4 space-y-3">
                     {messages.map(msg => (
                       <div key={msg.id} className={`flex gap-2 ${msg.user === 'You' ? 'flex-row-reverse' : ''}`}>
@@ -289,7 +327,7 @@ export const CollabPlaylistModal: React.FC<Props> = ({ isOpen, onClose }) => {
                     <div ref={messagesEndRef} />
                   </div>
                   {/* Input */}
-                  <div className="p-3 border-t border-white/5 flex gap-2">
+                  <div className="p-3 border-t border-white/5 flex gap-2 pb-[calc(12px+env(safe-area-inset-bottom))]">
                     <input
                       value={message}
                       onChange={e => setMessage(e.target.value)}
@@ -300,7 +338,7 @@ export const CollabPlaylistModal: React.FC<Props> = ({ isOpen, onClose }) => {
                     <button
                       onClick={handleSendMessage}
                       disabled={!message.trim()}
-                      className="p-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white disabled:opacity-40 transition"
+                      className="p-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white disabled:opacity-40 transition shrink-0"
                     >
                       <Send className="w-4 h-4" />
                     </button>
@@ -310,8 +348,8 @@ export const CollabPlaylistModal: React.FC<Props> = ({ isOpen, onClose }) => {
 
               {/* Activity feed */}
               {tab === 'activity' && (
-                <motion.div key="activity" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 overflow-y-auto p-4 space-y-2">
-                  {MOCK_ACTIVITY.map(act => (
+                <motion.div key="activity" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 overflow-y-auto p-4 space-y-2 pb-[calc(16px+env(safe-area-inset-bottom))]">
+                  {activities.map(act => (
                     <div key={act.id} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/3 transition">
                       <div className="w-8 h-8 rounded-full bg-white/8 flex items-center justify-center text-sm shrink-0">
                         {act.emoji}
@@ -331,7 +369,7 @@ export const CollabPlaylistModal: React.FC<Props> = ({ isOpen, onClose }) => {
 
               {/* Collaborative queue */}
               {tab === 'queue' && (
-                <motion.div key="queue" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 overflow-y-auto p-4 space-y-2">
+                <motion.div key="queue" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 overflow-y-auto p-4 space-y-2 pb-[calc(16px+env(safe-area-inset-bottom))]">
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-xs font-black uppercase tracking-widest text-zinc-500">
                       {queue.length} tracks in queue

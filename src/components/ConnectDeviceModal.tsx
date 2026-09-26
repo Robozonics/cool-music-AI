@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Smartphone, Monitor, Tv, Cast, Bluetooth, Wifi, QrCode,
@@ -6,7 +6,7 @@ import {
   Play, Pause, SkipForward, Volume2,
   Laptop, Watch, Speaker, Headphones, Zap, Lock
 } from 'lucide-react';
-import { usePlayerStore } from '../store/usePlayerStore';
+import { usePlayerStore, nativeAudio } from '../store/usePlayerStore';
 
 // ── Session code generator ────────────────────────────────────────────
 const generateSessionCode = (): string => {
@@ -19,15 +19,13 @@ const generateSessionCode = (): string => {
   return code;
 };
 
-// ── Simulated peer devices ─────────────────────────────────────────────
-const MOCK_DEVICES = [
-  { id: 'dev1', name: 'My MacBook Pro', type: 'laptop', status: 'available' as const, signal: 4 },
-  { id: 'dev2', name: 'Living Room TV', type: 'tv', status: 'available' as const, signal: 3 },
-  { id: 'dev3', name: 'iPhone 15 Pro', type: 'phone', status: 'available' as const, signal: 5 },
-  { id: 'dev4', name: 'Galaxy Watch', type: 'watch', status: 'busy' as const, signal: 2 },
-  { id: 'dev5', name: 'Sonos Speaker', type: 'speaker', status: 'available' as const, signal: 4 },
-  { id: 'dev6', name: 'AirPods Pro', type: 'headphones', status: 'available' as const, signal: 5 },
-];
+interface AppDevice {
+  id: string;
+  name: string;
+  type: string;
+  status: 'available' | 'busy';
+  signal: number;
+}
 
 const DeviceIcon: React.FC<{ type: string; className?: string }> = ({ type, className = 'w-5 h-5' }) => {
   switch (type) {
@@ -123,6 +121,7 @@ export const ConnectDeviceModal: React.FC = () => {
   const setConnectModalOpen = usePlayerStore(state => state.setConnectModalOpen);
   const currentTrack = usePlayerStore(state => state.currentTrack);
 
+  const [devices, setDevices] = useState<AppDevice[]>([]);
   const [tab, setTab] = useState<'devices' | 'sync' | 'remote'>('devices');
   const [sessionCode] = useState(generateSessionCode);
   const [joinCode, setJoinCode] = useState('');
@@ -132,6 +131,35 @@ export const ConnectDeviceModal: React.FC = () => {
   const [syncMode, setSyncMode] = useState<'host' | 'join'>('host');
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [sessionPeers, setSessionPeers] = useState<string[]>([]);
+  const [syncChannel, setSyncChannel] = useState<BroadcastChannel | null>(null);
+
+  useEffect(() => {
+    // Fetch real audio output devices
+    if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+      navigator.mediaDevices.enumerateDevices().then(deviceInfos => {
+        const audioOutputs = deviceInfos.filter(d => d.kind === 'audiooutput' && d.deviceId !== 'default');
+        const realDevices = audioOutputs.map((d, i) => ({
+          id: d.deviceId,
+          name: d.label || `Audio Output ${i + 1}`,
+          type: d.label.toLowerCase().includes('headphone') || d.label.toLowerCase().includes('airpods') ? 'headphones' : 'speaker',
+          status: 'available' as const,
+          signal: 5
+        }));
+        
+        // Add a mock remote device to demonstrate the cross-device switching concept
+        // (Since web APIs don't easily see other devices like TVs on the network without Cast API)
+        const mockDevices: AppDevice[] = [
+          { id: 'mock-tv', name: 'Living Room TV', type: 'tv', status: 'available', signal: 4 },
+          { id: 'mock-laptop', name: 'MacBook Pro', type: 'laptop', status: 'available', signal: 5 },
+        ];
+        
+        setDevices([...realDevices, ...mockDevices]);
+      }).catch(err => {
+        console.error('Error fetching devices', err);
+        setDevices([{ id: 'mock1', name: 'Local Speaker', type: 'speaker', status: 'available', signal: 5 }]);
+      });
+    }
+  }, []);
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(sessionCode).catch(() => {});
@@ -141,24 +169,67 @@ export const ConnectDeviceModal: React.FC = () => {
 
   const handleConnect = async (deviceId: string, deviceName: string) => {
     setIsConnecting(deviceId);
-    await new Promise(r => setTimeout(r, 1200));
-    setIsConnecting(null);
-    setConnectedDevice(deviceName);
-    setTab('remote');
+    
+    // Attempt to set actual audio output device if it's a real device id
+    try {
+      if ((nativeAudio as any).setSinkId && !deviceId.startsWith('mock-')) {
+        await (nativeAudio as any).setSinkId(deviceId);
+      } else {
+        // Mock connection delay
+        await new Promise(r => setTimeout(r, 1200));
+      }
+      setConnectedDevice(deviceName);
+      setTab('remote');
+    } catch (e) {
+      console.error('Failed to set audio output device', e);
+    } finally {
+      setIsConnecting(null);
+    }
   };
 
   const handleJoinSession = () => {
     if (joinCode.length < 7) return;
+    const channel = new BroadcastChannel(`musify-sync-${joinCode}`);
+    
+    channel.onmessage = (e) => {
+      if (e.data.type === 'peer_joined') {
+        setSessionPeers(prev => [...prev, e.data.peerId]);
+      } else if (e.data.type === 'play_track' && e.data.track) {
+        usePlayerStore.getState().playTrack(e.data.track);
+      }
+    };
+    
+    channel.postMessage({ type: 'peer_joined', peerId: `User_${Math.floor(Math.random()*1000)}` });
+    setSyncChannel(channel);
     setIsSessionActive(true);
-    setSessionPeers(['User_Alpha', 'User_Beta']);
   };
 
   const handleStartSession = () => {
+    const channel = new BroadcastChannel(`musify-sync-${sessionCode}`);
+    
+    channel.onmessage = (e) => {
+      if (e.data.type === 'peer_joined') {
+        setSessionPeers(prev => Array.from(new Set([...prev, e.data.peerId])));
+      }
+    };
+    
+    // Listen to player state to sync to peers
+    usePlayerStore.subscribe((state, prevState) => {
+      if (state.currentTrack?.id !== prevState.currentTrack?.id) {
+        channel.postMessage({ type: 'play_track', track: state.currentTrack });
+      }
+    });
+
+    setSyncChannel(channel);
     setIsSessionActive(true);
     setSessionPeers([]);
-    // Simulate someone joining
-    setTimeout(() => setSessionPeers(['User_Gamma']), 3000);
   };
+
+  useEffect(() => {
+    return () => {
+      if (syncChannel) syncChannel.close();
+    };
+  }, [syncChannel]);
 
   if (!isConnectModalOpen) return null;
 
@@ -254,7 +325,7 @@ export const ConnectDeviceModal: React.FC = () => {
                       <Wifi className="w-3 h-3" /> Network Devices
                     </div>
                     <div className="space-y-1.5">
-                      {MOCK_DEVICES.filter(d => d.type !== 'headphones').map(device => (
+                      {devices.filter(d => d.type !== 'headphones').map(device => (
                         <motion.button
                           key={device.id}
                           whileHover={{ x: 2 }}
@@ -308,7 +379,7 @@ export const ConnectDeviceModal: React.FC = () => {
                         <p className="text-[10px] text-zinc-500">Opens native pairing dialog</p>
                       </div>
                     </button>
-                    {MOCK_DEVICES.filter(d => d.type === 'headphones').map(device => (
+                    {devices.filter(d => d.type === 'headphones').map(device => (
                       <button
                         key={device.id}
                         onClick={() => handleConnect(device.id, device.name)}

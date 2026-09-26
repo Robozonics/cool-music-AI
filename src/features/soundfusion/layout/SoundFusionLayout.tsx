@@ -4,9 +4,11 @@ import { FloatingGlassPlayer } from '../../../components/FloatingGlassPlayer';
 import { SyncedLyrics } from '../../../components/SyncedLyrics';
 import { usePlayerStore } from '../../../store/usePlayerStore';
 import { useMashupStore } from '../../../store/useMashupStore';
+import { useAuthStore } from '../../../store/useAuthStore';
 import { MashupStudioPanel } from '../../../components/MashupStudioPanel';
 import { CollabPlaylistModal } from '../../../components/CollabPlaylistModal';
-import { Camera, Sun, Moon, AudioWaveform, Layers, Users } from 'lucide-react';
+import { AuthModal } from '../../../components/AuthModal';
+import { Camera, Sun, Moon, AudioWaveform, Layers, Users, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 
@@ -23,6 +25,7 @@ export const SoundFusionLayout: React.FC<LayoutProps> = ({ children, activeTab, 
   const savedPlaylists = usePlayerStore(state => state.savedPlaylists);
   const isMashupOpen = useMashupStore(state => state.isOpen);
   const setMashupOpen = useMashupStore(state => state.setIsOpen);
+  const { user, setAuthModalOpen, signOut } = useAuthStore();
   const [isDark, setIsDark] = useState(true);
   const [isCollabOpen, setIsCollabOpen] = useState(false);
 
@@ -123,7 +126,19 @@ export const SoundFusionLayout: React.FC<LayoutProps> = ({ children, activeTab, 
             {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
           
-          <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-electric-fuchsia to-cyber-cyan cursor-pointer ring-2 ring-white/20"></div>
+          <button
+            onClick={() => user ? signOut() : setAuthModalOpen(true)}
+            className="w-9 h-9 rounded-full bg-gradient-to-tr from-electric-fuchsia to-cyber-cyan cursor-pointer ring-2 ring-white/20 flex items-center justify-center overflow-hidden transition-transform hover:scale-105"
+            title={user ? `Signed in as ${user.email} (Click to sign out)` : "Sign In"}
+          >
+            {user ? (
+              <span className="text-white font-black text-xs">
+                {user.email?.charAt(0).toUpperCase() || 'U'}
+              </span>
+            ) : (
+              <User className="w-4 h-4 text-white" />
+            )}
+          </button>
         </div>
       </header>
 
@@ -226,8 +241,9 @@ export const SoundFusionLayout: React.FC<LayoutProps> = ({ children, activeTab, 
       {/* Gen Z Floating Glass Player Bar */}
       <FloatingGlassPlayer />
 
-      {/* Collab session modal */}
+      {/* Modals */}
       <CollabPlaylistModal isOpen={isCollabOpen} onClose={() => setIsCollabOpen(false)} />
+      <AuthModal />
     </div>
   );
 };
