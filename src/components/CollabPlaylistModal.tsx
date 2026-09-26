@@ -8,6 +8,9 @@ import {
   Send, Smile
 } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { useAuthStore } from '../store/useAuthStore';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 
 // ── Initial mock data (will be synced via BroadcastChannel) ─────────────
 const INITIAL_PARTICIPANTS = [
@@ -45,12 +48,40 @@ export const CollabPlaylistModal: React.FC<Props> = ({ isOpen, onClose }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [participants, setParticipants] = useState(INITIAL_PARTICIPANTS);
   const [activities] = useState(INITIAL_ACTIVITY);
-  const channelRef = useRef<BroadcastChannel | null>(null);
+  const channelRef = useRef<RealtimeChannel | null>(null);
+  const user = useAuthStore(s => s.user);
 
   useEffect(() => {
-    if (isOpen && !channelRef.current) {
-      const channel = new BroadcastChannel('musify-collab-session');
+    if (isOpen && !channelRef.current && isSupabaseConfigured && supabase) {
+      const channel = supabase.channel('global-collab');
       channelRef.current = channel;
+
+      channel.on('broadcast', { event: 'NEW_MESSAGE' }, ({ payload }) => {
+        setMessages(prev => [...prev, payload]);
+      });
+      channel.on('broadcast', { event: 'NEW_REACTION' }, ({ payload }) => {
+        setReactions(prev => ({ ...prev, [payload.emoji]: (prev[payload.emoji] || 0) + 1 }));
+        showFloatingReaction(payload.emoji);
+      });
+      channel.on('broadcast', { event: 'NEW_PARTICIPANT' }, ({ payload }) => {
+        setParticipants(prev => {
+          if (prev.find(p => p.id === payload.id)) return prev;
+          return [...prev, payload];
+        });
+      });
+
+      channel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          channel.send({
+            type: 'broadcast',
+            event: 'NEW_PARTICIPANT',
+            payload: { id: user?.id || Math.random().toString(), name: user?.email?.split('@')[0] || 'Collab User', emoji: '😎', isHost: false, isListening: true }
+          });
+        }
+      });
+    } else if (isOpen && !channelRef.current && !isSupabaseConfigured) {
+      const channel = new BroadcastChannel('musify-collab-session');
+      (channelRef as any).current = channel;
 
       channel.onmessage = (event) => {
         const { type, payload } = event.data;
@@ -67,7 +98,6 @@ export const CollabPlaylistModal: React.FC<Props> = ({ isOpen, onClose }) => {
         }
       };
 
-      // Broadcast our presence when we open the modal
       channel.postMessage({
         type: 'NEW_PARTICIPANT',
         payload: { id: Math.random().toString(), name: 'Collab User', emoji: '😎', isHost: false, isListening: true }
@@ -76,11 +106,15 @@ export const CollabPlaylistModal: React.FC<Props> = ({ isOpen, onClose }) => {
 
     return () => {
       if (!isOpen && channelRef.current) {
-        channelRef.current.close();
+        if (isSupabaseConfigured && supabase) {
+          supabase.removeChannel(channelRef.current as RealtimeChannel);
+        } else {
+          (channelRef.current as any).close();
+        }
         channelRef.current = null;
       }
     };
-  }, [isOpen]);
+  }, [isOpen, user]);
 
   const showFloatingReaction = (emoji: string) => {
     const el = document.createElement('div');
@@ -104,7 +138,11 @@ export const CollabPlaylistModal: React.FC<Props> = ({ isOpen, onClose }) => {
       time: 'now',
     };
     setMessages(prev => [...prev, newMsg]);
-    channelRef.current?.postMessage({ type: 'NEW_MESSAGE', payload: { ...newMsg, user: 'Collab User' } });
+    if (isSupabaseConfigured && channelRef.current) {
+      (channelRef.current as RealtimeChannel).send({ type: 'broadcast', event: 'NEW_MESSAGE', payload: { ...newMsg, user: user?.email?.split('@')[0] || 'Collab User' } });
+    } else {
+      (channelRef.current as any)?.postMessage({ type: 'NEW_MESSAGE', payload: { ...newMsg, user: 'Collab User' } });
+    }
     setMessage('');
   };
 
@@ -112,7 +150,11 @@ export const CollabPlaylistModal: React.FC<Props> = ({ isOpen, onClose }) => {
     setReactions(prev => ({ ...prev, [emoji]: (prev[emoji] || 0) + 1 }));
     setShowReactions(false);
     showFloatingReaction(emoji);
-    channelRef.current?.postMessage({ type: 'NEW_REACTION', payload: { emoji } });
+    if (isSupabaseConfigured && channelRef.current) {
+      (channelRef.current as RealtimeChannel).send({ type: 'broadcast', event: 'NEW_REACTION', payload: { emoji } });
+    } else {
+      (channelRef.current as any)?.postMessage({ type: 'NEW_REACTION', payload: { emoji } });
+    }
   };
 
   const handleCopyCode = () => {
