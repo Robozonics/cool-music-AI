@@ -17,6 +17,49 @@ const proxifyUrl = (url: string, type: 'saavn' | 'youtube') => {
   return url;
 };
 
+const decodeHtml = (html: string): string => {
+  if (!html) return '';
+  return html
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .trim();
+};
+
+const artworkCache = new Map<string, string>();
+
+export const fetchAccurateArtwork = async (title: string, artist: string): Promise<string | null> => {
+  const cleanTitle = title.replace(/\(.*?\)|\[.*?\]/g, '').trim();
+  const cleanArtist = artist.split(',')[0].replace(/feat\..*/i, '').trim();
+  const cacheKey = `${cleanTitle.toLowerCase()} - ${cleanArtist.toLowerCase()}`;
+  
+  if (artworkCache.has(cacheKey)) {
+    return artworkCache.get(cacheKey) || null;
+  }
+
+  try {
+    const query = encodeURIComponent(`${cleanTitle} ${cleanArtist}`);
+    const res = await fetch(`https://itunes.apple.com/search?term=${query}&entity=song&limit=1`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.results && data.results.length > 0 && data.results[0].artworkUrl100) {
+        const hqUrl = data.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
+        artworkCache.set(cacheKey, hqUrl);
+        return hqUrl;
+      }
+    }
+  } catch (e) {
+    console.warn('iTunes artwork fetch error:', e);
+  }
+  
+  artworkCache.set(cacheKey, '');
+  return null;
+};
+
 export const fetchMusicBrainzCoverArt = async (title: string, artist: string): Promise<string | null> => {
   try {
     const query = encodeURIComponent(`recording:"${title}" AND artist:"${artist}"`);
@@ -31,7 +74,6 @@ export const fetchMusicBrainzCoverArt = async (title: string, artist: string): P
     for (const recording of data.recordings) {
       if (recording.releases && recording.releases.length > 0) {
         const releaseId = recording.releases[0].id;
-        // Check if cover art exists (HEAD request might fail due to CORS, but let's just return the URL)
         return `https://coverartarchive.org/release/${releaseId}/front`;
       }
     }
@@ -66,7 +108,8 @@ export const fetchFreshSaavnUrl = async (trackId: string): Promise<string> => {
     const res = await fetch(proxifyUrl(detailsUrl, 'saavn'));
     if (!res.ok) return '';
     const data = await res.json();
-    const song = data[rawId] || data[Object.keys(data)[0]];
+    // Only pick the matching song to prevent audio-song mismatch
+    const song = data[rawId] || (data[Object.keys(data)[0]]?.id === rawId ? data[Object.keys(data)[0]] : null);
     if (!song) return '';
     
     let streamUrl = song.media_preview_url || '';
@@ -94,6 +137,74 @@ export const fetchFreshSaavnUrl = async (trackId: string): Promise<string> => {
 
 export const searchSaavn = async (query: string): Promise<Track[]> => {
   try {
+    // 1. Try search.getResults first (returns relevant songs with accurate data and ordering)
+    const directUrl = `${SAAVN_BASE}?__call=search.getResults&_marker=0&q=${encodeURIComponent(query)}&ctx=android&_format=json&p=1&n=20`;
+    const directRes = await fetch(proxifyUrl(directUrl, 'saavn'));
+    
+    if (directRes.ok) {
+      const directData = await directRes.json();
+      const rawResults = directData.results || directData.songs?.data || [];
+      if (Array.isArray(rawResults) && rawResults.length > 0) {
+        const tracks: Track[] = [];
+        for (const song of rawResults) {
+          if (!song || typeof song !== 'object') continue;
+          
+          let streamUrl = song.media_preview_url || '';
+          if (song.encrypted_media_url) {
+            streamUrl = decryptSaavnUrl(song.encrypted_media_url);
+          }
+          
+          if (streamUrl && streamUrl.startsWith('http')) {
+            try {
+              if (!Capacitor.isNativePlatform()) {
+                const urlObj = new URL(streamUrl);
+                streamUrl = '/api/saavncdn' + urlObj.pathname + urlObj.search;
+              }
+            } catch (e) {}
+          }
+          
+          const trackId = song.id;
+          if (!trackId) continue;
+          
+          const title = decodeHtml(song.song || song.title || 'Unknown Title');
+          const artist = decodeHtml(song.singers || song.primary_artists || 'Unknown Artist');
+          
+          let thumbnailUrl = 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=500&q=80';
+          if (typeof song.image === 'string') {
+            thumbnailUrl = song.image.replace(/150x150|50x50|250x250|100x100/g, '500x500');
+          } else if (Array.isArray(song.image) && song.image.length > 0) {
+            const img = song.image[song.image.length - 1];
+            thumbnailUrl = (img.link || img.url || thumbnailUrl).replace(/150x150|50x50|250x250|100x100/g, '500x500');
+          }
+
+          // If the thumbnail looks like a generic compilation album or placeholder, fetch accurate cover
+          const isGenericCover = /Viral-TikTok|Trending-Love|Various-Artists|editorial|unsplash\.com/i.test(thumbnailUrl);
+          if (isGenericCover) {
+            const accurateArt = await fetchAccurateArtwork(title, artist);
+            if (accurateArt) {
+              thumbnailUrl = accurateArt;
+            }
+          }
+          
+          tracks.push({
+            id: `saavn-${trackId}`,
+            title,
+            artist,
+            thumbnail: thumbnailUrl,
+            duration: parseInt(song.duration, 10) || 180,
+            streamUrl,
+            source: 'saavn',
+            sourceBadge: 'Studio 320k',
+          });
+        }
+        
+        if (tracks.length > 0) {
+          return tracks;
+        }
+      }
+    }
+
+    // 2. Fallback to autocomplete.get
     const searchUrl = `${SAAVN_BASE}?__call=autocomplete.get&_marker=0&query=${encodeURIComponent(query)}&ctx=android&_format=json`;
     const res = await fetch(proxifyUrl(searchUrl, 'saavn'));
     
@@ -110,9 +221,8 @@ export const searchSaavn = async (query: string): Promise<Track[]> => {
     const detailsData = await detailsRes.json();
     
     const tracks: Track[] = [];
-    for (const key in detailsData) {
-      const song = detailsData[key];
-      // Skip invalid metadata objects that might be returned alongside the songs
+    for (const item of data.songs.data) {
+      const song = detailsData[item.id] || detailsData[item.id?.toString()];
       if (!song || typeof song !== 'object' || !song.song) continue;
       
       let streamUrl = song.media_preview_url || '';
@@ -120,16 +230,20 @@ export const searchSaavn = async (query: string): Promise<Track[]> => {
         streamUrl = decryptSaavnUrl(song.encrypted_media_url);
       }
       
-      // Proxy ALL streamUrls to bypass CORS for Web Audio API
       if (streamUrl && streamUrl.startsWith('http')) {
         try {
-           const urlObj = new URL(streamUrl);
-           streamUrl = '/api/saavncdn' + urlObj.pathname + urlObj.search;
+          if (!Capacitor.isNativePlatform()) {
+            const urlObj = new URL(streamUrl);
+            streamUrl = '/api/saavncdn' + urlObj.pathname + urlObj.search;
+          }
         } catch (e) {}
       }
       
-      const trackId = song.id || key;
+      const trackId = song.id || item.id;
       if (!trackId) continue;
+
+      const title = decodeHtml(song.song || song.title || 'Unknown Title');
+      const artist = decodeHtml(song.singers || song.primary_artists || 'Unknown Artist');
 
       let thumbnailUrl = 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=500&q=80';
       if (typeof song.image === 'string') {
@@ -139,12 +253,20 @@ export const searchSaavn = async (query: string): Promise<Track[]> => {
         thumbnailUrl = (img.link || img.url || thumbnailUrl).replace(/150x150|50x50|250x250|100x100/g, '500x500');
       }
 
+      const isGenericCover = /Viral-TikTok|Trending-Love|Various-Artists|editorial|unsplash\.com/i.test(thumbnailUrl);
+      if (isGenericCover) {
+        const accurateArt = await fetchAccurateArtwork(title, artist);
+        if (accurateArt) {
+          thumbnailUrl = accurateArt;
+        }
+      }
+
       tracks.push({
         id: `saavn-${trackId}`,
-        title: song.song || song.title || 'Unknown Title',
-        artist: song.singers || song.primary_artists || 'Unknown Artist',
+        title,
+        artist,
         thumbnail: thumbnailUrl,
-        duration: parseInt(song.duration, 10),
+        duration: parseInt(song.duration, 10) || 180,
         streamUrl,
         source: 'saavn',
         sourceBadge: 'Studio 320k',

@@ -388,12 +388,40 @@ const MOOD_PILLS = [
 
 interface Section {
   title: string;
-  query: string;
+  seeds: string[];
 }
 
 const SECTIONS: Section[] = [
-  { title: "W SONGS (NO CAP)", query: "trending top hits" },
-  { title: "SIGMA BEATS", query: "viral tiktok songs" }
+  {
+    title: "W SONGS (NO CAP)",
+    seeds: [
+      "Die With A Smile Lady Gaga Bruno Mars",
+      "Starboy The Weeknd",
+      "Espresso Sabrina Carpenter",
+      "Birds of a Feather Billie Eilish",
+      "Blinding Lights The Weeknd",
+      "APT ROSE Bruno Mars",
+      "Cruel Summer Taylor Swift",
+      "One of the Girls The Weeknd",
+      "As It Was Harry Styles",
+      "Greedy Tate McRae"
+    ]
+  },
+  {
+    title: "SIGMA BEATS",
+    seeds: [
+      "FE!N Travis Scott",
+      "Sweater Weather The Neighbourhood",
+      "After Dark Mr Kitty",
+      "Metamorphosis INTERWORLD",
+      "Memory Reboot VOJ",
+      "Montagem PR Funk S3BZS",
+      "Dancin Krono Remix Aaron Smith",
+      "Resonance HOME",
+      "Softcore The Neighbourhood",
+      "Daylight David Kushner"
+    ]
+  }
 ];
 
 interface HomeViewProps {
@@ -414,15 +442,18 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab }) => {
     const fetchHomeData = async () => {
       setIsLoading(true);
       try {
-        const results = await Promise.all(
-          SECTIONS.map(section => searchUnblocked(section.query))
-        );
-        
         const newData: Record<string, Track[]> = {};
-        SECTIONS.forEach((section, index) => {
-          // Shuffle slightly to make it feel fresh
-          newData[section.title] = results[index].sort(() => 0.5 - Math.random()).slice(0, 10);
-        });
+        await Promise.all(
+          SECTIONS.map(async (section) => {
+            const trackResults = await Promise.all(
+              section.seeds.map(async (seed) => {
+                const results = await searchUnblocked(seed);
+                return results[0] || null;
+              })
+            );
+            newData[section.title] = trackResults.filter(Boolean) as Track[];
+          })
+        );
         
         setSectionsData(newData);
       } catch (error) {
@@ -564,7 +595,14 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab }) => {
                     </div>
                     
                     <div className="relative w-16 h-16 rounded-xl overflow-hidden shadow-lg mr-6 flex-shrink-0">
-                      <img src={track.thumbnail} alt={track.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                      <img 
+                        src={track.thumbnail} 
+                        alt={track.title} 
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&q=80';
+                        }}
+                      />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-sm">
                         <Play className="w-6 h-6 text-acid-lime fill-current" />
                       </div>
