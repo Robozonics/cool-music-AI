@@ -27,11 +27,12 @@ export const SpotifyAccountButton: React.FC = () => {
     return (
       <button
         onClick={() => setAuthModalOpen(true)}
-        className="px-5 py-2 rounded-full bg-white hover:bg-neutral-100 text-black font-extrabold text-xs uppercase tracking-wider transition-all hover:scale-105 active:scale-95 shadow-md flex items-center gap-2"
+        className="group relative flex items-center justify-center md:px-5 md:py-2 w-9 h-9 md:w-auto md:h-auto rounded-full bg-[#121216] md:bg-white text-acid-lime md:text-black border-2 border-acid-lime md:border-none hover:bg-[#1e1e24] md:hover:bg-neutral-100 font-extrabold text-xs uppercase tracking-wider transition-all hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(204,255,0,0.35)] md:shadow-md overflow-hidden"
         title="Log In"
       >
-        <UserIcon className="w-3.5 h-3.5 fill-current" />
-        <span>Log in</span>
+        <div className="md:hidden absolute inset-0 bg-[conic-gradient(from_0deg,transparent_0_340deg,rgba(204,255,0,0.5)_360deg)] animate-[spin_3s_linear_infinite] opacity-70 group-hover:opacity-100" />
+        <UserIcon className="w-4 h-4 md:w-3.5 md:h-3.5 fill-current relative z-10 drop-shadow-[0_0_8px_rgba(204,255,0,0.8)] md:drop-shadow-none" />
+        <span className="hidden md:inline relative z-10 ml-2">Log in</span>
       </button>
     );
   }
