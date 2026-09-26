@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import type { User } from '@supabase/supabase-js';
-import { usePlayerStore } from './usePlayerStore';
 
 interface AuthState {
   user: User | null;

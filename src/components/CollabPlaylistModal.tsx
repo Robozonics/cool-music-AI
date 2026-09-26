@@ -44,7 +44,7 @@ export const CollabPlaylistModal: React.FC<Props> = ({ isOpen, onClose }) => {
   const [isPrivate, setIsPrivate] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [participants, setParticipants] = useState(INITIAL_PARTICIPANTS);
-  const [activities, setActivities] = useState(INITIAL_ACTIVITY);
+  const [activities] = useState(INITIAL_ACTIVITY);
   const channelRef = useRef<BroadcastChannel | null>(null);
 
   useEffect(() => {
@@ -217,7 +217,7 @@ export const CollabPlaylistModal: React.FC<Props> = ({ isOpen, onClose }) => {
                   <Plus className="w-3 h-3" />
                 </button>
               </div>
-              <span className="text-xs text-zinc-500">{MOCK_PARTICIPANTS.length} in session</span>
+              <span className="text-xs text-zinc-500">{participants.length} in session</span>
             </div>
 
             {/* Current track display */}
