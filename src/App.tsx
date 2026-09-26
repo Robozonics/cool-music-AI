@@ -20,9 +20,9 @@ import { QueuePanel } from './components/QueuePanel';
 import { MobileAICommandBox } from './components/MobileAICommandBox';
 import { CollabPlaylistModal } from './components/CollabPlaylistModal';
 import { AuthModal } from './components/AuthModal';
+import { SpotifyAccountButton } from './components/SpotifyAccountButton';
 import { usePlayerStore } from './store/usePlayerStore';
-import { useAuthStore } from './store/useAuthStore';
-import { WifiOff, AlertTriangle, Settings, Sparkles, Mic, Layers, Users, User } from 'lucide-react';
+import { WifiOff, AlertTriangle, Settings, Sparkles, Mic, Layers, Users } from 'lucide-react';
 import { useAudioAnalyzer } from './store/useAudioAnalyzer';
 import { SoundFusionLayout } from './features/soundfusion/layout/SoundFusionLayout';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
@@ -53,7 +53,6 @@ function App() {
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [isAiCommandOpen, setAiCommandOpen] = useState(false);
   const [isCollabOpen, setIsCollabOpen] = useState(false);
-  const { user, setAuthModalOpen, signOut } = useAuthStore();
   const isMashupOpen = useMashupStore(state => state.isOpen);
   const setMashupOpen = useMashupStore(state => state.setIsOpen);
 
@@ -173,21 +172,7 @@ function App() {
             >
               <Settings className="w-6 h-6" />
             </button>
-            <button
-              onClick={() => user ? signOut() : setAuthModalOpen(true)}
-              className="p-1.5 ml-1 transition"
-              title={user ? "Sign Out" : "Sign In"}
-            >
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-electric-fuchsia to-cyber-cyan ring-2 ring-white/20 flex items-center justify-center overflow-hidden">
-                {user ? (
-                  <span className="text-white font-black text-xs">
-                    {user.email?.charAt(0).toUpperCase() || 'U'}
-                  </span>
-                ) : (
-                  <User className="w-4 h-4 text-white" />
-                )}
-              </div>
-            </button>
+            <SpotifyAccountButton />
           </div>
         </header>
         <div className="relative z-10">

@@ -1,38 +1,63 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Mail, Lock, Loader2 } from 'lucide-react';
+import { X, Eye, EyeOff, Loader2, Sparkles, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 export const AuthModal: React.FC = () => {
-  const { isAuthModalOpen, setAuthModalOpen, signInWithGoogle } = useAuthStore();
+  const { isAuthModalOpen, setAuthModalOpen, signInWithGoogle, signInWithEmail, signUpWithEmail, signInAsGuest } = useAuthStore();
   
   const [isLogin, setIsLogin] = useState(true);
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
 
   if (!isAuthModalOpen) return null;
 
-  const handleEmailAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!supabase) return;
-    
+  const handleGoogleSignIn = async () => {
     setLoading(true);
     setError(null);
+    setInfoMessage(null);
     
+    const res = await signInWithGoogle();
+    if (res?.error) {
+      if (
+        res.error.toLowerCase().includes('provider is not enabled') || 
+        res.error.toLowerCase().includes('validation_failed') ||
+        res.error.toLowerCase().includes('unsupported provider')
+      ) {
+        setError('Google sign-in is not enabled in your Supabase project dashboard yet. Please use Email or 1-Click Guest access below!');
+      } else {
+        setError(res.error);
+      }
+    }
+    setLoading(false);
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setInfoMessage(null);
+
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        const res = await signInWithEmail(email, password);
+        if (res.error) throw new Error(res.error);
       } else {
-        const { error } = await supabase.auth.signUp({ email, password });
-        if (error) throw error;
-        // Some users might need to check email, but often it auto signs in if email confirm is off.
-        alert('Signed up successfully! (If email confirmation is enabled on your Supabase, check your inbox)');
+        if (!name.trim()) {
+          throw new Error('Please enter your name.');
+        }
+        const res = await signUpWithEmail(name.trim(), email, password);
+        if (res.error) throw new Error(res.error);
+        if (res.message) {
+          setInfoMessage(res.message);
+        }
       }
-      setAuthModalOpen(false);
     } catch (err: any) {
       setError(err.message || 'Authentication failed');
     } finally {
@@ -40,8 +65,12 @@ export const AuthModal: React.FC = () => {
     }
   };
 
+  const handleGuestLogin = () => {
+    signInAsGuest(name.trim() || 'Spotify User');
+  };
+
   const GoogleIcon = () => (
-    <svg className="w-5 h-5" viewBox="0 0 24 24">
+    <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
       <path
         d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
         fill="#4285F4"
@@ -61,112 +90,206 @@ export const AuthModal: React.FC = () => {
     </svg>
   );
 
+  const SpotifyLogo = () => (
+    <div className="w-12 h-12 rounded-full bg-[#1ed760] flex items-center justify-center mx-auto mb-4 shadow-[0_0_25px_rgba(30,215,96,0.3)]">
+      <svg className="w-7 h-7 text-black fill-current" viewBox="0 0 24 24">
+        <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.503 17.31c-.218.357-.68.472-1.037.254-2.843-1.737-6.423-2.13-10.638-1.168-.407.094-.816-.16-.91-.567-.094-.407.16-.816.567-.91 4.62-1.055 8.577-.61 11.764 1.354.357.218.472.68.254 1.037zm1.47-3.266c-.274.446-.86.587-1.306.313-3.255-2.002-8.218-2.583-12.068-1.414-.502.152-1.033-.133-1.185-.635-.152-.502.133-1.033.635-1.185 4.407-1.338 9.878-.694 13.61 1.615.446.274.587.86.313 1.306zm.127-3.41c-3.903-2.318-10.337-2.532-14.072-1.397-.6.182-1.234-.16-1.416-.76-.182-.6.16-1.234.76-1.416 4.29-1.302 11.39-1.047 15.88 1.617.54.32.716 1.02.396 1.56-.32.54-1.02.716-1.56.396z" />
+      </svg>
+    </div>
+  );
+
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
+        {/* Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={() => setAuthModalOpen(false)}
-          className="absolute inset-0 bg-black/80 backdrop-blur-md"
+          className="absolute inset-0 bg-black/85 backdrop-blur-md"
         />
         
+        {/* Spotify Modal Window */}
         <motion.div
-          initial={{ opacity: 0, y: 60, scale: 0.95 }}
+          initial={{ opacity: 0, y: 50, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 40, scale: 0.95 }}
-          className="relative w-full max-w-md bg-zinc-950 border border-white/10 sm:rounded-3xl rounded-t-3xl sm:rounded-b-3xl overflow-hidden shadow-2xl flex flex-col p-6"
+          transition={{ type: 'spring', damping: 25, stiffness: 280 }}
+          className="relative w-full max-w-md bg-[#121212] border border-[#282828] sm:rounded-3xl rounded-t-3xl sm:rounded-b-3xl overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.8)] flex flex-col p-6 sm:p-8 max-h-[92vh] overflow-y-auto"
         >
+          {/* Close button */}
           <button 
             onClick={() => setAuthModalOpen(false)}
-            className="absolute top-4 right-4 p-2 rounded-full bg-white/5 hover:bg-white/10 text-white transition z-10"
+            className="absolute top-4 right-4 p-2 rounded-full text-[#a7a7a7] hover:text-white hover:bg-[#282828] transition z-10"
+            title="Close"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
           
-          <div className="text-center mb-8 mt-2">
-            <h2 className="text-2xl font-black text-white mb-2">
-              {isLogin ? 'Welcome Back to Musify' : 'Join Musify'}
-            </h2>
-            <p className="text-sm text-gray-400">
-              {isLogin ? 'Log in to sync your playlists and activity' : 'Create an account to save your music anywhere'}
+          {/* Spotify Branding & Title */}
+          <div className="text-center mt-2 mb-6">
+            <SpotifyLogo />
+            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+              {isLogin ? 'Log in to Musify' : 'Sign up to start listening'}
+            </h1>
+            <p className="text-xs text-[#a7a7a7] mt-1.5 font-medium">
+              {isLogin ? 'Welcome back to your high-fidelity music vault' : 'Listen without limits, ads, or restrictions'}
             </p>
           </div>
 
-          {!isSupabaseConfigured && (
-            <div className="mb-6 p-3 rounded-xl bg-orange-500/10 border border-orange-500/30 text-orange-400 text-xs">
-              Supabase is not configured! Please add your VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your .env.local file.
-            </div>
+          {/* Error Banner */}
+          {error && (
+            <motion.div 
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-4 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2.5"
+            >
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-400 mt-0.5" />
+              <div className="flex-1 leading-relaxed">{error}</div>
+            </motion.div>
           )}
 
-          <div className="space-y-4">
+          {/* Info / Success Banner */}
+          {infoMessage && (
+            <motion.div 
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-4 p-3.5 rounded-xl bg-[#1ed760]/10 border border-[#1ed760]/30 text-[#1ed760] text-xs flex items-start gap-2.5"
+            >
+              <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
+              <div className="flex-1 leading-relaxed">{infoMessage}</div>
+            </motion.div>
+          )}
+
+          {/* Social OAuth & Quick Login Buttons */}
+          <div className="space-y-3">
             <button
-              onClick={signInWithGoogle}
-              disabled={!isSupabaseConfigured}
-              className="w-full py-3.5 rounded-xl bg-white text-black font-bold flex items-center justify-center gap-3 hover:bg-gray-100 transition disabled:opacity-50"
+              onClick={handleGoogleSignIn}
+              disabled={loading}
+              className="w-full py-3 px-5 rounded-full border border-[#727272] hover:border-white text-white font-bold text-sm flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] bg-transparent disabled:opacity-50"
             >
               <GoogleIcon />
-              Continue with Google
+              <span>Continue with Google</span>
             </button>
-            
-            <div className="flex items-center gap-3 my-2">
-              <div className="flex-1 h-px bg-white/10" />
-              <span className="text-xs text-gray-500 font-medium uppercase">Or</span>
-              <div className="flex-1 h-px bg-white/10" />
+
+            <button
+              onClick={handleGuestLogin}
+              disabled={loading}
+              className="w-full py-3 px-5 rounded-full border border-[#1ed760]/40 text-[#1ed760] hover:bg-[#1ed760]/10 font-bold text-sm flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>Continue as Guest (Instant Access)</span>
+            </button>
+          </div>
+
+          {/* Spotify Divider */}
+          <div className="w-full flex items-center gap-4 my-6">
+            <div className="flex-1 h-px bg-[#282828]" />
+            <span className="text-[11px] uppercase tracking-widest text-[#a7a7a7] font-bold">or</span>
+            <div className="flex-1 h-px bg-[#282828]" />
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleFormSubmit} className="space-y-4">
+            {!isLogin && (
+              <div>
+                <label className="block text-xs font-bold text-white mb-1.5">What should we call you?</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  placeholder="Enter your profile name"
+                  required={!isLogin}
+                  className="w-full bg-[#121212] border border-[#727272] hover:border-white focus:border-white focus:ring-1 focus:ring-white rounded-md py-3 px-4 text-white text-sm outline-none transition placeholder-[#535353]"
+                />
+                <p className="text-[11px] text-[#a7a7a7] mt-1">This appears on your profile and avatar.</p>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-bold text-white mb-1.5">
+                {isLogin ? 'Email or username' : 'Email address'}
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="name@domain.com"
+                required
+                className="w-full bg-[#121212] border border-[#727272] hover:border-white focus:border-white focus:ring-1 focus:ring-white rounded-md py-3 px-4 text-white text-sm outline-none transition placeholder-[#535353]"
+              />
             </div>
 
-            <form onSubmit={handleEmailAuth} className="space-y-3">
+            <div>
+              <label className="block text-xs font-bold text-white mb-1.5">Password</label>
               <div className="relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
-                  <Mail className="w-4 h-4" />
-                </div>
                 <input
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="Email address"
-                  required
-                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3.5 pl-11 pr-4 text-white placeholder-gray-500 focus:outline-none focus:border-acid-lime/50 transition"
-                />
-              </div>
-              <div className="relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
-                  <Lock className="w-4 h-4" />
-                </div>
-                <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   placeholder="Password"
                   required
-                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3.5 pl-11 pr-4 text-white placeholder-gray-500 focus:outline-none focus:border-acid-lime/50 transition"
+                  className="w-full bg-[#121212] border border-[#727272] hover:border-white focus:border-white focus:ring-1 focus:ring-white rounded-md py-3 pl-4 pr-11 text-white text-sm outline-none transition placeholder-[#535353]"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#a7a7a7] hover:text-white transition"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
+            </div>
 
-              {error && (
-                <p className="text-red-400 text-xs text-center">{error}</p>
-              )}
+            {isLogin && (
+              <div className="flex items-center justify-between text-xs pt-1">
+                <label className="flex items-center gap-2 cursor-pointer select-none text-[#a7a7a7] hover:text-white">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={e => setRememberMe(e.target.checked)}
+                    className="accent-[#1ed760] w-4 h-4 rounded cursor-pointer"
+                  />
+                  <span>Remember me</span>
+                </label>
+              </div>
+            )}
 
-              <button
-                type="submit"
-                disabled={loading || !isSupabaseConfigured || !email || !password}
-                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-acid-lime to-[#a0f700] text-black font-black uppercase tracking-widest mt-2 hover:shadow-[0_0_30px_rgba(204,255,0,0.4)] transition disabled:opacity-50 disabled:shadow-none flex justify-center"
-              >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (isLogin ? 'Log In' : 'Sign Up')}
-              </button>
-            </form>
-          </div>
-
-          <p className="text-center text-xs text-gray-500 mt-6 pb-safe">
-            {isLogin ? "Don't have an account? " : "Already have an account? "}
-            <button 
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-acid-lime font-bold hover:underline"
+            <button
+              type="submit"
+              disabled={loading || !email || !password || (!isLogin && !name.trim())}
+              className="w-full py-3.5 rounded-full bg-[#1ed760] hover:bg-[#1fdf64] text-black font-extrabold text-sm uppercase tracking-wider transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-2 mt-4"
             >
-              {isLogin ? 'Sign up' : 'Log in'}
+              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+              <span>{isLogin ? 'Log In' : 'Sign Up'}</span>
             </button>
-          </p>
+          </form>
+
+          {/* Switch between Log In & Sign Up */}
+          <div className="text-center text-xs text-[#a7a7a7] mt-8 pt-4 border-t border-[#282828]">
+            {isLogin ? (
+              <p>
+                Don't have an account?{' '}
+                <button
+                  onClick={() => { setIsLogin(false); setError(null); setInfoMessage(null); }}
+                  className="text-white hover:text-[#1ed760] font-bold underline transition ml-1"
+                >
+                  Sign up for Musify
+                </button>
+              </p>
+            ) : (
+              <p>
+                Already have an account?{' '}
+                <button
+                  onClick={() => { setIsLogin(true); setError(null); setInfoMessage(null); }}
+                  className="text-white hover:text-[#1ed760] font-bold underline transition ml-1"
+                >
+                  Log in here
+                </button>
+              </p>
+            )}
+          </div>
         </motion.div>
       </div>
     </AnimatePresence>
