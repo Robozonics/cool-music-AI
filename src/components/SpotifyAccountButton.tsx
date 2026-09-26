@@ -38,16 +38,16 @@ export const SpotifyAccountButton: React.FC = () => {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      {/* Spotify Profile Circle with Name Initial */}
+      {/* Musify Profile Circle with Name Initial */}
       <button
         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-        className="w-9 h-9 rounded-full bg-[#191414] hover:bg-[#282828] border-2 border-[#1ed760] text-white font-black text-sm flex items-center justify-center transition-transform hover:scale-105 active:scale-95 shadow-lg select-none cursor-pointer focus:outline-none"
+        className="w-9 h-9 rounded-full bg-[#121216] hover:bg-[#1e1e24] border-2 border-acid-lime text-acid-lime font-black text-sm flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(204,255,0,0.35)] select-none cursor-pointer focus:outline-none"
         title={`Logged in as ${displayName}`}
       >
-        <span className="leading-none drop-shadow-sm">{initial}</span>
+        <span className="leading-none drop-shadow-[0_0_8px_rgba(204,255,0,0.8)] font-black">{initial}</span>
       </button>
 
-      {/* Spotify Profile Dropdown Menu */}
+      {/* Profile Dropdown Menu */}
       <AnimatePresence>
         {isDropdownOpen && (
           <motion.div
@@ -55,19 +55,19 @@ export const SpotifyAccountButton: React.FC = () => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 8 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="absolute right-0 mt-2 w-64 rounded-xl bg-[#282828] border border-white/10 shadow-2xl p-1.5 z-50 text-white select-none backdrop-blur-xl"
+            className="absolute right-0 mt-2 w-64 rounded-2xl bg-[#0c0c10]/95 border border-white/10 shadow-[0_15px_50px_rgba(0,0,0,0.8)] p-2 z-50 text-white select-none backdrop-blur-2xl"
           >
             {/* Header info */}
             <div className="flex items-center gap-3 p-3 border-b border-white/10">
-              <div className="w-10 h-10 rounded-full bg-[#121212] border border-[#1ed760] text-[#1ed760] font-black text-base flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-full bg-acid-lime/15 border border-acid-lime/40 text-acid-lime font-black text-base flex items-center justify-center shrink-0 shadow-[0_0_12px_rgba(204,255,0,0.2)]">
                 {initial}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
                   <h4 className="font-bold text-sm text-white truncate">{displayName}</h4>
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#1ed760] shrink-0" />
+                  <ShieldCheck className="w-3.5 h-3.5 text-acid-lime shrink-0" />
                 </div>
-                <p className="text-xs text-[#a7a7a7] truncate">{user.email}</p>
+                <p className="text-[11px] text-gray-400 truncate">{user.email}</p>
               </div>
             </div>
 
@@ -76,12 +76,12 @@ export const SpotifyAccountButton: React.FC = () => {
               <button
                 onClick={() => {
                   setIsDropdownOpen(false);
-                  alert(`Musify Profile\nName: ${displayName}\nEmail: ${user.email}\nStatus: Verified Premium Access`);
+                  alert(`Musify Profile\nName: ${displayName}\nEmail: ${user.email}\nStatus: VIP Access Active`);
                 }}
-                className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-[#e0e0e0] hover:text-white hover:bg-white/10 rounded-lg transition"
+                className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-300 hover:text-white hover:bg-white/10 rounded-xl transition"
               >
                 <span>Profile</span>
-                <ExternalLink className="w-3.5 h-3.5 text-[#a7a7a7]" />
+                <ExternalLink className="w-3.5 h-3.5 text-gray-500" />
               </button>
 
               <button
@@ -89,10 +89,10 @@ export const SpotifyAccountButton: React.FC = () => {
                   setIsDropdownOpen(false);
                   setApiKeyModalOpen(true);
                 }}
-                className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-[#e0e0e0] hover:text-white hover:bg-white/10 rounded-lg transition"
+                className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-300 hover:text-white hover:bg-white/10 rounded-xl transition"
               >
                 <span>Settings</span>
-                <Settings className="w-3.5 h-3.5 text-[#a7a7a7]" />
+                <Settings className="w-3.5 h-3.5 text-gray-500" />
               </button>
             </div>
 
@@ -104,7 +104,7 @@ export const SpotifyAccountButton: React.FC = () => {
                 setIsDropdownOpen(false);
                 await signOut();
               }}
-              className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition"
+              className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-xl transition"
             >
               <span>Log out</span>
               <LogOut className="w-3.5 h-3.5" />
