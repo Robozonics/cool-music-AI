@@ -352,8 +352,12 @@ export const ConnectDeviceModal: React.FC = () => {
             // Delay setting currentTime slightly to allow src to load
             setTimeout(() => {
               if (data.time !== undefined) nativeAudio.currentTime = data.time;
-              if (data.isPlaying === false) nativeAudio.pause();
-            }, 50);
+              if (data.isPlaying === false) {
+                nativeAudio.pause();
+              } else {
+                nativeAudio.play().catch(() => {});
+              }
+            }, 100);
           }
         } else if (data.type === 'sync_action') {
           if (!isHost) {
@@ -388,10 +392,15 @@ export const ConnectDeviceModal: React.FC = () => {
         // Sync track changes to all peers
         const unsub = usePlayerStore.subscribe((state, prevState) => {
           if (state.currentTrack?.id !== prevState.currentTrack?.id) {
-            broadcastToPeers({ type: 'play_track', track: state.currentTrack });
+            broadcastToPeers({ 
+              type: 'play_track', 
+              track: state.currentTrack,
+              time: nativeAudio.currentTime,
+              isPlaying: !nativeAudio.paused
+            });
           }
           if (state.isPlaying !== prevState.isPlaying) {
-            broadcastToPeers({ type: 'sync_action', action: state.isPlaying ? 'play' : 'pause', time: state.currentTime });
+            broadcastToPeers({ type: 'sync_action', action: state.isPlaying ? 'play' : 'pause', time: nativeAudio.currentTime });
           }
         });
         peerRef.current._unsub = unsub;
@@ -416,11 +425,11 @@ export const ConnectDeviceModal: React.FC = () => {
           });
         });
 
-        peer.on('error', (err) => {
+        peer.on('error', (err: any) => {
           console.error('PeerJS Error:', err);
           if (err.type === 'peer-unavailable') {
             showToast('error', 'Session not found. Is the host active?');
-          } else {
+          } else if (err.type !== 'network' && err.type !== 'server-error') {
             showToast('error', 'Connection failed.');
           }
           setJoiningSession(false);
@@ -431,14 +440,19 @@ export const ConnectDeviceModal: React.FC = () => {
       // Auto-reconnect if signaling server drops connection
       peer.on('disconnected', () => {
         if (!peer.destroyed) {
-          peer.reconnect();
+          setTimeout(() => {
+            if (peerRef.current === peer && !peer.destroyed) peer.reconnect();
+          }, 2000);
         }
       });
       
       if (isHost) {
-        peer.on('error', (err) => {
+        peer.on('error', (err: any) => {
           console.error('PeerJS Host Error:', err);
-          showToast('error', `Host failed to connect: ${err.type}`);
+          // Only show toast if it's a fatal error, hide network spam
+          if (err.type !== 'network' && err.type !== 'server-error') {
+            showToast('error', `Host failed to connect: ${err.type}`);
+          }
           setIsSessionActive(false);
           
           if (err.type === 'unavailable-id') {
@@ -471,10 +485,16 @@ export const ConnectDeviceModal: React.FC = () => {
   };
 
   const handleJoinSession = () => {
+    if (peerRef.current) {
+      peerRef.current.destroy();
+      peerRef.current = null;
+    }
+
     // Bless the audio element to bypass mobile autoplay restrictions
     if (nativeAudio.paused) {
-      nativeAudio.play().catch(() => {});
-      nativeAudio.pause();
+      nativeAudio.play().then(() => {
+        nativeAudio.pause();
+      }).catch(() => {});
     }
 
     let cleanCode = joinCode.toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -491,6 +511,10 @@ export const ConnectDeviceModal: React.FC = () => {
   };
 
   const handleStartSession = () => {
+    if (peerRef.current) {
+      peerRef.current.destroy();
+      peerRef.current = null;
+    }
     createSyncChannel(sessionCode, true);
     setSessionPeers([]);
   };

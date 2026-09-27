@@ -341,20 +341,14 @@ SCHEMA:
 
 Return ONLY the valid JSON object. No markdown formatting, no backticks, no explanations.`;
 
-    let blueprint: any = null;
-    const groqKey = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GROQ_API_KEY) || ('gsk_' + 'WFvoRPkbi' + 'uZ3gWa4PTD1WGdy' + 'b3FYOC9Frl0AzRe' + 'YGNTxyvebIr29');
-    
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const res = await fetch('/api/gemini', {
       method: 'POST',
       headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${groqKey}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama3-70b-8192',
-        messages: [{ role: 'user', content: promptText }],
-        temperature: 0.8,
-        response_format: { type: "json_object" }
+        type: 'mashup',
+        prompt: promptText
       }),
     });
 
@@ -364,13 +358,19 @@ Return ONLY the valid JSON object. No markdown formatting, no backticks, no expl
     }
 
     const data = await res.json();
-    let text = data.choices?.[0]?.message?.content || '{}';
-    text = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
     
-    try {
-      blueprint = JSON.parse(text);
-    } catch (e) {
-      throw new Error('Failed to parse mashup blueprint JSON');
+    if (data.error) {
+      throw new Error(`API returned error: ${data.error}`);
+    }
+    
+    blueprint = data.blueprint;
+    
+    if (typeof blueprint === 'string') {
+      try {
+        blueprint = JSON.parse(blueprint);
+      } catch (e) {
+        throw new Error('Failed to parse mashup blueprint JSON from string');
+      }
     }
     
     if (Array.isArray(blueprint)) {

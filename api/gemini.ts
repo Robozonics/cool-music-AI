@@ -144,50 +144,10 @@ Output ONLY valid JSON. No markdown, no commentary.`;
       return new Response(JSON.stringify({ error: `Unknown type: ${type}` }), { status: 400 });
     }
 
-    // ── Call Gemini with Fallback Keys ──────────────────────────────────────────
-    // For mashups, Gemini is too slow to generate 100+ bars of JSON and triggers a 504 on Vercel.
-    // We route mashups directly to Groq (which is 10x faster) to avoid timeouts.
+    // Removed direct Groq routing for mashups. It will now use Gemini first.
     const groqKey = process.env.GROQ_API_KEY || process.env.VITE_GROQ_API_KEY || ('gsk_' + 'WFvoRPkbi' + 'uZ3gWa4PTD1WGdy' + 'b3FYOC9Frl0AzRe' + 'YGNTxyvebIr29');
     
     let lastResponse: Response | null = null;
-
-    if (type === 'mashup' && groqKey) {
-      console.log('[API] Routing mashup directly to Groq for speed...');
-      try {
-        const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${groqKey}`
-          },
-          body: JSON.stringify({
-            model: 'llama3-70b-8192',
-            messages: [{ role: 'user', content: promptText }],
-            temperature: 0.8,
-            response_format: { type: "json_object" }
-          })
-        });
-
-        if (groqResponse.ok) {
-          const data = await groqResponse.json();
-          let text = data.choices?.[0]?.message?.content || '{}';
-          text = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
-          const parsed = JSON.parse(text);
-          return new Response(JSON.stringify({
-            success: true,
-            recommendations: [],
-            translated: undefined,
-            blueprint: parsed,
-          }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-        } else {
-          console.error('Groq API error:', groqResponse.statusText);
-          lastResponse = groqResponse;
-          // Fall through to Gemini if Groq fails
-        }
-      } catch (e) {
-        console.error('Groq direct routing crashed:', e);
-      }
-    }
 
     const payload = {
       contents: [{ parts: [{ text: promptText }] }],
@@ -276,8 +236,8 @@ Output ONLY valid JSON. No markdown, no commentary.`;
     
     geminiFailed = true;
     
-    // ── Fallback to Groq if all Gemini keys fail and it wasn't already tried ─────────────────────────────
-    if (geminiFailed && groqKey && type !== 'mashup') {
+    // ── Fallback to Groq if all Gemini keys fail ─────────────────────────────
+    if (geminiFailed && groqKey) {
       try {
         console.log('Gemini failed, falling back to Groq...');
         const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -287,7 +247,7 @@ Output ONLY valid JSON. No markdown, no commentary.`;
             'Authorization': `Bearer ${groqKey}`
           },
           body: JSON.stringify({
-            model: 'llama3-70b-8192',
+            model: 'llama-3.1-8b-instant',
             messages: [{ role: 'user', content: promptText }],
             temperature: type === 'playlist' ? 0.7 : 0.9,
             response_format: { type: "json_object" }
