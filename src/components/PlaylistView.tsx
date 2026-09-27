@@ -243,7 +243,7 @@ export const PlaylistView: React.FC<PlaylistViewProps> = ({ playlistId, setActiv
   };
 
   return (
-    <div className="flex flex-col min-h-full bg-obsidian pb-24">
+    <div className="flex flex-col min-h-full bg-obsidian pb-32">
       {/* Header */}
       <div className="relative pt-12 md:pt-16 pb-4 md:pb-8 px-4 md:px-6 bg-gradient-to-b from-purple-900/40 to-obsidian">
         <button 

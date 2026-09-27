@@ -300,7 +300,7 @@ export const SearchView: React.FC = () => {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto space-y-4 pb-24">
+      <div className="flex-1 overflow-y-auto space-y-4 pb-32">
         {results.map((track) => (
           <div key={track.id} className="flex flex-col p-3 rounded-2xl hover:bg-white/5 transition group">
             <div className="flex items-center">

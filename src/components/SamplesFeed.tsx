@@ -190,7 +190,7 @@ const SampleCard: React.FC<SampleCardProps> = ({ track, isActive, isMuted, onAdd
       </AnimatePresence>
 
       {/* Right Action Rail */}
-      <div className="absolute right-4 bottom-32 flex flex-col items-center gap-7 z-20">
+      <div className="absolute right-4 bottom-44 flex flex-col items-center gap-7 z-20">
         <motion.button
           whileTap={{ scale: 0.85 }}
           onClick={handleLike}
@@ -251,7 +251,7 @@ const SampleCard: React.FC<SampleCardProps> = ({ track, isActive, isMuted, onAdd
       </div>
 
       {/* Track Info (Bottom Left) */}
-      <div className="absolute left-4 bottom-24 right-24 z-20 pointer-events-none flex flex-col items-start">
+      <div className="absolute left-4 bottom-40 right-24 z-20 pointer-events-none flex flex-col items-start">
          <h3 className="text-white font-black text-2xl md:text-3xl leading-tight drop-shadow-lg line-clamp-2">{track.title}</h3>
          <p className="text-white/90 font-medium mt-2 text-base drop-shadow-md">@{track.artist}</p>
          
@@ -365,7 +365,7 @@ export const SamplesFeed: React.FC = () => {
   }
 
   return (
-    <div className="relative h-[100dvh] w-full bg-black">
+    <div className="absolute inset-0 w-full bg-black z-[-1]">
       {/* Absolute Header (floats over content) */}
       <div className="absolute top-0 left-0 right-0 px-4 pt-10 pb-6 z-30 bg-gradient-to-b from-black/80 to-transparent flex justify-between items-start pointer-events-none">
         <div>
@@ -394,7 +394,7 @@ export const SamplesFeed: React.FC = () => {
           <div
             key={track.id}
             ref={el => { cardRefs.current[i] = el; }}
-            className="h-[100dvh] w-full shrink-0 snap-start bg-black"
+            className="h-full w-full shrink-0 snap-start bg-black"
             style={{ scrollSnapAlign: 'start' }}
           >
             <SampleCard
