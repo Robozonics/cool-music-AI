@@ -177,16 +177,10 @@ export const ConnectDeviceModal: React.FC = () => {
           signal: 5
         }));
         
-        // Add mock remote devices for demonstration
-        const mockDevices: AppDevice[] = [
-          { id: 'mock-tv', name: 'Living Room TV', type: 'tv', status: 'available', signal: 4 },
-          { id: 'mock-laptop', name: 'MacBook Pro', type: 'laptop', status: 'available', signal: 5 },
-        ];
-        
-        setDevices([...realDevices, ...mockDevices]);
+        setDevices(realDevices);
       }).catch(err => {
         console.error('Error fetching devices', err);
-        setDevices([{ id: 'mock1', name: 'Local Speaker', type: 'speaker', status: 'available', signal: 5 }]);
+        setDevices([]);
       });
     }
   }, []);
@@ -214,10 +208,8 @@ export const ConnectDeviceModal: React.FC = () => {
     setIsConnecting(deviceId);
     
     try {
-      if ((nativeAudio as any).setSinkId && !deviceId.startsWith('mock-')) {
+      if ((nativeAudio as any).setSinkId) {
         await (nativeAudio as any).setSinkId(deviceId);
-      } else {
-        await new Promise(r => setTimeout(r, 1200));
       }
       setConnectedDevice(deviceName);
       setTab('remote');
@@ -498,6 +490,30 @@ export const ConnectDeviceModal: React.FC = () => {
                       <Wifi className="w-3 h-3" /> Network Devices
                     </div>
                     <div className="space-y-1.5">
+                      {'remote' in nativeAudio && (
+                        <motion.button
+                          whileHover={{ x: 2 }}
+                          onClick={async () => {
+                            try {
+                              await (nativeAudio as any).remote.prompt();
+                            } catch (e) {
+                              console.log('Cast prompt cancelled or failed', e);
+                            }
+                          }}
+                          className="w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left bg-white/3 hover:bg-white/8 border border-transparent hover:border-white/15"
+                        >
+                          <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/5 text-zinc-400">
+                            <Cast className="w-4 h-4" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-bold text-white">Cast to Device</p>
+                            <p className="text-[10px] text-zinc-500">
+                              AirPlay or Google Cast
+                            </p>
+                          </div>
+                        </motion.button>
+                      )}
+                      
                       {devices.filter(d => d.type !== 'headphones').map(device => (
                         <motion.button
                           key={device.id}
