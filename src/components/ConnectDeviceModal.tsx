@@ -4,7 +4,7 @@ import {
   X, Smartphone, Monitor, Tv, Cast, Bluetooth, Wifi, QrCode,
   Copy, Check, Link2, Radio, Loader2,
   Play, Pause, SkipForward, Volume2,
-  Laptop, Watch, Speaker, Headphones, Zap, Lock, Globe
+  Laptop, Watch, Speaker, Headphones, Lock, Globe
 } from 'lucide-react';
 import { usePlayerStore, nativeAudio } from '../store/usePlayerStore';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
