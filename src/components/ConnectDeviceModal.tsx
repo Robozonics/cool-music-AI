@@ -314,7 +314,7 @@ export const ConnectDeviceModal: React.FC = () => {
     // 2. Robust WebRTC sync using PeerJS
     try {
       const peerId = isHost ? `msy-host-${code}` : `msy-peer-${code}-${Math.floor(Math.random()*10000)}`;
-      const peer = new Peer(peerId);
+      const peer = new Peer(peerId, { pingInterval: 10000 });
       peerRef.current = peer;
 
       const broadcastToPeers = (data: any) => {
@@ -330,14 +330,17 @@ export const ConnectDeviceModal: React.FC = () => {
             showToast('info', `${data.peerId} joined!`);
             const state = usePlayerStore.getState();
             if (state.currentTrack && conn && conn.open) {
-               conn.send({ type: 'play_track', track: state.currentTrack, time: state.currentTime, isPlaying: state.isPlaying });
+               conn.send({ type: 'play_track', track: state.currentTrack, time: nativeAudio.currentTime, isPlaying: !nativeAudio.paused });
             }
           }
         } else if (data.type === 'play_track' && data.track) {
           if (!isHost) {
             usePlayerStore.getState().playTrack(data.track);
-            if (data.time !== undefined) nativeAudio.currentTime = data.time;
-            if (data.isPlaying === false) nativeAudio.pause();
+            // Delay setting currentTime slightly to allow src to load
+            setTimeout(() => {
+              if (data.time !== undefined) nativeAudio.currentTime = data.time;
+              if (data.isPlaying === false) nativeAudio.pause();
+            }, 50);
           }
         } else if (data.type === 'sync_action') {
           if (!isHost) {
@@ -402,8 +405,26 @@ export const ConnectDeviceModal: React.FC = () => {
 
         peer.on('error', (err) => {
           console.error('PeerJS Error:', err);
+          if (err.type === 'peer-unavailable') {
+            showToast('error', 'Session not found. Is the host active?');
+          } else {
+            showToast('error', 'Connection failed.');
+          }
           setJoiningSession(false);
-          showToast('error', 'Failed to connect. Is the host active?');
+          disconnectSession();
+        });
+      }
+
+      // Auto-reconnect if signaling server drops connection
+      peer.on('disconnected', () => {
+        if (!peer.destroyed) {
+          peer.reconnect();
+        }
+      });
+      
+      if (isHost) {
+        peer.on('error', (err) => {
+          console.error('PeerJS Host Error:', err);
         });
       }
     } catch (e) {
