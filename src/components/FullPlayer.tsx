@@ -190,11 +190,19 @@ export const FullPlayer: React.FC = () => {
             </button>
 
             <button
-              onClick={toggleCrossfade}
-              className={`p-2 sm:p-3 rounded-full transition-colors ${isCrossfadeEnabled ? 'text-lime-400 shadow-[0_0_15px_rgba(163,230,53,0.3)]' : 'text-gray-400 hover:text-[#ff00ff]'}`}
+              onClick={() => {
+                toggleCrossfade();
+                (window as any).showToast?.('info', isCrossfadeEnabled ? 'Crossfade Disabled' : 'Crossfade Enabled (3s)');
+              }}
+              className={`p-2 sm:px-4 sm:py-2 flex items-center justify-center gap-1.5 rounded-full transition-all text-xs font-bold ${
+                isCrossfadeEnabled 
+                  ? 'text-lime-400 bg-lime-400/10 shadow-[0_0_15px_rgba(163,230,53,0.3)]' 
+                  : 'text-gray-400 hover:text-white'
+              }`}
               title={isCrossfadeEnabled ? 'Smart Mix Transitions: ON (3s)' : 'Smart Mix Transitions: OFF'}
             >
-              <Blend className="w-5 h-5 sm:w-6 sm:h-6" />
+              <Blend className="w-5 h-5 sm:w-5 sm:h-5" />
+              <span className="sm:inline">{isCrossfadeEnabled ? 'XFADE' : 'XFADE'}</span>
             </button>
 
             <button 

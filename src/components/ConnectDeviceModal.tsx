@@ -188,6 +188,13 @@ export const ConnectDeviceModal: React.FC = () => {
     }
   }, []);
 
+  // Auto-start the host session exactly once so the code is always ready
+  useEffect(() => {
+    if (!peerRef.current) {
+      handleStartSession();
+    }
+  }, []);
+
   // Cleanup channels on unmount
   useEffect(() => {
     return () => {
@@ -718,12 +725,9 @@ export const ConnectDeviceModal: React.FC = () => {
 
                       {/* Session status */}
                       {!isSessionActive ? (
-                        <button
-                          onClick={handleStartSession}
-                          className="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-cyan-600 text-white font-bold text-sm flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.98] transition"
-                        >
-                          <Zap className="w-4 h-4" /> Start Live Session
-                        </button>
+                        <div className="w-full py-3.5 rounded-xl bg-white/5 border border-white/10 text-zinc-400 font-bold text-sm flex items-center justify-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin" /> Starting Live Session...
+                        </div>
                       ) : (
                         <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 space-y-2">
                           <div className="flex items-center justify-between">
