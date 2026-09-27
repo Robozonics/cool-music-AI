@@ -139,50 +139,52 @@ function App() {
           <h1 className="text-xl sm:text-2xl font-black tracking-tighter text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
             MUSI<span className="text-acid-lime drop-shadow-[0_0_15px_rgba(163,230,53,0.5)]">FY</span>
           </h1>
-          <div className="flex items-center gap-1 sm:gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto overflow-y-hidden no-scrollbar max-w-[65vw] pl-2 py-1">
             <button 
               onClick={toggleWakeWord}
-              className={`p-2 transition rounded-full ${isListening ? 'bg-red-500/20 text-red-400 animate-pulse' : 'text-zinc-500 hover:text-zinc-300'}`}
+              className={`p-2 shrink-0 transition rounded-full ${isListening ? 'bg-red-500/20 text-red-400 animate-pulse' : 'text-zinc-500 hover:text-zinc-300'}`}
               title="Hey Musify (Continuous Listening)"
             >
               <Mic className="w-5 h-5" />
             </button>
             <button 
               onClick={() => setAiCommandOpen(!isAiCommandOpen)}
-              className="p-2 text-purple-400 hover:text-purple-300 transition"
+              className="p-2 shrink-0 text-purple-400 hover:text-purple-300 transition"
               title="AI Command Box"
             >
               <Sparkles className="w-6 h-6" />
             </button>
             <button
               onClick={() => setIsCollabOpen(true)}
-              className="p-2 text-fuchsia-400 hover:text-fuchsia-300 transition"
+              className="p-2 shrink-0 text-fuchsia-400 hover:text-fuchsia-300 transition"
               title="Group Listening Session"
             >
               <Users className="w-5 h-5" />
             </button>
             <button 
               onClick={() => setMashupOpen(!isMashupOpen)}
-              className={`p-2 transition rounded-full ${isMashupOpen ? 'text-acid-lime bg-acid-lime/10 shadow-[0_0_15px_rgba(204,255,0,0.4)]' : 'text-gray-400 hover:text-white'}`}
+              className={`p-2 shrink-0 transition rounded-full ${isMashupOpen ? 'text-acid-lime bg-acid-lime/10 shadow-[0_0_15px_rgba(204,255,0,0.4)]' : 'text-gray-400 hover:text-white'}`}
               title="AI Mashup Studio"
             >
               <Layers className="w-6 h-6" />
             </button>
             <button 
               onClick={() => setSleepTimerOpen(true)}
-              className="p-2 text-purple-400 hover:text-purple-300 transition"
+              className="p-2 shrink-0 text-purple-400 hover:text-purple-300 transition"
               title="Sleep Timer"
             >
               <Moon className="w-5 h-5" />
             </button>
             <button 
               onClick={() => setApiKeyModalOpen(true)}
-              className="p-2 text-gray-400 hover:text-white transition"
+              className="p-2 shrink-0 text-gray-400 hover:text-white transition"
               title="Settings"
             >
               <Settings className="w-6 h-6" />
             </button>
-            <SpotifyAccountButton />
+            <div className="shrink-0">
+              <SpotifyAccountButton />
+            </div>
           </div>
         </header>
         <div className="relative z-10">

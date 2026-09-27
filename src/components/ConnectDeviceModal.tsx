@@ -56,13 +56,37 @@ const SignalBars: React.FC<{ strength: number }> = ({ strength }) => (
 );
 
 // ── Mini Remote Control ───────────────────────────────────────────────
-const RemoteControl: React.FC<{ deviceName: string; onDisconnect: () => void }> = ({
-  deviceName, onDisconnect
+const RemoteControl: React.FC<{ deviceName: string; onDisconnect: () => void; isRemoteSession?: boolean; sendRemoteAction?: (action: any) => void }> = ({
+  deviceName, onDisconnect, isRemoteSession, sendRemoteAction
 }) => {
   const isPlaying = usePlayerStore(s => s.isPlaying);
   const currentTrack = usePlayerStore(s => s.currentTrack);
   const volume = usePlayerStore(s => s.volume);
   const { togglePlay, nextTrack, prevTrack, setVolume } = usePlayerStore.getState();
+
+  const handlePlayPause = () => {
+    if (isRemoteSession && sendRemoteAction) {
+      sendRemoteAction({ action: isPlaying ? 'pause' : 'play' });
+      usePlayerStore.getState().setIsPlaying(!isPlaying);
+    } else {
+      togglePlay();
+    }
+  };
+
+  const handleNext = () => {
+    if (isRemoteSession && sendRemoteAction) sendRemoteAction({ action: 'next' });
+    else nextTrack();
+  };
+
+  const handlePrev = () => {
+    if (isRemoteSession && sendRemoteAction) sendRemoteAction({ action: 'prev' });
+    else prevTrack();
+  };
+
+  const handleVol = (val: number) => {
+    if (isRemoteSession && sendRemoteAction) sendRemoteAction({ action: 'volume', value: val });
+    else setVolume(val);
+  };
 
   return (
     <motion.div
@@ -91,16 +115,16 @@ const RemoteControl: React.FC<{ deviceName: string; onDisconnect: () => void }> 
       )}
 
       <div className="p-3 flex items-center justify-center gap-4">
-        <button onClick={prevTrack} className="p-2 rounded-full hover:bg-white/10 text-white transition">
+        <button onClick={handlePrev} className="p-2 rounded-full hover:bg-white/10 text-white transition">
           <SkipForward className="w-4 h-4 rotate-180" />
         </button>
         <button
-          onClick={togglePlay}
+          onClick={handlePlayPause}
           className="p-3 rounded-full bg-acid-lime text-black hover:bg-[#b3ff00] transition"
         >
           {isPlaying ? <Pause className="w-5 h-5 fill-black" /> : <Play className="w-5 h-5 fill-black" />}
         </button>
-        <button onClick={nextTrack} className="p-2 rounded-full hover:bg-white/10 text-white transition">
+        <button onClick={handleNext} className="p-2 rounded-full hover:bg-white/10 text-white transition">
           <SkipForward className="w-4 h-4" />
         </button>
       </div>
@@ -110,7 +134,7 @@ const RemoteControl: React.FC<{ deviceName: string; onDisconnect: () => void }> 
         <Volume2 className="w-3.5 h-3.5 text-gray-500" />
         <input
           type="range" min={0} max={1} step={0.01} value={volume}
-          onChange={e => setVolume(parseFloat(e.target.value))}
+          onChange={e => handleVol(parseFloat(e.target.value))}
           className="flex-1 h-1 accent-acid-lime cursor-pointer"
         />
         <span className="text-xs text-gray-500 w-8 text-right tabular-nums">{Math.round(volume * 100)}%</span>
@@ -209,6 +233,21 @@ export const ConnectDeviceModal: React.FC = () => {
   const createSyncChannel = (code: string, isHost: boolean) => {
     const peerName = user?.user_metadata?.display_name || user?.email?.split('@')[0] || `User_${Math.floor(Math.random() * 1000)}`;
 
+    const handleRemoteAction = (action: any) => {
+      const state = usePlayerStore.getState();
+      if (action.action === 'play') {
+        nativeAudio.play().catch(()=>{});
+      } else if (action.action === 'pause') {
+        nativeAudio.pause();
+      } else if (action.action === 'next') {
+        state.nextTrack();
+      } else if (action.action === 'prev') {
+        state.prevTrack();
+      } else if (action.action === 'volume') {
+        state.setVolume(action.value);
+      }
+    };
+
     // 1. Try Supabase Realtime for cross-device sync
     if (isSupabaseConfigured && supabase) {
       const channel = supabase.channel(`musify-sync-${code}`);
@@ -216,12 +255,28 @@ export const ConnectDeviceModal: React.FC = () => {
 
       channel.on('broadcast', { event: 'peer_joined' }, ({ payload }) => {
         setSessionPeers(prev => Array.from(new Set([...prev, payload.peerId])));
-        if (isHost) showToast('info', `${payload.peerId} joined the session!`);
+        if (isHost) {
+          showToast('info', `${payload.peerId} joined the session!`);
+          const state = usePlayerStore.getState();
+          if (state.currentTrack) {
+            channel.send({
+              type: 'broadcast',
+              event: 'play_track',
+              payload: { track: state.currentTrack, time: state.currentTime, isPlaying: state.isPlaying }
+            });
+          }
+        }
       });
 
       channel.on('broadcast', { event: 'play_track' }, ({ payload }) => {
         if (!isHost && payload.track) {
           usePlayerStore.getState().playTrack(payload.track);
+          if (payload.time !== undefined) {
+             nativeAudio.currentTime = payload.time;
+          }
+          if (payload.isPlaying === false) {
+             nativeAudio.pause();
+          }
         }
       });
 
@@ -230,11 +285,16 @@ export const ConnectDeviceModal: React.FC = () => {
           if (payload.action === 'pause') {
             nativeAudio.pause();
           } else if (payload.action === 'play') {
+            if (payload.time !== undefined) nativeAudio.currentTime = payload.time;
             nativeAudio.play().catch(() => {});
           } else if (payload.action === 'seek' && payload.time !== undefined) {
             nativeAudio.currentTime = payload.time;
           }
         }
+      });
+
+      channel.on('broadcast', { event: 'remote_action' }, ({ payload }) => {
+        if (isHost) handleRemoteAction(payload);
       });
 
       channel.subscribe((status) => {
@@ -259,7 +319,7 @@ export const ConnectDeviceModal: React.FC = () => {
                 channel.send({
                   type: 'broadcast',
                   event: 'sync_action',
-                  payload: { action: state.isPlaying ? 'play' : 'pause' }
+                  payload: { action: state.isPlaying ? 'play' : 'pause', time: state.currentTime }
                 });
               }
             });
@@ -282,8 +342,32 @@ export const ConnectDeviceModal: React.FC = () => {
     bc.onmessage = (e) => {
       if (e.data.type === 'peer_joined') {
         setSessionPeers(prev => Array.from(new Set([...prev, e.data.peerId])));
+        if (isHost) {
+          showToast('info', `${e.data.peerId} joined the session!`);
+          const state = usePlayerStore.getState();
+          if (state.currentTrack) {
+             bc.postMessage({ type: 'play_track', track: state.currentTrack, time: state.currentTime, isPlaying: state.isPlaying });
+          }
+        }
       } else if (e.data.type === 'play_track' && e.data.track) {
-        usePlayerStore.getState().playTrack(e.data.track);
+        if (!isHost) {
+          usePlayerStore.getState().playTrack(e.data.track);
+          if (e.data.time !== undefined) nativeAudio.currentTime = e.data.time;
+          if (e.data.isPlaying === false) nativeAudio.pause();
+        }
+      } else if (e.data.type === 'sync_action') {
+        if (!isHost) {
+          if (e.data.action === 'pause') {
+            nativeAudio.pause();
+          } else if (e.data.action === 'play') {
+            if (e.data.time !== undefined) nativeAudio.currentTime = e.data.time;
+            nativeAudio.play().catch(() => {});
+          } else if (e.data.action === 'seek' && e.data.time !== undefined) {
+            nativeAudio.currentTime = e.data.time;
+          }
+        }
+      } else if (e.data.type === 'remote_action') {
+        if (isHost) handleRemoteAction(e.data.action);
       }
     };
 
@@ -293,6 +377,9 @@ export const ConnectDeviceModal: React.FC = () => {
       usePlayerStore.subscribe((state, prevState) => {
         if (state.currentTrack?.id !== prevState.currentTrack?.id) {
           bc.postMessage({ type: 'play_track', track: state.currentTrack });
+        }
+        if (state.isPlaying !== prevState.isPlaying) {
+          bc.postMessage({ type: 'sync_action', action: state.isPlaying ? 'play' : 'pause', time: state.currentTime });
         }
       });
     }
@@ -641,10 +728,20 @@ export const ConnectDeviceModal: React.FC = () => {
               {/* ── Remote tab ───────────────────────────── */}
               {tab === 'remote' && (
                 <motion.div key="remote" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="space-y-4">
-                  {connectedDevice ? (
+                  {(connectedDevice || (isSessionActive && syncMode === 'join')) ? (
                     <RemoteControl
-                      deviceName={connectedDevice}
-                      onDisconnect={() => { setConnectedDevice(null); setTab('devices'); }}
+                      deviceName={connectedDevice || "Host Session"}
+                      onDisconnect={() => {
+                        if (connectedDevice) { setConnectedDevice(null); setTab('devices'); }
+                      }}
+                      isRemoteSession={isSessionActive && syncMode === 'join'}
+                      sendRemoteAction={(action) => {
+                        if (channelRef.current && supabase) {
+                           channelRef.current.send({ type: 'broadcast', event: 'remote_action', payload: action });
+                        } else if (bcRef.current) {
+                           bcRef.current.postMessage({ type: 'remote_action', action });
+                        }
+                      }}
                     />
                   ) : (
                     <div className="py-10 flex flex-col items-center text-center gap-4">
