@@ -56,7 +56,7 @@ export const SpotifyAccountButton: React.FC = () => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 8 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="absolute right-0 mt-2 w-64 rounded-2xl bg-[#0c0c10]/95 border border-white/10 shadow-[0_15px_50px_rgba(0,0,0,0.8)] p-2 z-50 text-white select-none backdrop-blur-2xl"
+            className="fixed top-16 right-4 sm:absolute sm:top-full sm:right-0 sm:mt-2 w-64 rounded-2xl bg-[#0c0c10]/95 border border-white/10 shadow-[0_15px_50px_rgba(0,0,0,0.8)] p-2 z-[999] text-white select-none backdrop-blur-2xl"
           >
             {/* Header info */}
             <div className="flex items-center gap-3 p-3 border-b border-white/10">
