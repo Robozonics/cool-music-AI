@@ -621,6 +621,7 @@ export const ConnectDeviceModal: React.FC = () => {
                               await (nativeAudio as any).remote.prompt();
                             } catch (e) {
                               console.log('Cast prompt cancelled or failed', e);
+                              (window as any).showToast?.('info', 'Cast unavailable due to DJ Engine. Use "Host Session" instead!');
                             }
                           }}
                           className="w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left bg-white/3 hover:bg-white/8 border border-transparent hover:border-white/15"
