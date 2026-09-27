@@ -289,7 +289,8 @@ export const ConnectDeviceModal: React.FC = () => {
         if (isHost) handleRemoteAction(payload);
       });
 
-      channel.subscribe((status) => {
+
+      channel.subscribe((status, err) => {
         if (status === 'SUBSCRIBED') {
           channel.send({
             type: 'broadcast',
@@ -320,7 +321,12 @@ export const ConnectDeviceModal: React.FC = () => {
           }
 
           setIsSessionActive(true);
+          setJoiningSession(false);
           showToast('success', isHost ? 'Session started! Share the code.' : 'Connected to session!');
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.error('Supabase Realtime Error:', err);
+          setJoiningSession(false);
+          showToast('error', 'Could not connect. Please check network or try again.');
         }
       });
 
@@ -381,14 +387,17 @@ export const ConnectDeviceModal: React.FC = () => {
   };
 
   const handleJoinSession = () => {
-    const cleanCode = joinCode.trim();
-    if (cleanCode.length < 7) {
-      showToast('error', 'Please enter a valid 6-character code (e.g. ABC-123)');
+    let cleanCode = joinCode.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (cleanCode.length < 6) {
+      showToast('error', 'Please enter a valid 6-character code (e.g. ABC123)');
       return;
     }
+    // format as XXX-XXX for channel name consistency
+    cleanCode = cleanCode.slice(0, 3) + '-' + cleanCode.slice(3, 6);
+    
     setJoiningSession(true);
     createSyncChannel(cleanCode, false);
-    setTimeout(() => setJoiningSession(false), 1500);
+    setTimeout(() => setJoiningSession(false), 5000); // 5s fallback timeout
   };
 
   const handleStartSession = () => {
@@ -697,7 +706,11 @@ export const ConnectDeviceModal: React.FC = () => {
                         <input
                           type="text"
                           value={joinCode}
-                          onChange={e => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 7))}
+                          onChange={e => {
+                            let val = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                            if (val.length > 3) val = val.slice(0, 3) + '-' + val.slice(3, 6);
+                            setJoinCode(val);
+                          }}
                           placeholder="ABC-123"
                           className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white font-mono text-lg font-black tracking-widest uppercase focus:outline-none focus:border-emerald-500/50 transition text-center placeholder-zinc-700"
                           maxLength={7}
@@ -705,9 +718,9 @@ export const ConnectDeviceModal: React.FC = () => {
                       </div>
                       <button
                         onClick={handleJoinSession}
-                        disabled={joinCode.length < 7 || joiningSession}
+                        disabled={joinCode.replace(/[^A-Z0-9]/g, '').length < 6 || joiningSession}
                         className={`w-full py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.98] ${
-                          joinCode.length >= 7
+                          joinCode.replace(/[^A-Z0-9]/g, '').length >= 6
                             ? 'bg-gradient-to-r from-emerald-600 to-cyan-600 text-white'
                             : 'bg-white/5 text-zinc-600 cursor-not-allowed'
                         }`}
