@@ -240,9 +240,60 @@ export const ConnectDeviceModal: React.FC = () => {
       }
     };
 
-    // 1. Try Supabase Realtime for cross-device sync
+    // 1. Always set up BroadcastChannel for same-device/same-browser fast path
+    const bc = new BroadcastChannel(`musify-sync-${code}`);
+    bcRef.current = bc;
+
+    bc.onmessage = (e) => {
+      if (e.data.type === 'peer_joined') {
+        setSessionPeers(prev => Array.from(new Set([...prev, e.data.peerId])));
+        if (isHost) {
+          showToast('info', `${e.data.peerId} joined locally!`);
+          const state = usePlayerStore.getState();
+          if (state.currentTrack) {
+             bc.postMessage({ type: 'play_track', track: state.currentTrack, time: state.currentTime, isPlaying: state.isPlaying });
+          }
+        }
+      } else if (e.data.type === 'play_track' && e.data.track) {
+        if (!isHost) {
+          usePlayerStore.getState().playTrack(e.data.track);
+          if (e.data.time !== undefined) nativeAudio.currentTime = e.data.time;
+          if (e.data.isPlaying === false) nativeAudio.pause();
+        }
+      } else if (e.data.type === 'sync_action') {
+        if (!isHost) {
+          if (e.data.action === 'pause') {
+            nativeAudio.pause();
+          } else if (e.data.action === 'play') {
+            if (e.data.time !== undefined) nativeAudio.currentTime = e.data.time;
+            nativeAudio.play().catch(() => {});
+          } else if (e.data.action === 'seek' && e.data.time !== undefined) {
+            nativeAudio.currentTime = e.data.time;
+          }
+        }
+      } else if (e.data.type === 'remote_action') {
+        if (isHost) handleRemoteAction(e.data.action);
+      }
+    };
+
+    bc.postMessage({ type: 'peer_joined', peerId: peerName });
+
+    if (isHost) {
+      usePlayerStore.subscribe((state, prevState) => {
+        if (state.currentTrack?.id !== prevState.currentTrack?.id) {
+          bc.postMessage({ type: 'play_track', track: state.currentTrack });
+        }
+        if (state.isPlaying !== prevState.isPlaying) {
+          bc.postMessage({ type: 'sync_action', action: state.isPlaying ? 'play' : 'pause', time: state.currentTime });
+        }
+      });
+    }
+
+    // 2. Try Supabase Realtime for cross-device sync
     if (isSupabaseConfigured && supabase) {
-      const channel = supabase.channel(`musify-sync-${code}`);
+      const channel = supabase.channel(`musify-sync-${code}`, {
+        config: { broadcast: { self: true, ack: true } }
+      });
       channelRef.current = channel;
 
       channel.on('broadcast', { event: 'peer_joined' }, ({ payload }) => {
@@ -330,63 +381,23 @@ export const ConnectDeviceModal: React.FC = () => {
         }
       });
 
-      return;
-    }
-
-    // 2. Fallback to BroadcastChannel for same-device sync
-    const bc = new BroadcastChannel(`musify-sync-${code}`);
-    bcRef.current = bc;
-
-    bc.onmessage = (e) => {
-      if (e.data.type === 'peer_joined') {
-        setSessionPeers(prev => Array.from(new Set([...prev, e.data.peerId])));
-        if (isHost) {
-          showToast('info', `${e.data.peerId} joined the session!`);
-          const state = usePlayerStore.getState();
-          if (state.currentTrack) {
-             bc.postMessage({ type: 'play_track', track: state.currentTrack, time: state.currentTime, isPlaying: state.isPlaying });
-          }
-        }
-      } else if (e.data.type === 'play_track' && e.data.track) {
-        if (!isHost) {
-          usePlayerStore.getState().playTrack(e.data.track);
-          if (e.data.time !== undefined) nativeAudio.currentTime = e.data.time;
-          if (e.data.isPlaying === false) nativeAudio.pause();
-        }
-      } else if (e.data.type === 'sync_action') {
-        if (!isHost) {
-          if (e.data.action === 'pause') {
-            nativeAudio.pause();
-          } else if (e.data.action === 'play') {
-            if (e.data.time !== undefined) nativeAudio.currentTime = e.data.time;
-            nativeAudio.play().catch(() => {});
-          } else if (e.data.action === 'seek' && e.data.time !== undefined) {
-            nativeAudio.currentTime = e.data.time;
-          }
-        }
-      } else if (e.data.type === 'remote_action') {
-        if (isHost) handleRemoteAction(e.data.action);
-      }
-    };
-
-    bc.postMessage({ type: 'peer_joined', peerId: peerName });
-
-    if (isHost) {
-      usePlayerStore.subscribe((state, prevState) => {
-        if (state.currentTrack?.id !== prevState.currentTrack?.id) {
-          bc.postMessage({ type: 'play_track', track: state.currentTrack });
-        }
-        if (state.isPlaying !== prevState.isPlaying) {
-          bc.postMessage({ type: 'sync_action', action: state.isPlaying ? 'play' : 'pause', time: state.currentTime });
-        }
       });
-    }
 
-    setIsSessionActive(true);
-    showToast('success', isHost ? 'Session started! Share the code.' : 'Connected to session!');
+    } else {
+      // If no supabase, just set session active since BC is already running
+      setIsSessionActive(true);
+      setJoiningSession(false);
+      showToast('success', isHost ? 'Local session started! Share code.' : 'Connected locally!');
+    }
   };
 
   const handleJoinSession = () => {
+    // Bless the audio element to bypass mobile autoplay restrictions
+    if (nativeAudio.paused) {
+      nativeAudio.play().catch(() => {});
+      nativeAudio.pause();
+    }
+
     let cleanCode = joinCode.toUpperCase().replace(/[^A-Z0-9]/g, '');
     if (cleanCode.length < 6) {
       showToast('error', 'Please enter a valid 6-character code (e.g. ABC123)');
