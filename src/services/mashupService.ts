@@ -341,6 +341,7 @@ SCHEMA:
 
 Return ONLY the valid JSON object. No markdown formatting, no backticks, no explanations.`;
 
+    let blueprint: any = null;
     const res = await fetch('/api/gemini', {
       method: 'POST',
       headers: { 
