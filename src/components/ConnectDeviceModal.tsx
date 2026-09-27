@@ -380,9 +380,6 @@ export const ConnectDeviceModal: React.FC = () => {
           showToast('error', 'Could not connect. Please check network or try again.');
         }
       });
-
-      });
-
     } else {
       // If no supabase, just set session active since BC is already running
       setIsSessionActive(true);
