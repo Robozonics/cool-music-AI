@@ -452,7 +452,12 @@ export const ConnectDeviceModal: React.FC = () => {
                     </div>
                     <button
                       onClick={async () => {
-                        try { await (navigator as any).bluetooth?.requestDevice({ acceptAllDevices: true }); }
+                        try {
+                          const device = await (navigator as any).bluetooth?.requestDevice({ acceptAllDevices: true });
+                          if (device) {
+                            handleConnect('bluetooth-' + (device.id || Date.now()), device.name || 'Bluetooth Device');
+                          }
+                        }
                         catch (e) { console.log('BT pairing cancelled'); }
                       }}
                       className="w-full flex items-center gap-3 p-3 rounded-xl bg-white/3 hover:bg-white/8 border border-transparent hover:border-white/15 transition text-left"

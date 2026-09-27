@@ -161,7 +161,7 @@ export const AuthModal: React.FC = () => {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 40, scale: 0.95 }}
           transition={{ type: 'spring', damping: 25, stiffness: 280 }}
-          className="relative w-full max-w-md bg-[#0a0a0d] border border-white/10 sm:rounded-3xl rounded-t-[32px] sm:rounded-b-3xl overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.9)] flex flex-col p-5 sm:p-7 max-h-[92dvh] overflow-y-auto"
+          className="relative w-full max-w-md bg-[#0a0a0d] border border-white/10 sm:rounded-3xl rounded-t-[32px] sm:rounded-b-3xl overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.9)] p-5 sm:p-7 max-h-[92dvh] overflow-y-auto"
         >
           {/* Mobile Drag Indicator */}
           <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-2 sm:hidden shrink-0" />

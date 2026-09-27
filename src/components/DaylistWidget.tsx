@@ -117,6 +117,19 @@ const DAYLIST_TABLE: Array<{
       query: 'jazz cafe acoustic saturday morning chill',
     },
   },
+  // ── Saturday afternoon ──
+  {
+    days: [6],
+    hourStart: 13, hourEnd: 20,
+    entry: {
+      title: 'Weekend Vibe',
+      subtitle: 'Living in the moment',
+      emoji: '😎',
+      gradient: 'from-blue-600/25 via-cyan-500/15 to-teal-300/10',
+      textColor: 'text-blue-300',
+      query: 'weekend chill upbeat pop indie',
+    },
+  },
   // ── Saturday night ──
   {
     days: [6],
@@ -133,7 +146,7 @@ const DAYLIST_TABLE: Array<{
   // ── Sunday chilling ──
   {
     days: [0],
-    hourStart: 10, hourEnd: 18,
+    hourStart: 8, hourEnd: 18,
     entry: {
       title: 'Sunday Soul Reset',
       subtitle: 'Breathe, reflect, recharge',
@@ -141,6 +154,32 @@ const DAYLIST_TABLE: Array<{
       gradient: 'from-emerald-600/25 via-teal-500/15 to-cyan-300/10',
       textColor: 'text-emerald-300',
       query: 'sunday chill indie folk acoustic soul',
+    },
+  },
+  // ── Sunday Evening ──
+  {
+    days: [0],
+    hourStart: 18, hourEnd: 24,
+    entry: {
+      title: 'Sunday Night Wind Down',
+      subtitle: 'Preparing for the week ahead',
+      emoji: '🕯️',
+      gradient: 'from-purple-600/25 via-indigo-500/15 to-blue-300/10',
+      textColor: 'text-purple-300',
+      query: 'relaxing evening lofi r&b chill',
+    },
+  },
+  // ── Weekend Early Morning ──
+  {
+    days: [0, 6],
+    hourStart: 5, hourEnd: 8,
+    entry: {
+      title: 'Early Bird Weekend',
+      subtitle: 'The world is quiet',
+      emoji: '🌅',
+      gradient: 'from-orange-500/30 via-yellow-400/20 to-amber-300/10',
+      textColor: 'text-orange-300',
+      query: 'peaceful morning acoustic ambient',
     },
   },
   // ── Default catch-all (midnight–5am any day) ──
