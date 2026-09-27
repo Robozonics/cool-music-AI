@@ -18,28 +18,66 @@ export const getUserDisplayName = (user: User | null): string => {
          user.user_metadata?.name || 
          user.user_metadata?.display_name || 
          user.email?.split('@')[0] || 
-         'Spotify User';
+         'Musify User';
+};
+
+// ── Friendly error messages for Supabase auth errors ──────────────
+const mapAuthError = (message: string): string => {
+  const msg = (message || '').toLowerCase();
+  if (msg.includes('invalid login credentials') || msg.includes('invalid_credentials'))
+    return 'Wrong email or password. Please try again.';
+  if (msg.includes('email not confirmed'))
+    return 'Please verify your email first. Check your inbox for the confirmation link.';
+  if (msg.includes('user not found'))
+    return 'No account found with that email. Try signing up instead.';
+  if (msg.includes('email rate limit'))
+    return 'Too many attempts. Please wait a minute before trying again.';
+  if (msg.includes('password') && msg.includes('too short'))
+    return 'Password must be at least 6 characters.';
+  if (msg.includes('user already registered') || msg.includes('already been registered'))
+    return 'An account with this email already exists. Try logging in.';
+  if (msg.includes('signup is not allowed') || msg.includes('signups not allowed'))
+    return 'New signups are currently disabled. Please try guest access.';
+  if (msg.includes('provider is not enabled'))
+    return 'This login method is not configured. Try email/password or guest access.';
+  if (msg.includes('validation_failed') || msg.includes('400'))
+    return 'Authentication service error. Try guest access for now.';
+  if (msg.includes('network') || msg.includes('fetch'))
+    return 'Network error. Check your internet connection.';
+  return message || 'Something went wrong. Please try again.';
 };
 
 interface AuthState {
   user: User | null;
   isLoading: boolean;
   isAuthModalOpen: boolean;
+  cloudSyncStatus: 'idle' | 'syncing' | 'synced' | 'error';
+  lastSyncAt: number | null;
+  recentlyPlayed: Array<{ trackId: string; title: string; artist: string; thumbnail: string; playedAt: number }>;
+  totalListeningSeconds: number;
   setUser: (user: User | null) => void;
   setAuthModalOpen: (open: boolean) => void;
   signInWithGoogle: () => Promise<{ error?: string }>;
   signInWithEmail: (email: string, password: string) => Promise<{ error?: string }>;
   signUpWithEmail: (name: string, email: string, password: string) => Promise<{ error?: string; message?: string }>;
+  resetPassword: (email: string) => Promise<{ error?: string; message?: string }>;
   signInAsGuest: (name?: string) => void;
   signOut: () => Promise<void>;
   syncUserData: () => Promise<void>;
+  pushPlaylistsToCloud: (playlists: any[], likedTracks: string[], likedTrackDetails: any[]) => Promise<void>;
   saveActivity: (trackId: string, action: string) => Promise<void>;
+  addRecentlyPlayed: (track: { id: string; title: string; artist: string; thumbnail: string }) => void;
+  addListeningTime: (seconds: number) => void;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isLoading: true,
   isAuthModalOpen: false,
+  cloudSyncStatus: 'idle',
+  lastSyncAt: null,
+  recentlyPlayed: JSON.parse(localStorage.getItem('musify_recently_played') || '[]'),
+  totalListeningSeconds: parseInt(localStorage.getItem('musify_listening_time') || '0', 10),
   
   setUser: (user) => set({ user }),
   setAuthModalOpen: (open) => set({ isAuthModalOpen: open }),
@@ -89,7 +127,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           activateInstantGoogleSession();
           return {};
         }
-        return { error: error.message };
+        return { error: mapAuthError(error.message) };
       }
       return {};
     } catch (err: any) {
@@ -109,24 +147,79 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signInWithEmail: async (email: string, password: string): Promise<{ error?: string }> => {
-    if (!isSupabaseConfigured || !supabase) {
-      return { error: 'Supabase is not configured' };
+    // Client-side validation first
+    if (!email || !email.includes('@')) {
+      return { error: 'Please enter a valid email address.' };
     }
+    if (!password || password.length < 6) {
+      return { error: 'Password must be at least 6 characters.' };
+    }
+
+    if (!isSupabaseConfigured || !supabase) {
+      // Offline fallback: create local session
+      const offlineUser: any = {
+        id: 'local-' + btoa(email).replace(/[^a-zA-Z0-9]/g, '').slice(0, 12),
+        email: email,
+        user_metadata: {
+          full_name: email.split('@')[0],
+          name: email.split('@')[0],
+          display_name: email.split('@')[0],
+        },
+        app_metadata: { provider: 'email' },
+        aud: 'authenticated',
+        created_at: new Date().toISOString()
+      };
+      set({ user: offlineUser, isAuthModalOpen: false });
+      localStorage.setItem('musify_guest_user', JSON.stringify(offlineUser));
+      return {};
+    }
+
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) return { error: error.message };
+      if (error) {
+        return { error: mapAuthError(error.message) };
+      }
       set({ user: data.user, isAuthModalOpen: false });
       localStorage.removeItem('musify_guest_user');
+      // Trigger cloud sync after login
+      setTimeout(() => get().syncUserData(), 500);
       return {};
     } catch (err: any) {
-      return { error: err.message || 'Failed to sign in' };
+      return { error: mapAuthError(err.message || 'Failed to sign in') };
     }
   },
 
   signUpWithEmail: async (name: string, email: string, password: string): Promise<{ error?: string; message?: string }> => {
-    if (!isSupabaseConfigured || !supabase) {
-      return { error: 'Supabase is not configured' };
+    // Client-side validation
+    if (!name || name.trim().length < 2) {
+      return { error: 'Name must be at least 2 characters.' };
     }
+    if (!email || !email.includes('@')) {
+      return { error: 'Please enter a valid email address.' };
+    }
+    if (!password || password.length < 6) {
+      return { error: 'Password must be at least 6 characters.' };
+    }
+
+    if (!isSupabaseConfigured || !supabase) {
+      // Offline fallback
+      const offlineUser: any = {
+        id: 'local-' + btoa(email).replace(/[^a-zA-Z0-9]/g, '').slice(0, 12),
+        email: email,
+        user_metadata: {
+          full_name: name,
+          name: name,
+          display_name: name,
+        },
+        app_metadata: { provider: 'email' },
+        aud: 'authenticated',
+        created_at: new Date().toISOString()
+      };
+      set({ user: offlineUser, isAuthModalOpen: false });
+      localStorage.setItem('musify_guest_user', JSON.stringify(offlineUser));
+      return { message: 'Account created locally! Your data will sync when online.' };
+    }
+
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -139,21 +232,45 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           }
         }
       });
-      if (error) return { error: error.message };
+      if (error) return { error: mapAuthError(error.message) };
       if (data.user) {
-        set({ user: data.user, isAuthModalOpen: false });
-        localStorage.removeItem('musify_guest_user');
+        // If user has identities, they're confirmed (auto-confirm enabled)
+        if (data.user.identities && data.user.identities.length > 0) {
+          set({ user: data.user, isAuthModalOpen: false });
+          localStorage.removeItem('musify_guest_user');
+          return { message: `Welcome to Musify, ${name}! 🎵` };
+        }
+        // Email confirmation required
+        return { message: 'Account created! Please check your email to verify your account, then log in.' };
       }
-      return { message: 'Account created! (If email confirmation is enabled, please check your inbox).' };
+      return { message: 'Account created! Check your inbox for the confirmation link.' };
     } catch (err: any) {
-      return { error: err.message || 'Failed to create account' };
+      return { error: mapAuthError(err.message || 'Failed to create account') };
     }
   },
 
-  signInAsGuest: (name: string = 'Spotify User') => {
+  resetPassword: async (email: string): Promise<{ error?: string; message?: string }> => {
+    if (!email || !email.includes('@')) {
+      return { error: 'Please enter a valid email address.' };
+    }
+    if (!isSupabaseConfigured || !supabase) {
+      return { error: 'Password reset is not available offline. Try guest access.' };
+    }
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin
+      });
+      if (error) return { error: mapAuthError(error.message) };
+      return { message: 'Password reset link sent! Check your email inbox.' };
+    } catch (err: any) {
+      return { error: mapAuthError(err.message || 'Failed to send reset email') };
+    }
+  },
+
+  signInAsGuest: (name: string = 'Musify User') => {
     const guestUser: any = {
       id: 'guest-' + Date.now(),
-      email: `${name.toLowerCase().replace(/[^a-z0-9]/g, '') || 'guest'}@spotify.vip`,
+      email: `${name.toLowerCase().replace(/[^a-z0-9]/g, '') || 'guest'}@musify.vip`,
       user_metadata: {
         full_name: name,
         name: name,
@@ -176,26 +293,102 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         // ignore
       }
     }
-    set({ user: null });
+    set({ user: null, cloudSyncStatus: 'idle', lastSyncAt: null });
   },
   
   // Sync playlists and activity from Supabase DB to local PlayerStore
   syncUserData: async () => {
     const { user } = get();
-    if (!user || !supabase) return;
+    if (!user || !supabase || user.id.startsWith('guest-') || user.id.startsWith('local-') || user.id.startsWith('google-')) return;
+
+    set({ cloudSyncStatus: 'syncing' });
 
     try {
-      // 1. Fetch user playlists
+      // 1. Fetch user playlists from cloud
       const { data: playlists } = await supabase
         .from('playlists')
         .select('*')
         .eq('user_id', user.id);
         
       if (playlists && playlists.length > 0) {
-        // Reserved for database sync
+        // Import into player store
+        const { usePlayerStore } = await import('./usePlayerStore');
+        const playerState = usePlayerStore.getState();
+        
+        for (const cloudPlaylist of playlists) {
+          const existing = playerState.savedPlaylists.find(p => p.name === cloudPlaylist.name);
+          if (!existing && cloudPlaylist.tracks) {
+            playerState.savePlaylist(cloudPlaylist.name, cloudPlaylist.tracks);
+          }
+        }
       }
+
+      // 2. Fetch liked tracks
+      const { data: likes } = await supabase
+        .from('liked_tracks')
+        .select('*')
+        .eq('user_id', user.id);
+      
+      if (likes && likes.length > 0) {
+        const { usePlayerStore } = await import('./usePlayerStore');
+        const playerState = usePlayerStore.getState();
+        
+        for (const like of likes) {
+          if (like.track_data && !playerState.likedTracks.includes(like.track_id)) {
+            playerState.toggleLikeTrack(like.track_data);
+          }
+        }
+      }
+
+      set({ cloudSyncStatus: 'synced', lastSyncAt: Date.now() });
     } catch (error) {
       console.error('Error syncing user data:', error);
+      set({ cloudSyncStatus: 'error' });
+    }
+  },
+
+  // Push local playlists to cloud
+  pushPlaylistsToCloud: async (playlists: any[], _likedTracks: string[], likedTrackDetails: any[]) => {
+    const { user } = get();
+    if (!user || !supabase || user.id.startsWith('guest-') || user.id.startsWith('local-') || user.id.startsWith('google-')) return;
+
+    set({ cloudSyncStatus: 'syncing' });
+
+    try {
+      // Upsert playlists
+      for (const playlist of playlists) {
+        try {
+          await supabase
+            .from('playlists')
+            .upsert({
+              id: `${user.id}_${playlist.id}`,
+              user_id: user.id,
+              name: playlist.name,
+              tracks: playlist.tracks,
+              updated_at: new Date().toISOString()
+            }, { onConflict: 'id' });
+        } catch (_) { /* Ignore if table doesn't exist */ }
+      }
+
+      // Upsert liked tracks
+      for (const trackDetail of likedTrackDetails) {
+        try {
+          await supabase
+            .from('liked_tracks')
+            .upsert({
+              id: `${user.id}_${trackDetail.id}`,
+              user_id: user.id,
+              track_id: trackDetail.id,
+              track_data: trackDetail,
+              updated_at: new Date().toISOString()
+            }, { onConflict: 'id' });
+        } catch (_) { /* Ignore if table doesn't exist */ }
+      }
+
+      set({ cloudSyncStatus: 'synced', lastSyncAt: Date.now() });
+    } catch (error) {
+      console.error('Error pushing to cloud:', error);
+      set({ cloudSyncStatus: 'error' });
     }
   },
   
@@ -213,7 +406,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (e) {
       // ignore
     }
-  }
+  },
+
+  addRecentlyPlayed: (track) => {
+    set(state => {
+      const filtered = state.recentlyPlayed.filter(r => r.trackId !== track.id);
+      const updated = [{ trackId: track.id, title: track.title, artist: track.artist, thumbnail: track.thumbnail, playedAt: Date.now() }, ...filtered].slice(0, 50);
+      localStorage.setItem('musify_recently_played', JSON.stringify(updated));
+      return { recentlyPlayed: updated };
+    });
+  },
+
+  addListeningTime: (seconds) => {
+    set(state => {
+      const total = state.totalListeningSeconds + seconds;
+      localStorage.setItem('musify_listening_time', total.toString());
+      return { totalListeningSeconds: total };
+    });
+  },
 }));
 
 // Load persistent guest session if present

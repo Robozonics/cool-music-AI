@@ -493,6 +493,9 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab }) => {
       {/* Geo-Tagged Discovery Banner */}
       <GeoDiscoveryBanner />
 
+      {/* Recently Played Section */}
+      <RecentlyPlayedSection />
+
       {/* Daylist Widget — Time-Contextual (Feature 4) */}
       <DaylistWidget />
 

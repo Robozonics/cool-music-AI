@@ -192,10 +192,24 @@ export const rampVolume = (
   const safeFrom = Number.isFinite(from) ? Math.min(1, Math.max(0, from)) : 0;
   const safeTo = Number.isFinite(to) ? Math.min(1, Math.max(0, to)) : 1;
   const startTime = performance.now();
+  
+  // Determine if it's a fade in or fade out for equal power curve
+  const isFadeIn = safeTo > safeFrom;
+  const maxVol = Math.max(safeFrom, safeTo);
+  
   const tick = (now: number) => {
     const elapsed = now - startTime;
     const progress = Math.min(elapsed / Math.max(1, durationMs), 1);
-    audio.volume = Math.min(1, Math.max(0, safeFrom + (safeTo - safeFrom) * progress));
+    
+    // Equal power crossfade curves
+    if (isFadeIn) {
+      // Fade IN uses Sine curve
+      audio.volume = Math.min(1, Math.max(0, maxVol * Math.sin((Math.PI / 2) * progress)));
+    } else {
+      // Fade OUT uses Cosine curve
+      audio.volume = Math.min(1, Math.max(0, maxVol * Math.cos((Math.PI / 2) * progress)));
+    }
+    
     if (progress < 1) {
       requestAnimationFrame(tick);
     } else {
@@ -584,19 +598,31 @@ export const usePlayerStore = create<PlayerState>()(
         // Fade OUT main, fade IN crossfade
         rampVolume(nativeAudio, get().volume, 0, 3000);
         rampVolume(crossfadeAudio, 0, get().volume, 3000, () => {
-          // Swap: crossfadeAudio becomes main, reset nativeAudio
+          // Crossfade finished!
+          const currentT = crossfadeAudio.currentTime;
+          
           nativeAudio.pause();
           nativeAudio.src = nextTrk.streamUrl;
           nativeAudio.volume = get().volume;
-          nativeAudio.currentTime = crossfadeAudio.currentTime;
-          crossfadeAudio.pause();
-          crossfadeAudio.src = '';
-          set({
-            currentTrack: nextTrk,
-            currentTime: nativeAudio.currentTime,
-            duration: nativeAudio.duration || nextTrk.duration || 0,
-            isCrossfading: false,
-          });
+          
+          const onCanPlay = () => {
+            nativeAudio.currentTime = crossfadeAudio.currentTime;
+            nativeAudio.play().catch(() => {});
+            nativeAudio.removeEventListener('canplay', onCanPlay);
+            
+            crossfadeAudio.pause();
+            crossfadeAudio.src = '';
+            
+            set({
+              currentTrack: nextTrk,
+              currentTime: nativeAudio.currentTime,
+              duration: nativeAudio.duration || nextTrk.duration || 0,
+              isCrossfading: false,
+            });
+          };
+          
+          nativeAudio.addEventListener('canplay', onCanPlay);
+          nativeAudio.load();
         });
       }
     }
@@ -785,6 +811,11 @@ export const usePlayerStore = create<PlayerState>()(
 
     playTrack: (track: Track) => {
       set({ currentTrack: track, currentTime: 0, duration: track.duration || 0, isAutoplayBlocked: false, isBuffering: false, isCrossfading: false });
+
+      // Track recently played
+      import('./useAuthStore').then(({ useAuthStore }) => {
+        useAuthStore.getState().addRecentlyPlayed({ id: track.id, title: track.title, artist: track.artist, thumbnail: track.thumbnail });
+      }).catch(() => { /* ignore if auth store not ready */ });
 
       // Reset recovering state for the new track
       (nativeAudio as any)._isRecovering = false;
@@ -1075,17 +1106,24 @@ export const usePlayerStore = create<PlayerState>()(
     setSearchQuery: (query: string) => set({ searchQuery: query }),
     setSpeedWheelOpen: (open: boolean) => set({ isSpeedWheelOpen: open }),
 
-    toggleLikeTrack: (track: Track) => set((state) => {
-      const isLiked = state.likedTracks.includes(track.id);
-      return {
-        likedTracks: isLiked
-          ? state.likedTracks.filter(id => id !== track.id)
-          : [...state.likedTracks, track.id],
-        likedTrackDetails: isLiked
-          ? (state.likedTrackDetails || []).filter(t => t.id !== track.id)
-          : [...(state.likedTrackDetails || []), track]
-      };
-    }),
+    toggleLikeTrack: (track: Track) => {
+      set((state) => {
+        const isLiked = state.likedTracks.includes(track.id);
+        return {
+          likedTracks: isLiked
+            ? state.likedTracks.filter(id => id !== track.id)
+            : [...state.likedTracks, track.id],
+          likedTrackDetails: isLiked
+            ? (state.likedTrackDetails || []).filter(t => t.id !== track.id)
+            : [...(state.likedTrackDetails || []), track]
+        };
+      });
+      // Sync liked tracks to cloud
+      import('./useAuthStore').then(({ useAuthStore }) => {
+        const state = get();
+        useAuthStore.getState().pushPlaylistsToCloud(state.savedPlaylists, state.likedTracks, state.likedTrackDetails || []);
+      }).catch(() => { /* ignore */ });
+    },
 
     setRepeatMode: (mode: 'off' | 'all' | 'one') => {
       nativeAudio.loop = (mode === 'one');
@@ -1122,6 +1160,11 @@ export const usePlayerStore = create<PlayerState>()(
           { id, name, tracks }
         ]
       }));
+      // Sync to cloud
+      import('./useAuthStore').then(({ useAuthStore }) => {
+        const state = get();
+        useAuthStore.getState().pushPlaylistsToCloud(state.savedPlaylists, state.likedTracks, state.likedTrackDetails || []);
+      }).catch(() => { /* ignore */ });
       return id;
     },
 

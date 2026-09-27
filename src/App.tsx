@@ -21,8 +21,10 @@ import { MobileAICommandBox } from './components/MobileAICommandBox';
 import { CollabPlaylistModal } from './components/CollabPlaylistModal';
 import { AuthModal } from './components/AuthModal';
 import { SpotifyAccountButton } from './components/SpotifyAccountButton';
+import { ToastContainer } from './components/ToastNotification';
+import { SleepTimer } from './components/SleepTimer';
 import { usePlayerStore } from './store/usePlayerStore';
-import { WifiOff, AlertTriangle, Settings, Sparkles, Mic, Layers, Users } from 'lucide-react';
+import { WifiOff, AlertTriangle, Settings, Sparkles, Mic, Layers, Users, Moon } from 'lucide-react';
 import { useAudioAnalyzer } from './store/useAudioAnalyzer';
 import { SoundFusionLayout } from './features/soundfusion/layout/SoundFusionLayout';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
@@ -55,6 +57,7 @@ function App() {
   const [isCollabOpen, setIsCollabOpen] = useState(false);
   const isMashupOpen = useMashupStore(state => state.isOpen);
   const setMashupOpen = useMashupStore(state => state.setIsOpen);
+  const [isSleepTimerOpen, setSleepTimerOpen] = useState(false);
 
   const { processCommand } = useAICommandProcessor();
   const { isListening, toggleWakeWord } = useWakeWord((command) => {
@@ -166,6 +169,13 @@ function App() {
               <Layers className="w-6 h-6" />
             </button>
             <button 
+              onClick={() => setSleepTimerOpen(true)}
+              className="p-2 text-purple-400 hover:text-purple-300 transition"
+              title="Sleep Timer"
+            >
+              <Moon className="w-5 h-5" />
+            </button>
+            <button 
               onClick={() => setApiKeyModalOpen(true)}
               className="p-2 text-gray-400 hover:text-white transition"
               title="Settings"
@@ -213,6 +223,8 @@ function App() {
       <QueuePanel />
       <CollabPlaylistModal isOpen={isCollabOpen} onClose={() => setIsCollabOpen(false)} />
       <AuthModal />
+      <SleepTimer isOpen={isSleepTimerOpen} onClose={() => setSleepTimerOpen(false)} />
+      <ToastContainer />
       
       {/* Premium Texture Overlay */}
       <div className="noise-overlay" />

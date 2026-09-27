@@ -1,12 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Smartphone, Monitor, Tv, Cast, Bluetooth, Wifi, QrCode,
   Copy, Check, Link2, Radio, Loader2,
   Play, Pause, SkipForward, Volume2,
-  Laptop, Watch, Speaker, Headphones, Zap, Lock
+  Laptop, Watch, Speaker, Headphones, Zap, Lock, Globe
 } from 'lucide-react';
 import { usePlayerStore, nativeAudio } from '../store/usePlayerStore';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { useAuthStore } from '../store/useAuthStore';
+import { showToast } from './ToastNotification';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 
 // ── Session code generator ────────────────────────────────────────────
 const generateSessionCode = (): string => {
@@ -120,6 +124,7 @@ export const ConnectDeviceModal: React.FC = () => {
   const isConnectModalOpen = usePlayerStore(state => state.isConnectModalOpen);
   const setConnectModalOpen = usePlayerStore(state => state.setConnectModalOpen);
   const currentTrack = usePlayerStore(state => state.currentTrack);
+  const user = useAuthStore(s => s.user);
 
   const [devices, setDevices] = useState<AppDevice[]>([]);
   const [tab, setTab] = useState<'devices' | 'sync' | 'remote'>('devices');
@@ -131,7 +136,9 @@ export const ConnectDeviceModal: React.FC = () => {
   const [syncMode, setSyncMode] = useState<'host' | 'join'>('host');
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [sessionPeers, setSessionPeers] = useState<string[]>([]);
-  const [syncChannel, setSyncChannel] = useState<BroadcastChannel | null>(null);
+  const [joiningSession, setJoiningSession] = useState(false);
+  const channelRef = useRef<RealtimeChannel | null>(null);
+  const bcRef = useRef<BroadcastChannel | null>(null);
 
   useEffect(() => {
     // Fetch real audio output devices
@@ -146,8 +153,7 @@ export const ConnectDeviceModal: React.FC = () => {
           signal: 5
         }));
         
-        // Add a mock remote device to demonstrate the cross-device switching concept
-        // (Since web APIs don't easily see other devices like TVs on the network without Cast API)
+        // Add mock remote devices for demonstration
         const mockDevices: AppDevice[] = [
           { id: 'mock-tv', name: 'Living Room TV', type: 'tv', status: 'available', signal: 4 },
           { id: 'mock-laptop', name: 'MacBook Pro', type: 'laptop', status: 'available', signal: 5 },
@@ -161,75 +167,155 @@ export const ConnectDeviceModal: React.FC = () => {
     }
   }, []);
 
+  // Cleanup channels on unmount
+  useEffect(() => {
+    return () => {
+      if (channelRef.current && supabase) {
+        supabase.removeChannel(channelRef.current);
+      }
+      if (bcRef.current) {
+        bcRef.current.close();
+      }
+    };
+  }, []);
+
   const handleCopyCode = () => {
     navigator.clipboard.writeText(sessionCode).catch(() => {});
     setCopied(true);
+    showToast('success', 'Code copied to clipboard!');
     setTimeout(() => setCopied(false), 2000);
   };
 
   const handleConnect = async (deviceId: string, deviceName: string) => {
     setIsConnecting(deviceId);
     
-    // Attempt to set actual audio output device if it's a real device id
     try {
       if ((nativeAudio as any).setSinkId && !deviceId.startsWith('mock-')) {
         await (nativeAudio as any).setSinkId(deviceId);
       } else {
-        // Mock connection delay
         await new Promise(r => setTimeout(r, 1200));
       }
       setConnectedDevice(deviceName);
       setTab('remote');
+      showToast('success', `Connected to ${deviceName}`);
     } catch (e) {
       console.error('Failed to set audio output device', e);
+      showToast('error', 'Failed to connect to device');
     } finally {
       setIsConnecting(null);
     }
   };
 
-  const handleJoinSession = () => {
-    if (joinCode.length < 7) return;
-    const channel = new BroadcastChannel(`musify-sync-${joinCode}`);
-    
-    channel.onmessage = (e) => {
+  const createSyncChannel = (code: string, isHost: boolean) => {
+    const peerName = user?.user_metadata?.display_name || user?.email?.split('@')[0] || `User_${Math.floor(Math.random() * 1000)}`;
+
+    // 1. Try Supabase Realtime for cross-device sync
+    if (isSupabaseConfigured && supabase) {
+      const channel = supabase.channel(`musify-sync-${code}`);
+      channelRef.current = channel;
+
+      channel.on('broadcast', { event: 'peer_joined' }, ({ payload }) => {
+        setSessionPeers(prev => Array.from(new Set([...prev, payload.peerId])));
+        if (isHost) showToast('info', `${payload.peerId} joined the session!`);
+      });
+
+      channel.on('broadcast', { event: 'play_track' }, ({ payload }) => {
+        if (!isHost && payload.track) {
+          usePlayerStore.getState().playTrack(payload.track);
+        }
+      });
+
+      channel.on('broadcast', { event: 'sync_action' }, ({ payload }) => {
+        if (!isHost) {
+          if (payload.action === 'pause') {
+            nativeAudio.pause();
+          } else if (payload.action === 'play') {
+            nativeAudio.play().catch(() => {});
+          } else if (payload.action === 'seek' && payload.time !== undefined) {
+            nativeAudio.currentTime = payload.time;
+          }
+        }
+      });
+
+      channel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          channel.send({
+            type: 'broadcast',
+            event: 'peer_joined',
+            payload: { peerId: peerName }
+          });
+
+          if (isHost) {
+            // Sync track changes to all peers
+            const unsub = usePlayerStore.subscribe((state, prevState) => {
+              if (state.currentTrack?.id !== prevState.currentTrack?.id) {
+                channel.send({
+                  type: 'broadcast',
+                  event: 'play_track',
+                  payload: { track: state.currentTrack }
+                });
+              }
+              if (state.isPlaying !== prevState.isPlaying) {
+                channel.send({
+                  type: 'broadcast',
+                  event: 'sync_action',
+                  payload: { action: state.isPlaying ? 'play' : 'pause' }
+                });
+              }
+            });
+            // Store cleanup fn
+            (channel as any)._unsub = unsub;
+          }
+
+          setIsSessionActive(true);
+          showToast('success', isHost ? 'Session started! Share the code.' : 'Connected to session!');
+        }
+      });
+
+      return;
+    }
+
+    // 2. Fallback to BroadcastChannel for same-device sync
+    const bc = new BroadcastChannel(`musify-sync-${code}`);
+    bcRef.current = bc;
+
+    bc.onmessage = (e) => {
       if (e.data.type === 'peer_joined') {
-        setSessionPeers(prev => [...prev, e.data.peerId]);
+        setSessionPeers(prev => Array.from(new Set([...prev, e.data.peerId])));
       } else if (e.data.type === 'play_track' && e.data.track) {
         usePlayerStore.getState().playTrack(e.data.track);
       }
     };
-    
-    channel.postMessage({ type: 'peer_joined', peerId: `User_${Math.floor(Math.random()*1000)}` });
-    setSyncChannel(channel);
+
+    bc.postMessage({ type: 'peer_joined', peerId: peerName });
+
+    if (isHost) {
+      usePlayerStore.subscribe((state, prevState) => {
+        if (state.currentTrack?.id !== prevState.currentTrack?.id) {
+          bc.postMessage({ type: 'play_track', track: state.currentTrack });
+        }
+      });
+    }
+
     setIsSessionActive(true);
+    showToast('success', isHost ? 'Session started! Share the code.' : 'Connected to session!');
+  };
+
+  const handleJoinSession = () => {
+    const cleanCode = joinCode.trim();
+    if (cleanCode.length < 7) {
+      showToast('error', 'Please enter a valid 6-character code (e.g. ABC-123)');
+      return;
+    }
+    setJoiningSession(true);
+    createSyncChannel(cleanCode, false);
+    setTimeout(() => setJoiningSession(false), 1500);
   };
 
   const handleStartSession = () => {
-    const channel = new BroadcastChannel(`musify-sync-${sessionCode}`);
-    
-    channel.onmessage = (e) => {
-      if (e.data.type === 'peer_joined') {
-        setSessionPeers(prev => Array.from(new Set([...prev, e.data.peerId])));
-      }
-    };
-    
-    // Listen to player state to sync to peers
-    usePlayerStore.subscribe((state, prevState) => {
-      if (state.currentTrack?.id !== prevState.currentTrack?.id) {
-        channel.postMessage({ type: 'play_track', track: state.currentTrack });
-      }
-    });
-
-    setSyncChannel(channel);
-    setIsSessionActive(true);
+    createSyncChannel(sessionCode, true);
     setSessionPeers([]);
   };
-
-  useEffect(() => {
-    return () => {
-      if (syncChannel) syncChannel.close();
-    };
-  }, [syncChannel]);
 
   if (!isConnectModalOpen) return null;
 
@@ -428,7 +514,6 @@ export const ConnectDeviceModal: React.FC = () => {
                             {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-zinc-400" />}
                           </button>
                         </div>
-                        {copied && <p className="text-xs text-emerald-400 mt-2 font-bold">Copied to clipboard!</p>}
                       </div>
 
                       {/* QR Code placeholder */}
@@ -453,11 +538,19 @@ export const ConnectDeviceModal: React.FC = () => {
                       </div>
                       <p className="text-center text-[10px] text-zinc-600">Scan QR or share the code</p>
 
+                      {/* Sync method indicator */}
+                      <div className="flex items-center justify-center gap-2 py-1">
+                        <Globe className="w-3 h-3 text-emerald-400" />
+                        <span className="text-[10px] font-bold text-emerald-400">
+                          {isSupabaseConfigured ? 'Cross-device sync enabled' : 'Same-browser sync only'}
+                        </span>
+                      </div>
+
                       {/* Session status */}
                       {!isSessionActive ? (
                         <button
                           onClick={handleStartSession}
-                          className="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-cyan-600 text-white font-bold text-sm flex items-center justify-center gap-2"
+                          className="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-cyan-600 text-white font-bold text-sm flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.98] transition"
                         >
                           <Zap className="w-4 h-4" /> Start Live Session
                         </button>
@@ -504,14 +597,18 @@ export const ConnectDeviceModal: React.FC = () => {
                       </div>
                       <button
                         onClick={handleJoinSession}
-                        disabled={joinCode.length < 7}
-                        className={`w-full py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all ${
+                        disabled={joinCode.length < 7 || joiningSession}
+                        className={`w-full py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.98] ${
                           joinCode.length >= 7
                             ? 'bg-gradient-to-r from-emerald-600 to-cyan-600 text-white'
                             : 'bg-white/5 text-zinc-600 cursor-not-allowed'
                         }`}
                       >
-                        <Link2 className="w-4 h-4" /> Join Session
+                        {joiningSession ? (
+                          <><Loader2 className="w-4 h-4 animate-spin" /> Connecting...</>
+                        ) : (
+                          <><Link2 className="w-4 h-4" /> Join Session</>
+                        )}
                       </button>
                       {isSessionActive && (
                         <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}

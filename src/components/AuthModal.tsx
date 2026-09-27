@@ -1,12 +1,48 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Eye, EyeOff, Loader2, Sparkles, AlertCircle, CheckCircle2, Disc, User as UserIcon } from 'lucide-react';
+import { X, Eye, EyeOff, Loader2, Sparkles, AlertCircle, CheckCircle2, Disc, User as UserIcon, Mail, Lock, ArrowLeft, Shield, Zap } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 
-export const AuthModal: React.FC = () => {
-  const { isAuthModalOpen, setAuthModalOpen, signInWithGoogle, signInWithEmail, signUpWithEmail, signInAsGuest } = useAuthStore();
+const PasswordStrength: React.FC<{ password: string }> = ({ password }) => {
+  const getStrength = (pw: string) => {
+    let score = 0;
+    if (pw.length >= 6) score++;
+    if (pw.length >= 10) score++;
+    if (/[A-Z]/.test(pw)) score++;
+    if (/[0-9]/.test(pw)) score++;
+    if (/[^a-zA-Z0-9]/.test(pw)) score++;
+    return score;
+  };
   
-  const [isLogin, setIsLogin] = useState(true);
+  const strength = getStrength(password);
+  if (!password) return null;
+  
+  const labels = ['Very Weak', 'Weak', 'Fair', 'Strong', 'Excellent'];
+  const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#10b981'];
+  
+  return (
+    <div className="mt-1.5 space-y-1">
+      <div className="flex gap-1">
+        {[0, 1, 2, 3, 4].map(i => (
+          <div
+            key={i}
+            className="h-1 flex-1 rounded-full transition-all duration-300"
+            style={{ backgroundColor: i < strength ? colors[Math.min(strength - 1, 4)] : 'rgba(255,255,255,0.1)' }}
+          />
+        ))}
+      </div>
+      <p className="text-[10px] font-bold transition-colors" style={{ color: colors[Math.min(strength - 1, 4)] || colors[0] }}>
+        {labels[Math.min(strength - 1, 4)] || labels[0]}
+        {password.length < 6 && <span className="text-gray-500 font-normal ml-1">(min 6 characters)</span>}
+      </p>
+    </div>
+  );
+};
+
+export const AuthModal: React.FC = () => {
+  const { isAuthModalOpen, setAuthModalOpen, signInWithGoogle, signInWithEmail, signUpWithEmail, signInAsGuest, resetPassword } = useAuthStore();
+  
+  const [mode, setMode] = useState<'login' | 'signup' | 'reset'>('login');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -16,12 +52,16 @@ export const AuthModal: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
 
+  const clearMessages = useCallback(() => {
+    setError(null);
+    setInfoMessage(null);
+  }, []);
+
   if (!isAuthModalOpen) return null;
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
-    setError(null);
-    setInfoMessage(null);
+    clearMessages();
     
     try {
       const res = await signInWithGoogle();
@@ -39,20 +79,30 @@ export const AuthModal: React.FC = () => {
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
-    setInfoMessage(null);
+    clearMessages();
 
     try {
-      if (isLogin) {
+      if (mode === 'reset') {
+        const res = await resetPassword(email);
+        if (res.error) {
+          setError(res.error);
+        } else if (res.message) {
+          setInfoMessage(res.message);
+        }
+      } else if (mode === 'login') {
         const res = await signInWithEmail(email, password);
-        if (res.error) throw new Error(res.error);
+        if (res.error) {
+          setError(res.error);
+        }
       } else {
         if (!name.trim()) {
-          throw new Error('Please enter your name.');
+          setError('Please enter your name.');
+          return;
         }
         const res = await signUpWithEmail(name.trim(), email, password);
-        if (res.error) throw new Error(res.error);
-        if (res.message) {
+        if (res.error) {
+          setError(res.error);
+        } else if (res.message) {
           setInfoMessage(res.message);
         }
       }
@@ -65,6 +115,11 @@ export const AuthModal: React.FC = () => {
 
   const handleGuestLogin = () => {
     signInAsGuest(name.trim() || 'Musify VIP');
+  };
+
+  const switchMode = (newMode: 'login' | 'signup' | 'reset') => {
+    setMode(newMode);
+    clearMessages();
   };
 
   const GoogleIcon = () => (
@@ -161,164 +216,244 @@ export const AuthModal: React.FC = () => {
             </div>
             
             <p className="text-xs text-gray-400 mt-1 font-medium max-w-xs">
-              {isLogin ? 'Log in to your high-fidelity music vault' : 'Start your limitless listening experience'}
+              {mode === 'login' && 'Log in to your high-fidelity music vault'}
+              {mode === 'signup' && 'Start your limitless listening experience'}
+              {mode === 'reset' && 'We\'ll send you a reset link'}
             </p>
           </div>
 
           {/* Error Banner */}
-          {error && (
-            <motion.div 
-              initial={{ opacity: 0, y: -6 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2.5"
-            >
-              <AlertCircle className="w-4 h-4 shrink-0 text-rose-400 mt-0.5" />
-              <div className="flex-1 leading-relaxed">{error}</div>
-            </motion.div>
-          )}
+          <AnimatePresence mode="wait">
+            {error && (
+              <motion.div 
+                key="error"
+                initial={{ opacity: 0, y: -6, height: 0 }}
+                animate={{ opacity: 1, y: 0, height: 'auto' }}
+                exit={{ opacity: 0, y: -6, height: 0 }}
+                className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2.5"
+              >
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-400 mt-0.5" />
+                <div className="flex-1 leading-relaxed">{error}</div>
+              </motion.div>
+            )}
 
-          {/* Info / Success Banner */}
-          {infoMessage && (
-            <motion.div 
-              initial={{ opacity: 0, y: -6 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-4 p-3 rounded-xl bg-acid-lime/10 border border-acid-lime/30 text-acid-lime text-xs flex items-start gap-2.5"
-            >
-              <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
-              <div className="flex-1 leading-relaxed">{infoMessage}</div>
-            </motion.div>
-          )}
+            {/* Info / Success Banner */}
+            {infoMessage && (
+              <motion.div 
+                key="info"
+                initial={{ opacity: 0, y: -6, height: 0 }}
+                animate={{ opacity: 1, y: 0, height: 'auto' }}
+                exit={{ opacity: 0, y: -6, height: 0 }}
+                className="mb-4 p-3 rounded-xl bg-acid-lime/10 border border-acid-lime/30 text-acid-lime text-xs flex items-start gap-2.5"
+              >
+                <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
+                <div className="flex-1 leading-relaxed">{infoMessage}</div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-          {/* Social OAuth & Quick Login Buttons */}
-          <div className="space-y-2.5">
-            <button
-              onClick={handleGoogleSignIn}
-              disabled={loading}
-              className="w-full py-3 px-5 rounded-2xl bg-white hover:bg-neutral-100 text-black font-extrabold text-sm flex items-center justify-center gap-3 transition-all hover:scale-[1.01] active:scale-[0.98] shadow-md disabled:opacity-50"
-            >
-              <GoogleIcon />
-              <span>Continue with Google</span>
-            </button>
-
-            <button
-              onClick={handleGuestLogin}
-              disabled={loading}
-              className="w-full py-2.5 px-5 rounded-2xl border border-acid-lime/40 text-acid-lime hover:bg-acid-lime/10 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.98] disabled:opacity-50"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>1-Click Instant Guest Access</span>
-            </button>
-          </div>
-
-          {/* Divider */}
-          <div className="w-full flex items-center gap-3 my-4">
-            <div className="flex-1 h-px bg-white/10" />
-            <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">or</span>
-            <div className="flex-1 h-px bg-white/10" />
-          </div>
-
-          {/* Form */}
-          <form onSubmit={handleFormSubmit} className="space-y-3">
-            {!isLogin && (
-              <div>
-                <label className="block text-xs font-bold text-gray-300 mb-1">Your Name</label>
-                <div className="relative">
-                  <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500">
-                    <UserIcon className="w-4 h-4" />
+          {mode === 'reset' ? (
+            // ── Password Reset Form ──────────────
+            <div className="space-y-4">
+              <button 
+                onClick={() => switchMode('login')} 
+                className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" /> Back to login
+              </button>
+              
+              <form onSubmit={handleFormSubmit} className="space-y-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-300 mb-1">Email address</label>
+                  <div className="relative">
+                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500">
+                      <Mail className="w-4 h-4" />
+                    </div>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      placeholder="name@example.com"
+                      required
+                      className="w-full bg-white/5 border border-white/10 focus:border-acid-lime/60 rounded-xl py-2.5 pl-10 pr-4 text-white text-sm outline-none transition placeholder-gray-600"
+                    />
                   </div>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={e => setName(e.target.value)}
-                    placeholder="Enter your name"
-                    required={!isLogin}
-                    className="w-full bg-white/5 border border-white/10 focus:border-acid-lime/60 rounded-xl py-2.5 pl-10 pr-4 text-white text-sm outline-none transition placeholder-gray-600"
-                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading || !email}
+                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-acid-lime to-[#a0f700] text-black font-black text-xs sm:text-sm uppercase tracking-wider transition-all hover:scale-[1.01] active:scale-[0.98] shadow-[0_0_25px_rgba(204,255,0,0.35)] disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                  <span>Send Reset Link</span>
+                </button>
+              </form>
+            </div>
+          ) : (
+            // ── Login / Signup ──────────────
+            <>
+              {/* Social OAuth & Quick Login Buttons */}
+              <div className="space-y-2.5">
+                <button
+                  onClick={handleGoogleSignIn}
+                  disabled={loading}
+                  className="w-full py-3 px-5 rounded-2xl bg-white hover:bg-neutral-100 text-black font-extrabold text-sm flex items-center justify-center gap-3 transition-all hover:scale-[1.01] active:scale-[0.98] shadow-md disabled:opacity-50"
+                >
+                  <GoogleIcon />
+                  <span>Continue with Google</span>
+                </button>
+
+                <button
+                  onClick={handleGuestLogin}
+                  disabled={loading}
+                  className="w-full py-2.5 px-5 rounded-2xl border border-acid-lime/40 text-acid-lime hover:bg-acid-lime/10 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.98] disabled:opacity-50"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>1-Click Instant Guest Access</span>
+                </button>
+              </div>
+
+              {/* Divider */}
+              <div className="w-full flex items-center gap-3 my-4">
+                <div className="flex-1 h-px bg-white/10" />
+                <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">or</span>
+                <div className="flex-1 h-px bg-white/10" />
+              </div>
+
+              {/* Form */}
+              <form onSubmit={handleFormSubmit} className="space-y-3">
+                {mode === 'signup' && (
+                  <div>
+                    <label className="block text-xs font-bold text-gray-300 mb-1">Your Name</label>
+                    <div className="relative">
+                      <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500">
+                        <UserIcon className="w-4 h-4" />
+                      </div>
+                      <input
+                        type="text"
+                        value={name}
+                        onChange={e => setName(e.target.value)}
+                        placeholder="Enter your name"
+                        required={mode === 'signup'}
+                        className="w-full bg-white/5 border border-white/10 focus:border-acid-lime/60 rounded-xl py-2.5 pl-10 pr-4 text-white text-sm outline-none transition placeholder-gray-600"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-300 mb-1">Email address</label>
+                  <div className="relative">
+                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500">
+                      <Mail className="w-4 h-4" />
+                    </div>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      placeholder="name@example.com"
+                      required
+                      className="w-full bg-white/5 border border-white/10 focus:border-acid-lime/60 rounded-xl py-2.5 pl-10 pr-4 text-white text-sm outline-none transition placeholder-gray-600"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-300 mb-1">Password</label>
+                  <div className="relative">
+                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500">
+                      <Lock className="w-4 h-4" />
+                    </div>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      placeholder={mode === 'signup' ? 'At least 6 characters' : 'Enter your password'}
+                      required
+                      minLength={6}
+                      className="w-full bg-white/5 border border-white/10 focus:border-acid-lime/60 rounded-xl py-2.5 pl-10 pr-11 text-white text-sm outline-none transition placeholder-gray-600"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {mode === 'signup' && <PasswordStrength password={password} />}
+                </div>
+
+                {mode === 'login' && (
+                  <div className="flex items-center justify-between text-xs pt-0.5">
+                    <label className="flex items-center gap-2 cursor-pointer select-none text-gray-400 hover:text-white">
+                      <input
+                        type="checkbox"
+                        checked={rememberMe}
+                        onChange={e => setRememberMe(e.target.checked)}
+                        className="accent-acid-lime w-4 h-4 rounded cursor-pointer"
+                      />
+                      <span>Remember me</span>
+                    </label>
+                    <button 
+                      type="button" 
+                      onClick={() => switchMode('reset')}
+                      className="text-acid-lime/80 hover:text-acid-lime hover:underline font-bold transition"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading || !email || !password || password.length < 6 || (mode === 'signup' && !name.trim())}
+                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-acid-lime to-[#a0f700] text-black font-black text-xs sm:text-sm uppercase tracking-wider transition-all hover:scale-[1.01] active:scale-[0.98] shadow-[0_0_25px_rgba(204,255,0,0.35)] disabled:opacity-50 flex items-center justify-center gap-2 mt-3"
+                >
+                  {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                  <span>{mode === 'login' ? 'Log In' : 'Sign Up'}</span>
+                </button>
+              </form>
+
+              {/* Trust badges */}
+              <div className="flex items-center justify-center gap-4 mt-3 pt-2">
+                <div className="flex items-center gap-1 text-[10px] text-gray-500">
+                  <Shield className="w-3 h-3" /> Secure
+                </div>
+                <div className="flex items-center gap-1 text-[10px] text-gray-500">
+                  <Zap className="w-3 h-3" /> Instant Access
                 </div>
               </div>
-            )}
-
-            <div>
-              <label className="block text-xs font-bold text-gray-300 mb-1">Email address</label>
-              <input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="name@example.com"
-                required
-                className="w-full bg-white/5 border border-white/10 focus:border-acid-lime/60 rounded-xl py-2.5 px-4 text-white text-sm outline-none transition placeholder-gray-600"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-gray-300 mb-1">Password</label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  required
-                  className="w-full bg-white/5 border border-white/10 focus:border-acid-lime/60 rounded-xl py-2.5 pl-4 pr-11 text-white text-sm outline-none transition placeholder-gray-600"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-
-            {isLogin && (
-              <div className="flex items-center justify-between text-xs pt-0.5">
-                <label className="flex items-center gap-2 cursor-pointer select-none text-gray-400 hover:text-white">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={e => setRememberMe(e.target.checked)}
-                    className="accent-acid-lime w-4 h-4 rounded cursor-pointer"
-                  />
-                  <span>Remember me</span>
-                </label>
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading || !email || !password || (!isLogin && !name.trim())}
-              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-acid-lime to-[#a0f700] text-black font-black text-xs sm:text-sm uppercase tracking-wider transition-all hover:scale-[1.01] active:scale-[0.98] shadow-[0_0_25px_rgba(204,255,0,0.35)] disabled:opacity-50 flex items-center justify-center gap-2 mt-3"
-            >
-              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-              <span>{isLogin ? 'Log In' : 'Sign Up'}</span>
-            </button>
-          </form>
+            </>
+          )}
 
           {/* Switch between Log In & Sign Up */}
-          <div className="text-center text-xs text-gray-400 mt-5 pt-3 border-t border-white/10 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-            {isLogin ? (
-              <p>
-                Don't have an account?{' '}
-                <button
-                  onClick={() => { setIsLogin(false); setError(null); setInfoMessage(null); }}
-                  className="text-acid-lime hover:underline font-bold transition ml-1"
-                >
-                  Sign up for Musify
-                </button>
-              </p>
-            ) : (
-              <p>
-                Already have an account?{' '}
-                <button
-                  onClick={() => { setIsLogin(true); setError(null); setInfoMessage(null); }}
-                  className="text-acid-lime hover:underline font-bold transition ml-1"
-                >
-                  Log in here
-                </button>
-              </p>
-            )}
-          </div>
+          {mode !== 'reset' && (
+            <div className="text-center text-xs text-gray-400 mt-5 pt-3 border-t border-white/10 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+              {mode === 'login' ? (
+                <p>
+                  Don't have an account?{' '}
+                  <button
+                    onClick={() => switchMode('signup')}
+                    className="text-acid-lime hover:underline font-bold transition ml-1"
+                  >
+                    Sign up for Musify
+                  </button>
+                </p>
+              ) : (
+                <p>
+                  Already have an account?{' '}
+                  <button
+                    onClick={() => switchMode('login')}
+                    className="text-acid-lime hover:underline font-bold transition ml-1"
+                  >
+                    Log in here
+                  </button>
+                </p>
+              )}
+            </div>
+          )}
         </motion.div>
       </div>
     </AnimatePresence>

@@ -297,8 +297,8 @@ You must sequence these tracks musically over a bar-based timeline.
 
 CRITICAL MASHUP RULES:
 1. **Length**: The mashup MUST be exactly 96 bars long.
-2. **Aggressive Intertwining**: Swap vocals back and forth every 8 to 16 bars. Layer Track 2's vocals over Track 1's instrumental, then immediately swap.
-3. **Effects & Tempo**: Set a high-energy final_bpm (e.g., 125-135). Use transition effects heavily between blocks (high_pass_sweep, low_pass_sweep, cut, crossfade) to build tension. 
+2. **Aggressive Intertwining**: Swap vocals back and forth every 8 to 16 bars. Layer Track 2's vocals over Track 1's instrumental, then immediately swap. DO NOT OVERLAP VOCALS. When Track 1 vocals are playing, Track 2 MUST be instrumental/drums, and vice versa. Overlapping vocals sound messy.
+3. **Effects & Tempo**: You MUST estimate the BPM for each track based on its title and artist. If you don't know, guess a standard EDM/Pop tempo (e.g. 120-130). Then, calculate a final_bpm that works well for both. Include these in the \`track_bpms\` object! Use transition effects heavily between blocks (high_pass_sweep, low_pass_sweep, cut, crossfade) to build tension. 
 4. **Harden the Voice**: Use \`pitch_shift_semitones\` on vocal stems (e.g., +1, -1, or -2) to "harden" or shift the voice for a unique effect. Increase volume_db (e.g. +2) for vocals during the climax.
 
 CRITICAL AUDIO ENGINEERING RULES:
@@ -307,14 +307,15 @@ CRITICAL AUDIO ENGINEERING RULES:
    - Beat/Melody: "instrumental" or "drums"
    - Singing: "vocals"
    - Epic Climax Singing: "hard_vocals" (applies a 600Hz high-pass and volume boost).
-3. NEVER have two tracks active with \`stem_type: "full"\` at the same time.
+3. NEVER have two tracks active with \`stem_type: "full"\` at the same time. NEVER have two tracks active with \`stem_type: "vocals"\` at the same time.
 4. **Mastering:** Use stem isolation properly for a sidechain effect.
 
 CRITICAL PERFORMANCE RULE (PREVENT TIMEOUTS):
 To keep the JSON efficient, you MUST cover the 96 bars using exactly 6 to 12 \`timeline_blocks\`. Group the arrangement into 8-bar or 16-bar chunks (e.g., 1-8, 9-24, 25-32). DO NOT create a new block for every single bar. 
 
 TRACKS:
-1 (ANCHOR): ${anchorTrack.title} by${anchorTrack.artist} (Duration: ${anchorTrack.duration}s)${secondaryTracks.map((t, i) => `${i + 2}: ${t.title} by ${t.artist} (Duration: ${t.duration}s)`).join('\n')}
+1 (ANCHOR): ${anchorTrack.title} by ${anchorTrack.artist} (Duration: ${anchorTrack.duration}s)
+${secondaryTracks.map((t, i) => `${i + 2}: ${t.title} by ${t.artist} (Duration: ${t.duration}s)`).join('\n')}
 
 SCHEMA:
 {
