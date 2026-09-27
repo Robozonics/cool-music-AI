@@ -204,6 +204,12 @@ export const ConnectDeviceModal: React.FC = () => {
       if (bcRef.current) {
         bcRef.current.close();
       }
+      if (peerRef.current) {
+        peerRef.current.destroy();
+        peerRef.current = null;
+      }
+      connectionsRef.current.forEach(c => c.close());
+      connectionsRef.current = [];
     };
   }, []);
 
@@ -432,6 +438,18 @@ export const ConnectDeviceModal: React.FC = () => {
       if (isHost) {
         peer.on('error', (err) => {
           console.error('PeerJS Host Error:', err);
+          showToast('error', `Host failed to connect: ${err.type}`);
+          setIsSessionActive(false);
+          // Try to recreate the session after a delay if it's a network error
+          if (err.type === 'network' || err.type === 'server-error' || err.type === 'unavailable-id') {
+            setTimeout(() => {
+              if (peerRef.current) {
+                 peerRef.current.destroy();
+                 peerRef.current = null;
+              }
+              handleStartSession();
+            }, 5000);
+          }
         });
       }
     } catch (e) {
