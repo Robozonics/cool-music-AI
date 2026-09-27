@@ -11,6 +11,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useAuthStore } from '../store/useAuthStore';
 import { showToast } from './ToastNotification';
 import type { RealtimeChannel } from '@supabase/supabase-js';
+import { Peer } from 'peerjs';
 
 // ── Session code generator ────────────────────────────────────────────
 const generateSessionCode = (): string => {
@@ -163,6 +164,8 @@ export const ConnectDeviceModal: React.FC = () => {
   const [joiningSession, setJoiningSession] = useState(false);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const bcRef = useRef<BroadcastChannel | null>(null);
+  const peerRef = useRef<any>(null);
+  const connectionsRef = useRef<any[]>([]);
 
   useEffect(() => {
     // Fetch real audio output devices
@@ -220,6 +223,25 @@ export const ConnectDeviceModal: React.FC = () => {
     } finally {
       setIsConnecting(null);
     }
+  };
+
+  const disconnectSession = () => {
+    if (peerRef.current) {
+      peerRef.current.destroy();
+      peerRef.current = null;
+    }
+    if (bcRef.current) {
+      bcRef.current.close();
+      bcRef.current = null;
+    }
+    if (channelRef.current) {
+      if (typeof channelRef.current.unsubscribe === 'function') channelRef.current.unsubscribe();
+      channelRef.current = null;
+    }
+    connectionsRef.current = [];
+    setIsSessionActive(false);
+    setSessionPeers([]);
+    setConnectedDevice(null);
   };
 
   const createSyncChannel = (code: string, isHost: boolean) => {
@@ -289,102 +311,104 @@ export const ConnectDeviceModal: React.FC = () => {
       });
     }
 
-    // 2. Try Supabase Realtime for cross-device sync
-    if (isSupabaseConfigured && supabase) {
-      const channel = supabase.channel(`musify-sync-${code}`, {
-        config: { broadcast: { self: true, ack: true } }
-      });
-      channelRef.current = channel;
+    // 2. Robust WebRTC sync using PeerJS
+    try {
+      const peerId = isHost ? `msy-host-${code}` : `msy-peer-${code}-${Math.floor(Math.random()*10000)}`;
+      const peer = new Peer(peerId);
+      peerRef.current = peer;
 
-      channel.on('broadcast', { event: 'peer_joined' }, ({ payload }) => {
-        setSessionPeers(prev => Array.from(new Set([...prev, payload.peerId])));
-        if (isHost) {
-          showToast('info', `${payload.peerId} joined the session!`);
-          const state = usePlayerStore.getState();
-          if (state.currentTrack) {
-            channel.send({
-              type: 'broadcast',
-              event: 'play_track',
-              payload: { track: state.currentTrack, time: state.currentTime, isPlaying: state.isPlaying }
-            });
-          }
-        }
-      });
+      const broadcastToPeers = (data: any) => {
+        connectionsRef.current.forEach(conn => {
+          if (conn.open) conn.send(data);
+        });
+      };
 
-      channel.on('broadcast', { event: 'play_track' }, ({ payload }) => {
-        if (!isHost && payload.track) {
-          usePlayerStore.getState().playTrack(payload.track);
-          if (payload.time !== undefined) {
-             nativeAudio.currentTime = payload.time;
-          }
-          if (payload.isPlaying === false) {
-             nativeAudio.pause();
-          }
-        }
-      });
-
-      channel.on('broadcast', { event: 'sync_action' }, ({ payload }) => {
-        if (!isHost) {
-          if (payload.action === 'pause') {
-            nativeAudio.pause();
-          } else if (payload.action === 'play') {
-            if (payload.time !== undefined) nativeAudio.currentTime = payload.time;
-            nativeAudio.play().catch(() => {});
-          } else if (payload.action === 'seek' && payload.time !== undefined) {
-            nativeAudio.currentTime = payload.time;
-          }
-        }
-      });
-
-      channel.on('broadcast', { event: 'remote_action' }, ({ payload }) => {
-        if (isHost) handleRemoteAction(payload);
-      });
-
-
-      channel.subscribe((status, err) => {
-        if (status === 'SUBSCRIBED') {
-          channel.send({
-            type: 'broadcast',
-            event: 'peer_joined',
-            payload: { peerId: peerName }
-          });
-
+      const handleIncomingData = (data: any, conn?: any) => {
+        if (data.type === 'peer_joined') {
+          setSessionPeers(prev => Array.from(new Set([...prev, data.peerId])));
           if (isHost) {
-            // Sync track changes to all peers
-            const unsub = usePlayerStore.subscribe((state, prevState) => {
-              if (state.currentTrack?.id !== prevState.currentTrack?.id) {
-                channel.send({
-                  type: 'broadcast',
-                  event: 'play_track',
-                  payload: { track: state.currentTrack }
-                });
-              }
-              if (state.isPlaying !== prevState.isPlaying) {
-                channel.send({
-                  type: 'broadcast',
-                  event: 'sync_action',
-                  payload: { action: state.isPlaying ? 'play' : 'pause', time: state.currentTime }
-                });
-              }
-            });
-            // Store cleanup fn
-            (channel as any)._unsub = unsub;
+            showToast('info', `${data.peerId} joined!`);
+            const state = usePlayerStore.getState();
+            if (state.currentTrack && conn && conn.open) {
+               conn.send({ type: 'play_track', track: state.currentTrack, time: state.currentTime, isPlaying: state.isPlaying });
+            }
           }
+        } else if (data.type === 'play_track' && data.track) {
+          if (!isHost) {
+            usePlayerStore.getState().playTrack(data.track);
+            if (data.time !== undefined) nativeAudio.currentTime = data.time;
+            if (data.isPlaying === false) nativeAudio.pause();
+          }
+        } else if (data.type === 'sync_action') {
+          if (!isHost) {
+            if (data.action === 'pause') {
+              nativeAudio.pause();
+            } else if (data.action === 'play') {
+              if (data.time !== undefined) nativeAudio.currentTime = data.time;
+              nativeAudio.play().catch(() => {});
+            } else if (data.action === 'seek' && data.time !== undefined) {
+              nativeAudio.currentTime = data.time;
+            }
+          }
+        } else if (data.type === 'remote_action') {
+          if (isHost) handleRemoteAction(data.action);
+        }
+      };
 
+      if (isHost) {
+        peer.on('open', () => {
           setIsSessionActive(true);
           setJoiningSession(false);
-          showToast('success', isHost ? 'Session started! Share the code.' : 'Connected to session!');
-        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-          console.error('Supabase Realtime Error:', err);
+          showToast('success', 'Session started! Share the code.');
+        });
+        peer.on('connection', (conn) => {
+          connectionsRef.current.push(conn);
+          conn.on('data', (data: any) => handleIncomingData(data, conn));
+          conn.on('close', () => {
+            connectionsRef.current = connectionsRef.current.filter(c => c !== conn);
+          });
+        });
+
+        // Sync track changes to all peers
+        const unsub = usePlayerStore.subscribe((state, prevState) => {
+          if (state.currentTrack?.id !== prevState.currentTrack?.id) {
+            broadcastToPeers({ type: 'play_track', track: state.currentTrack });
+          }
+          if (state.isPlaying !== prevState.isPlaying) {
+            broadcastToPeers({ type: 'sync_action', action: state.isPlaying ? 'play' : 'pause', time: state.currentTime });
+          }
+        });
+        peerRef.current._unsub = unsub;
+
+      } else {
+        peer.on('open', () => {
+          const conn = peer.connect(`msy-host-${code}`);
+          connectionsRef.current.push(conn);
+          
+          conn.on('open', () => {
+            setIsSessionActive(true);
+            setJoiningSession(false);
+            showToast('success', 'Connected to session!');
+            conn.send({ type: 'peer_joined', peerId: peerName });
+          });
+          
+          conn.on('data', handleIncomingData);
+          
+          conn.on('close', () => {
+            showToast('error', 'Host disconnected.');
+            disconnectSession();
+          });
+        });
+
+        peer.on('error', (err) => {
+          console.error('PeerJS Error:', err);
           setJoiningSession(false);
-          showToast('error', 'Could not connect. Please check network or try again.');
-        }
-      });
-    } else {
-      // If no supabase, just set session active since BC is already running
-      setIsSessionActive(true);
+          showToast('error', 'Failed to connect. Is the host active?');
+        });
+      }
+    } catch (e) {
+      console.error(e);
       setJoiningSession(false);
-      showToast('success', isHost ? 'Local session started! Share code.' : 'Connected locally!');
     }
   };
 
@@ -773,7 +797,11 @@ export const ConnectDeviceModal: React.FC = () => {
                       }}
                       isRemoteSession={isSessionActive && syncMode === 'join'}
                       sendRemoteAction={(action) => {
-                        if (channelRef.current && supabase) {
+                        if (connectionsRef.current.length > 0) {
+                           connectionsRef.current.forEach(conn => {
+                              if (conn.open) conn.send({ type: 'remote_action', action });
+                           });
+                        } else if (channelRef.current && supabase) {
                            channelRef.current.send({ type: 'broadcast', event: 'remote_action', payload: action });
                         } else if (bcRef.current) {
                            bcRef.current.postMessage({ type: 'remote_action', action });
