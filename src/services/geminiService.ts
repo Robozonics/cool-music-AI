@@ -57,7 +57,7 @@ const callGroqFallback = async (promptText: string, expectJson: boolean = true) 
 
 const deadKeys = new Set<string>();
 
-export const callGeminiDirectly = async (promptText: string, type: 'playlist' | 'search' | 'mood' | 'translate', audioBase64?: string, expectJson: boolean = true): Promise<any> => {
+export const callGeminiDirectly = async (promptText: string, type: 'playlist' | 'search' | 'mood' | 'translate', audioBase64?: string, expectJson: boolean = true, audioMimeType: string = 'audio/webm'): Promise<any> => {
   const keys = getKeys();
   if (keys.length === 0) throw new Error('API key not configured');
 
@@ -66,7 +66,7 @@ export const callGeminiDirectly = async (promptText: string, type: 'playlist' | 
   if (audioBase64) {
     parts.push({
       inlineData: {
-        mimeType: 'audio/webm',
+        mimeType: audioMimeType,
         data: audioBase64
       }
     });
@@ -194,12 +194,12 @@ Output ONLY valid JSON ARRAY containing ONE object. Example: [{"vibeTitle": "CYB
 };
 
 // ── Existing: Best Music Search ──────────────────────────────────────────────
-export const searchBestMusicWithAI = async (userQuery: string, audioBase64?: string): Promise<Track[]> => {
+export const searchBestMusicWithAI = async (userQuery: string, audioBase64?: string, audioMimeType: string = 'audio/webm'): Promise<Track[]> => {
   const promptText = audioBase64 
     ? `You are an expert music identifier. Listen to the provided audio (which might be humming, singing, or a song playing). Identify the song being hummed/played. If you cannot identify a specific song, suggest 5 songs that sound very similar to the melody/vibe. Return STRICT JSON array schema: [{"title": "Song Title", "artist": "Artist Name", "reason": "why this matches"}]. Output ONLY valid JSON.`
     : `You are the world's foremost music curator and critic. The user is asking for the 'best' music matching: '${userQuery}'. Curate a list of 8 objectively top-rated, culturally accurate songs. Return STRICT JSON array schema: [{"title": "Song Title", "artist": "Artist Name", "reason": "why this matches"}]. Output ONLY valid JSON.`;
   
-  const recommendations = await callGeminiDirectly(promptText, 'search', audioBase64);
+  const recommendations = await callGeminiDirectly(promptText, 'search', audioBase64, true, audioMimeType);
   if (!Array.isArray(recommendations)) return [];
 
   const resolvedTracksPromises = recommendations.map(async (item: any) => {

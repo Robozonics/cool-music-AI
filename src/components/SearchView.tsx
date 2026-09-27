@@ -85,7 +85,17 @@ export const SearchView: React.FC = () => {
       setIsListening(true);
       setSearchMode('ai');
       
-      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      let mimeType = '';
+      if (typeof MediaRecorder.isTypeSupported === 'function') {
+        if (MediaRecorder.isTypeSupported('audio/webm')) mimeType = 'audio/webm';
+        else if (MediaRecorder.isTypeSupported('audio/mp4')) mimeType = 'audio/mp4';
+        else if (MediaRecorder.isTypeSupported('audio/aac')) mimeType = 'audio/aac';
+      }
+      
+      const options = mimeType ? { mimeType } : undefined;
+      const mediaRecorder = new MediaRecorder(stream, options);
+      const actualMimeType = mediaRecorder.mimeType || mimeType || 'audio/webm';
+      
       mediaRecorderRef.current = mediaRecorder;
       const audioChunks: Blob[] = [];
 
@@ -99,7 +109,7 @@ export const SearchView: React.FC = () => {
         setIsListening(false);
         stream.getTracks().forEach(track => track.stop());
         
-        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        const audioBlob = new Blob(audioChunks, { type: actualMimeType });
         const reader = new FileReader();
         reader.readAsDataURL(audioBlob);
         reader.onloadend = async () => {
@@ -108,7 +118,7 @@ export const SearchView: React.FC = () => {
           setIsLoading(true);
           setResults([]);
           try {
-            const tracks = await searchBestMusicWithAI('Audio Search', base64data);
+            const tracks = await searchBestMusicWithAI('Audio Search', base64data, actualMimeType);
             setResults(tracks);
             if (tracks.length > 0) {
               setQuery(`Found: ${tracks[0].title}`);
