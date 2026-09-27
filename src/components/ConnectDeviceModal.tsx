@@ -153,7 +153,7 @@ export const ConnectDeviceModal: React.FC = () => {
 
   const [devices, setDevices] = useState<AppDevice[]>([]);
   const [tab, setTab] = useState<'devices' | 'sync' | 'remote'>('devices');
-  const [sessionCode] = useState(generateSessionCode);
+  const [sessionCode, setSessionCode] = useState(generateSessionCode);
   const [joinCode, setJoinCode] = useState('');
   const [copied, setCopied] = useState(false);
   const [connectedDevice, setConnectedDevice] = useState<string | null>(null);
@@ -440,8 +440,20 @@ export const ConnectDeviceModal: React.FC = () => {
           console.error('PeerJS Host Error:', err);
           showToast('error', `Host failed to connect: ${err.type}`);
           setIsSessionActive(false);
-          // Try to recreate the session after a delay if it's a network error
-          if (err.type === 'network' || err.type === 'server-error' || err.type === 'unavailable-id') {
+          
+          if (err.type === 'unavailable-id') {
+            // The public server locked the ID (e.g. after a hot reload). Generate a new one instantly!
+            const newCode = generateSessionCode();
+            setSessionCode(newCode);
+            setTimeout(() => {
+              if (peerRef.current) {
+                 peerRef.current.destroy();
+                 peerRef.current = null;
+              }
+              createSyncChannel(newCode, true);
+            }, 500);
+          } else if (err.type === 'network' || err.type === 'server-error') {
+            // Try to recreate the session after a delay if it's a network error
             setTimeout(() => {
               if (peerRef.current) {
                  peerRef.current.destroy();
