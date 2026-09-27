@@ -497,8 +497,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab }) => {
       {/* Recently Played Section */}
       <RecentlyPlayedSection />
 
-      {/* Daylist Widget — Time-Contextual (Feature 4) */}
-      <DaylistWidget />
+      {/* Daylist Widget — Time-Contextual (Feature 4)
+      <DaylistWidget /> */}
 
       {/* AI Playlist Generator CTA Card */}
       <div
