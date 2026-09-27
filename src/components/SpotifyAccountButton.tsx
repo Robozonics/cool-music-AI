@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LogOut, Settings, User as UserIcon, ExternalLink, ShieldCheck } from 'lucide-react';
 import { useAuthStore, getUserInitial, getUserDisplayName } from '../store/useAuthStore';
@@ -49,14 +50,14 @@ export const SpotifyAccountButton: React.FC = () => {
       </button>
 
       {/* Profile Dropdown Menu */}
-      <AnimatePresence>
-        {isDropdownOpen && (
+      {isDropdownOpen && createPortal(
+        <AnimatePresence>
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 8 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="fixed top-16 right-4 sm:absolute sm:top-full sm:right-0 sm:mt-2 w-64 rounded-2xl bg-[#0c0c10]/95 border border-white/10 shadow-[0_15px_50px_rgba(0,0,0,0.8)] p-2 z-[999] text-white select-none backdrop-blur-2xl"
+            className="fixed top-[calc(env(safe-area-inset-top,0px)+4rem)] right-4 sm:top-[4.5rem] sm:right-6 w-64 rounded-2xl bg-[#0c0c10]/95 border border-white/10 shadow-[0_15px_50px_rgba(0,0,0,0.8)] p-2 z-[999] text-white select-none backdrop-blur-2xl"
           >
             {/* Header info */}
             <div className="flex items-center gap-3 p-3 border-b border-white/10">
@@ -111,8 +112,9 @@ export const SpotifyAccountButton: React.FC = () => {
               <LogOut className="w-3.5 h-3.5" />
             </button>
           </motion.div>
-        )}
-      </AnimatePresence>
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 };

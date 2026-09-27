@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, SkipBack, SkipForward, Laptop2 } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Laptop2, Blend } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePlayerStore } from '../store/usePlayerStore';
 
@@ -11,6 +11,8 @@ export const MiniPlayer: React.FC = () => {
   const prevTrack = usePlayerStore(state => state.prevTrack);
   const setFullPlayerOpen = usePlayerStore(state => state.setFullPlayerOpen);
   const setConnectModalOpen = usePlayerStore(state => state.setConnectModalOpen);
+  const isCrossfadeEnabled = usePlayerStore(state => state.isCrossfadeEnabled);
+  const toggleCrossfade = usePlayerStore(state => state.toggleCrossfade);
 
   return (
     <AnimatePresence>
@@ -35,6 +37,17 @@ export const MiniPlayer: React.FC = () => {
             </div>
             
             <div className="flex items-center space-x-1 pr-1 shrink-0" onClick={e => e.stopPropagation()}>
+              <motion.button
+                whileTap={{ scale: 0.8 }}
+                onClick={() => {
+                  toggleCrossfade();
+                  (window as any).showToast?.('info', isCrossfadeEnabled ? 'Crossfade Disabled' : 'Crossfade Enabled (3s)');
+                }}
+                className={`p-2 rounded-full transition-colors ${isCrossfadeEnabled ? 'text-lime-400' : 'text-zinc-400 hover:text-white'}`}
+                title="Smart Mix (Crossfade)"
+              >
+                <Blend className="w-4 h-4" />
+              </motion.button>
               <motion.button 
                 whileTap={{ scale: 0.8 }}
                 onClick={() => setConnectModalOpen(true)}

@@ -677,6 +677,10 @@ export const usePlayerStore = create<PlayerState>()(
          a.audio.play().catch(() => console.warn('Aux autoplay blocked'));
        }
     });
+
+    if (crossfadeAudio.paused && !crossfadeAudio.src) {
+        crossfadeAudio.play().then(() => crossfadeAudio.pause()).catch(() => {});
+    }
   });
 
   nativeAudio.addEventListener('playing', () => {
@@ -769,6 +773,8 @@ export const usePlayerStore = create<PlayerState>()(
          auxContexts.forEach(a => {
            a.audio.play().catch(e => console.warn('Aux bless failed', e));
          });
+
+         crossfadeAudio.play().then(() => crossfadeAudio.pause()).catch(() => {});
 
          attemptPlay();
        }
