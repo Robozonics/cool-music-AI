@@ -26,14 +26,20 @@ export const MiniPlayer: React.FC = () => {
           style={{ bottom: 'calc(env(safe-area-inset-bottom, 1rem) + 4rem + 20px)' }}
         >
           <div 
-            className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-2xl flex items-center p-2 cursor-pointer shadow-[0_15px_30px_rgba(0,0,0,0.5)] hover:bg-white/10 transition-colors" 
+            className="relative bg-[#0a0a0a]/60 backdrop-blur-2xl border border-white/10 rounded-2xl flex items-center p-2 cursor-pointer shadow-[0_20px_50px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.1)] hover:bg-[#111111]/80 transition-colors group" 
             onClick={() => setFullPlayerOpen(true)}
           >
-            <img src={currentTrack.thumbnail} alt={currentTrack.title} className="w-10 h-10 rounded-xl object-cover shadow-lg" />
+            {/* Ambient Aura Background */}
+            <div className="absolute inset-0 bg-gradient-to-r from-fuchsia-500/10 via-purple-500/10 to-blue-500/10 rounded-2xl pointer-events-none -z-10" />
+
+            <div className="relative">
+              <img src={currentTrack.thumbnail} alt={currentTrack.title} className="w-11 h-11 rounded-xl object-cover shadow-[0_0_15px_rgba(0,0,0,0.5)] z-10" />
+              <div className="absolute inset-0 bg-fuchsia-500/20 blur-md rounded-xl -z-10 group-hover:bg-fuchsia-400/40 transition-colors" />
+            </div>
             
             <div className="ml-3 flex-1 min-w-0 pr-2">
-              <h4 className="text-white font-bold truncate text-sm">{currentTrack.title}</h4>
-              <p className="text-gray-400 text-xs truncate">{currentTrack.artist}</p>
+              <h4 className="text-white font-bold truncate text-[13px] drop-shadow-md">{currentTrack.title}</h4>
+              <p className="text-fuchsia-100/60 font-medium text-[11px] truncate">{currentTrack.artist}</p>
             </div>
             
             <div className="flex items-center space-x-1 pr-1 shrink-0" onClick={e => e.stopPropagation()}>
