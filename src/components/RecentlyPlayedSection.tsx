@@ -19,7 +19,7 @@ export const RecentlyPlayedSection: React.FC = () => {
       <div className="flex overflow-x-auto gap-4 pb-4 snap-x no-scrollbar">
         {recentlyPlayed.map((item, idx) => (
           <div 
-            key={`${item.id}-${idx}`} 
+            key={`${item.trackId}-${idx}`} 
             className="snap-start flex-shrink-0 w-32 group cursor-pointer"
           >
             <div className="w-32 h-32 rounded-xl overflow-hidden mb-2 relative">
