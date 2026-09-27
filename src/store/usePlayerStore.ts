@@ -599,8 +599,6 @@ export const usePlayerStore = create<PlayerState>()(
         rampVolume(nativeAudio, get().volume, 0, 3000);
         rampVolume(crossfadeAudio, 0, get().volume, 3000, () => {
           // Crossfade finished!
-          const currentT = crossfadeAudio.currentTime;
-          
           nativeAudio.pause();
           nativeAudio.src = nextTrk.streamUrl;
           nativeAudio.volume = get().volume;

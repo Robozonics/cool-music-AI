@@ -5,6 +5,7 @@ import { searchUnblocked } from '../services/unblockedMusicService';
 import type { Track } from '../types/music';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { DaylistWidget } from './DaylistWidget';
+import { RecentlyPlayedSection } from './RecentlyPlayedSection';
 import { AIPlaylistModal } from './AIPlaylistModal';
 import type { TabType } from './BottomNav';
 import { generateAIPlaylist, generateAuraAnalysis, callGeminiDirectly } from '../services/geminiService';
