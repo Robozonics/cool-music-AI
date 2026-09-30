@@ -83,28 +83,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   setAuthModalOpen: (open) => set({ isAuthModalOpen: open }),
   
   signInWithGoogle: async (): Promise<{ error?: string }> => {
-    // Helper to activate instant Google session
-    const activateInstantGoogleSession = () => {
-      const googleUser: any = {
-        id: 'google-' + Date.now(),
-        email: 'user@gmail.com',
-        user_metadata: {
-          full_name: 'Google User',
-          name: 'Google User',
-          display_name: 'Google User',
-          avatar_url: 'https://lh3.googleusercontent.com/a/default-user=s96-c'
-        },
-        app_metadata: { provider: 'google' },
-        aud: 'authenticated',
-        created_at: new Date().toISOString()
-      };
-      set({ user: googleUser, isAuthModalOpen: false });
-      localStorage.setItem('musify_guest_user', JSON.stringify(googleUser));
-    };
-
     if (!isSupabaseConfigured || !supabase) {
-      activateInstantGoogleSession();
-      return {};
+      return { error: 'Database is not configured.' };
     }
     
     try {
@@ -115,34 +95,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
       });
       if (error) {
-        // If Supabase Google OAuth provider is not enabled in dashboard or validation fails:
-        const msg = (error.message || '').toLowerCase();
-        if (
-          msg.includes('provider is not enabled') ||
-          msg.includes('validation_failed') ||
-          msg.includes('unsupported provider') ||
-          msg.includes('400')
-        ) {
-          // Fall back gracefully to Google session so user is never blocked by unconfigured dashboard
-          activateInstantGoogleSession();
-          return {};
-        }
         return { error: mapAuthError(error.message) };
       }
       return {};
     } catch (err: any) {
-      const msg = (err.message || '').toLowerCase();
-      if (
-        msg.includes('provider is not enabled') ||
-        msg.includes('validation_failed') ||
-        msg.includes('unsupported provider') ||
-        msg.includes('400')
-      ) {
-        activateInstantGoogleSession();
-        return {};
-      }
-      activateInstantGoogleSession();
-      return {};
+      return { error: mapAuthError(err.message || 'Failed to sign in with Google') };
     }
   },
 
@@ -156,39 +113,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
 
     if (!isSupabaseConfigured || !supabase) {
-      // Offline fallback: create local session
-      const offlineUser: any = {
-        id: 'local-' + btoa(email).replace(/[^a-zA-Z0-9]/g, '').slice(0, 12),
-        email: email,
-        user_metadata: {
-          full_name: email.split('@')[0],
-          name: email.split('@')[0],
-          display_name: email.split('@')[0],
-        },
-        app_metadata: { provider: 'email' },
-        aud: 'authenticated',
-        created_at: new Date().toISOString()
-      };
-      set({ user: offlineUser, isAuthModalOpen: false });
-      localStorage.setItem('musify_guest_user', JSON.stringify(offlineUser));
-      return {};
+      return { error: 'Database is not configured.' };
     }
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
-        console.warn('Supabase login failed, falling back to local session:', error.message);
-        const offlineUser: any = {
-          id: 'local-' + btoa(email).replace(/[^a-zA-Z0-9]/g, '').slice(0, 12),
-          email: email,
-          user_metadata: { full_name: email.split('@')[0], name: email.split('@')[0] },
-          app_metadata: { provider: 'email' },
-          aud: 'authenticated',
-          created_at: new Date().toISOString()
-        };
-        set({ user: offlineUser, isAuthModalOpen: false });
-        localStorage.setItem('musify_guest_user', JSON.stringify(offlineUser));
-        return {};
+        return { error: mapAuthError(error.message) };
       }
       set({ user: data.user, isAuthModalOpen: false });
       localStorage.removeItem('musify_guest_user');
@@ -196,18 +127,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       setTimeout(() => get().syncUserData(), 500);
       return {};
     } catch (err: any) {
-      console.warn('Supabase login exception, falling back to local session:', err.message);
-      const offlineUser: any = {
-        id: 'local-' + btoa(email).replace(/[^a-zA-Z0-9]/g, '').slice(0, 12),
-        email: email,
-        user_metadata: { full_name: email.split('@')[0], name: email.split('@')[0] },
-        app_metadata: { provider: 'email' },
-        aud: 'authenticated',
-        created_at: new Date().toISOString()
-      };
-      set({ user: offlineUser, isAuthModalOpen: false });
-      localStorage.setItem('musify_guest_user', JSON.stringify(offlineUser));
-      return {};
+      return { error: mapAuthError(err.message || 'Login failed. Please try again.') };
     }
   },
 
@@ -224,22 +144,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
 
     if (!isSupabaseConfigured || !supabase) {
-      // Offline fallback
-      const offlineUser: any = {
-        id: 'local-' + btoa(email).replace(/[^a-zA-Z0-9]/g, '').slice(0, 12),
-        email: email,
-        user_metadata: {
-          full_name: name,
-          name: name,
-          display_name: name,
-        },
-        app_metadata: { provider: 'email' },
-        aud: 'authenticated',
-        created_at: new Date().toISOString()
-      };
-      set({ user: offlineUser, isAuthModalOpen: false });
-      localStorage.setItem('musify_guest_user', JSON.stringify(offlineUser));
-      return { message: 'Account created locally! Your data will sync when online.' };
+      return { error: 'Database is not configured.' };
     }
 
     try {
@@ -255,27 +160,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
       });
       
-      // Auto-fallback if signup fails (e.g., Supabase signups disabled)
       if (error) {
-        console.warn('Supabase signup failed, falling back to local session:', error.message);
-        const offlineUser: any = {
-          id: 'local-' + btoa(email).replace(/[^a-zA-Z0-9]/g, '').slice(0, 12),
-          email: email,
-          user_metadata: { full_name: name, name: name, display_name: name },
-          app_metadata: { provider: 'email' },
-          aud: 'authenticated',
-          created_at: new Date().toISOString()
-        };
-        set({ user: offlineUser, isAuthModalOpen: false });
-        localStorage.setItem('musify_guest_user', JSON.stringify(offlineUser));
-        return { message: 'Account created locally! Welcome to Musify! 🎵' };
+        return { error: mapAuthError(error.message) };
       }
       
       if (data.user) {
-        // If user has identities, they're confirmed (auto-confirm enabled)
-        if (data.user.identities && data.user.identities.length > 0) {
+        // If there's an active session returned, auto-login was successful
+        if (data.session) {
           set({ user: data.user, isAuthModalOpen: false });
           localStorage.removeItem('musify_guest_user');
+          setTimeout(() => get().syncUserData(), 500);
           return { message: `Welcome to Musify, ${name}! 🎵` };
         }
         // Email confirmation required
@@ -283,18 +177,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
       return { message: 'Account created! Check your inbox for the confirmation link.' };
     } catch (err: any) {
-      console.warn('Supabase signup exception, falling back to local session:', err.message);
-      const offlineUser: any = {
-        id: 'local-' + btoa(email).replace(/[^a-zA-Z0-9]/g, '').slice(0, 12),
-        email: email,
-        user_metadata: { full_name: name, name: name, display_name: name },
-        app_metadata: { provider: 'email' },
-        aud: 'authenticated',
-        created_at: new Date().toISOString()
-      };
-      set({ user: offlineUser, isAuthModalOpen: false });
-      localStorage.setItem('musify_guest_user', JSON.stringify(offlineUser));
-      return { message: 'Account created locally! Welcome to Musify! 🎵' };
+      return { error: mapAuthError(err.message || 'Sign up failed. Please try again.') };
     }
   },
 
