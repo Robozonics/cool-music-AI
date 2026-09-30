@@ -169,8 +169,11 @@ Output ONLY valid JSON. No markdown, no commentary.`;
       for (let attempt = 1; attempt <= MAX_RETRIES_PER_KEY; attempt++) {
         try {
           const GEMINI_MODELS_ORDERED = attempt === 1
-            ? 'gemini-2.0-flash'
-            : 'gemini-1.5-flash';
+            ? 'gemini-3.8-flash'
+            : attempt === 2 ? 'gemini-3.7-flash'
+            : attempt === 3 ? 'gemini-3.5-flash-lite'
+            : attempt === 4 ? 'gemini-3.1-flash-lite'
+            : 'gemini-flash-latest';
           const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODELS_ORDERED}:generateContent`;
 
           const response = await fetch(endpoint, {
@@ -198,8 +201,19 @@ Output ONLY valid JSON. No markdown, no commentary.`;
               await new Promise(resolve => setTimeout(resolve, attempt * 1000));
               continue;
             }
+            if (response.status === 404) {
+               console.warn(`Model not found (404). Trying next model...`);
+               continue;
+            }
+            if (response.status === 401 || response.status === 403 || response.status === 400) {
+               console.error(`Gemini API key invalid (Status ${response.status})`);
+               keyFailed = true;
+               break;
+            }
             
             console.error(`Gemini API error (Status ${response.status}):`, response.statusText);
+            if (attempt < MAX_RETRIES_PER_KEY) continue;
+            
             keyFailed = true;
             break;
           }
@@ -248,10 +262,9 @@ Output ONLY valid JSON. No markdown, no commentary.`;
     ].filter(Boolean) as string[]).slice(0, 2); // Max 2 Groq keys to prevent Vercel timeouts
 
     const GROQ_MODELS = [
-      'llama-3.3-70b-versatile',
-      'llama3-70b-8192',
-      'mixtral-8x7b-32768',
-      'gemma2-9b-it'
+      'openai/gpt-oss-120b',
+      'qwen/qwen3.8-27b',
+      'meta-llama/llama-prompt-guard-2-22m'
     ];
 
     if (geminiFailed && groqKeys.length > 0) {
@@ -294,10 +307,13 @@ Output ONLY valid JSON. No markdown, no commentary.`;
             } else if (groqResponse.status === 429) {
                console.warn(`Groq rate limited on model ${model}. Trying next model...`);
                continue;
+            } else if (groqResponse.status === 401 || groqResponse.status === 403) {
+               console.error(`Groq API key invalid on model ${model}:`, groqResponse.statusText);
+               groqKeyFailed = true;
+               break;
             } else {
                console.error(`Groq API error on model ${model}:`, groqResponse.statusText);
-               groqKeyFailed = true;
-               break; // break model loop, try next key
+               continue;
             }
           } catch (e) {
             console.error('Groq fallback attempt crashed:', e);

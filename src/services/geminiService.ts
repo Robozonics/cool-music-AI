@@ -28,10 +28,9 @@ const groqKeys = [
 ].filter(Boolean) as string[];
 
 const GROQ_MODELS = [
-  'llama-3.3-70b-versatile',
-  'llama3-70b-8192',
-  'mixtral-8x7b-32768',
-  'gemma2-9b-it'
+  'openai/gpt-oss-120b',
+  'qwen/qwen3.8-27b',
+  'meta-llama/llama-prompt-guard-2-22m'
 ];
 
 const callGroqFallback = async (promptText: string, expectJson: boolean = true) => {
@@ -71,10 +70,13 @@ const callGroqFallback = async (promptText: string, expectJson: boolean = true) 
         } else if (response.status === 429) {
           console.warn(`Groq rate limited on model ${model}. Trying next...`);
           continue;
-        } else {
-          console.error(`Groq API error on model ${model}:`, response.statusText);
+        } else if (response.status === 401 || response.status === 403) {
+          console.error(`Groq API key invalid on model ${model}:`, response.statusText);
           groqKeyFailed = true;
           break;
+        } else {
+          console.error(`Groq API error on model ${model}:`, response.statusText);
+          continue;
         }
       } catch (e) {
         console.error('Groq fallback crashed:', e);
@@ -119,9 +121,11 @@ export const callGeminiDirectly = async (promptText: string, type: 'playlist' | 
     if (deadKeys.has(apiKey)) continue;
 
     const GEMINI_MODELS = [
-      'gemini-2.0-flash',
-      'gemini-1.5-flash',
-      'gemini-1.5-flash-8b'
+      'gemini-3.8-flash',
+      'gemini-3.7-flash',
+      'gemini-3.5-flash-lite',
+      'gemini-3.1-flash-lite',
+      'gemini-flash-latest'
     ];
     let keyFailed = false;
 
@@ -144,7 +148,6 @@ export const callGeminiDirectly = async (promptText: string, type: 'playlist' | 
               keyFailed = true;
               break;
             }
-            // 404 = model doesn't exist, try next model
             if (response.status === 404) {
               console.warn(`Model ${model} not found (404). Trying next model...`);
               break;
@@ -153,11 +156,15 @@ export const callGeminiDirectly = async (promptText: string, type: 'playlist' | 
               await new Promise(resolve => setTimeout(resolve, attempt * 500));
               continue;
             }
-            console.error(`Gemini API error (Status ${response.status}) on model ${model}:`, response.statusText);
-            if (response.status === 503 || response.status === 400 || response.status >= 500) {
+            if (response.status === 401 || response.status === 403 || response.status === 400) {
+              console.error(`Gemini API key invalid (Status ${response.status})`);
               deadKeys.add(apiKey);
+              keyFailed = true;
+              break;
             }
-            keyFailed = true;
+            
+            console.error(`Gemini API error (Status ${response.status}) on model ${model}:`, response.statusText);
+            if (attempt < MAX_RETRIES) continue;
             break;
           }
 
