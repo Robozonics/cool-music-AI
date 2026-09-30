@@ -19,7 +19,7 @@ export const MANUAL_TRACKS: Track[] = [
     artist: 'Sheheryar Rehan X Zoha Waseem',
     thumbnail: 'https://img.youtube.com/vi/OtWjS4I2ojU/hqdefault.jpg',
     duration: 210,
-    streamUrl: 'https://archive.org/download/majboor-sheheryar-rehan-x-zoha-waseem-music-video-2025-aap-ka-he-kehna-banta-256k/Jaan_Se_Guzarte_Hain__Live_at_Dhurandhar_The_Revenge_-Music_Album_Launch__Shashwat_Sachdev,Khan_Saab(256k).mp3',
+    streamUrl: 'https://archive.org/download/sheheryar-rehan-zoha-waseem-majboorlyrics-shortsfeedmusicsongmajboor-popularsongfyp/Sheheryar%20Rehan%20%26%20Zoha%20Waseem%20-%20Majboor(lyrics)%20%23shortsfeed%23music%23song%23majboor%20%23popularsong%23fyp.mp3',
     source: 'archive',
     sourceBadge: 'Exclusive'
   },

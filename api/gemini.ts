@@ -40,11 +40,12 @@ export default async function handler(req: Request) {
       'gqqpqVApKCDUuOlG0QdFAjCg5g60LTxzgMgi8ae5RnuK6NR8bA.QA'
     ];
 
-    const keys = [
+    const shuffleArray = (array: string[]) => array.sort(() => 0.5 - Math.random());
+    const keys = shuffleArray([
       process.env.GEMINI_API_KEY,
       process.env.VITE_GEMINI_API_KEY,
       ...reversedKeys.map(k => k.split('').reverse().join(''))
-    ].filter(Boolean) as string[];
+    ].filter(Boolean) as string[]).slice(0, 3); // Max 3 Gemini keys to prevent Vercel timeouts
 
     if (keys.length === 0) {
       return new Response(JSON.stringify({ error: 'API key not configured' }), {
@@ -236,7 +237,7 @@ Output ONLY valid JSON. No markdown, no commentary.`;
     
     geminiFailed = true;
     
-    const groqKeys = [
+    const groqKeys = shuffleArray([
       process.env.GROQ_API_KEY,
       process.env.VITE_GROQ_API_KEY,
       ...[
@@ -244,7 +245,7 @@ Output ONLY valid JSON. No markdown, no commentary.`;
         'Y5uTiDVFMKBoPGmdKI6KLzLOYF3bydGWv1OauYyNzJhiz4Tf6RA8_ksg',
         'Qh77n8WPAtROlxSmvunnbLYsYF3bydGW6vGRkFUwAgDkQpPO55VT_ksg'
       ].map(k => k.split('').reverse().join(''))
-    ].filter(Boolean) as string[];
+    ].filter(Boolean) as string[]).slice(0, 2); // Max 2 Groq keys to prevent Vercel timeouts
 
     const GROQ_MODELS = [
       'qwen/qwen3.8-27b',
