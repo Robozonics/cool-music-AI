@@ -169,11 +169,8 @@ Output ONLY valid JSON. No markdown, no commentary.`;
       for (let attempt = 1; attempt <= MAX_RETRIES_PER_KEY; attempt++) {
         try {
           const GEMINI_MODELS_ORDERED = attempt === 1
-            ? 'gemini-3.8-flash'
-            : attempt === 2 ? 'gemini-3.7-flash'
-            : attempt === 3 ? 'gemini-3.5-flash-lite'
-            : attempt === 4 ? 'gemini-3.1-flash-lite'
-            : 'gemini-flash-latest';
+            ? 'gemini-2.0-flash'
+            : 'gemini-1.5-flash';
           const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODELS_ORDERED}:generateContent`;
 
           const response = await fetch(endpoint, {
@@ -251,9 +248,10 @@ Output ONLY valid JSON. No markdown, no commentary.`;
     ].filter(Boolean) as string[]).slice(0, 2); // Max 2 Groq keys to prevent Vercel timeouts
 
     const GROQ_MODELS = [
-      'openai/gpt-oss-120b',
-      'qwen/qwen3.8-27b',
-      'meta-llama/llama-prompt-guard-2-22m'
+      'llama-3.3-70b-versatile',
+      'llama3-70b-8192',
+      'mixtral-8x7b-32768',
+      'gemma2-9b-it'
     ];
 
     if (geminiFailed && groqKeys.length > 0) {

@@ -28,9 +28,10 @@ const groqKeys = [
 ].filter(Boolean) as string[];
 
 const GROQ_MODELS = [
-  'openai/gpt-oss-120b',
-  'qwen/qwen3.8-27b',
-  'meta-llama/llama-prompt-guard-2-22m'
+  'llama-3.3-70b-versatile',
+  'llama3-70b-8192',
+  'mixtral-8x7b-32768',
+  'gemma2-9b-it'
 ];
 
 const callGroqFallback = async (promptText: string, expectJson: boolean = true) => {
@@ -118,11 +119,9 @@ export const callGeminiDirectly = async (promptText: string, type: 'playlist' | 
     if (deadKeys.has(apiKey)) continue;
 
     const GEMINI_MODELS = [
-      'gemini-3.8-flash',
-      'gemini-3.7-flash',
-      'gemini-3.5-flash-lite',
-      'gemini-3.1-flash-lite',
-      'gemini-flash-latest'
+      'gemini-2.0-flash',
+      'gemini-1.5-flash',
+      'gemini-1.5-flash-8b'
     ];
     let keyFailed = false;
 
