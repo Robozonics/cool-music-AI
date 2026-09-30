@@ -240,6 +240,9 @@ export const ConnectDeviceModal: React.FC = () => {
 
   const disconnectSession = () => {
     if (peerRef.current) {
+      if ((peerRef.current as any)._unsub) {
+        (peerRef.current as any)._unsub();
+      }
       peerRef.current.destroy();
       peerRef.current = null;
     }
@@ -465,7 +468,11 @@ export const ConnectDeviceModal: React.FC = () => {
             broadcastToPeers({ type: 'heartbeat', time: nativeAudio.currentTime });
           }
         }, 2000);
-        peerRef.current._unsub = unsub;
+        (peerRef.current as any)._unsub = () => {
+          unsub();
+          nativeAudio.removeEventListener('seeked', onHostSeekRTC);
+          clearInterval(heartbeatIdRTC);
+        };
 
       } else {
         peer.on('open', () => {
