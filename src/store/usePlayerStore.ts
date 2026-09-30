@@ -179,35 +179,39 @@ const initAudioContext = (forceKaraokeMode?: boolean) => {
 
     karaokeGain.connect(masterCompressor!);
 
-    // 5. 3D Spatial Audio / Concert Mode (Stadium Reverb & Stereo Widening)
+    // 5. Dolby Atmos / Spatial Audio Mode (Lightweight Haas Stereo Widener)
+    // Completely replaces the heavy CPU-intensive ConvolverNode that causes audio breaking on mobile
     concertGain = audioCtx.createGain();
-    concertGain.gain.value = 0; // Off by default
+    concertGain.gain.value = 0; // Off by default (controlled by UI)
 
-    // Create synthetic stadium impulse response
-    const sampleRate = audioCtx.sampleRate;
-    const length = sampleRate * 3.5; // 3.5 second reverb tail
-    const impulse = audioCtx.createBuffer(2, length, sampleRate);
-    for (let i = 0; i < 2; i++) {
-      const channel = impulse.getChannelData(i);
-      for (let j = 0; j < length; j++) {
-        // Exponential decay of white noise
-        channel[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / length, 4);
-      }
-    }
-    
-    concertConvolver = audioCtx.createConvolver();
-    concertConvolver.buffer = impulse;
+    const splitterSpatial = audioCtx.createChannelSplitter(2);
+    const mergerSpatial = audioCtx.createChannelMerger(2);
 
-    // A bit of EQ on the reverb to make it sound like a large arena (muddy lows, rolled off highs)
-    const concertEq = audioCtx.createBiquadFilter();
-    concertEq.type = 'bandpass';
-    concertEq.frequency.value = 1000;
-    concertEq.Q.value = 0.5;
+    // Left and Right delays for the Haas effect (psychoacoustic 3D widening)
+    const delayL = audioCtx.createDelay();
+    delayL.delayTime.value = 0.015; // 15ms delay
+
+    const delayR = audioCtx.createDelay();
+    delayR.delayTime.value = 0.022; // 22ms delay for asymmetrical width
+
+    const spatialHighShelf = audioCtx.createBiquadFilter();
+    spatialHighShelf.type = 'highshelf';
+    spatialHighShelf.frequency.value = 7000;
+    spatialHighShelf.gain.value = 5; // Add "air" to the wide signal
+
+    nativeAudioFilter.connect(splitterSpatial);
+
+    // Cross-feed delayed L into R, and delayed R into L to create a massive 3D stereo image
+    splitterSpatial.connect(delayL, 0); // L goes to delayL
+    splitterSpatial.connect(delayR, 1); // R goes to delayR
+
+    delayL.connect(spatialHighShelf);
+    delayR.connect(spatialHighShelf);
     
-    // Tap from the main audio into the convolver, then EQ, then concertGain, then master
-    nativeAudioFilter.connect(concertConvolver);
-    concertConvolver.connect(concertEq);
-    concertEq.connect(concertGain);
+    // Mix the delayed, EQ'd cross-feed into the spatial gain
+    spatialHighShelf.connect(concertGain);
+    
+    // Connect spatial effect directly into the master compressor alongside the normal mix
     concertGain.connect(masterCompressor!);
   }
   if (audioCtx.state === 'suspended') {

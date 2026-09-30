@@ -160,7 +160,7 @@ export const SyncedLyrics: React.FC<{ inline?: boolean }> = ({ inline = false })
               }`}
             >
               <AudioLines className="w-3 h-3" />
-              <span>{isConcertMode ? 'Concert On' : '3D Concert Mode'}</span>
+              <span>{isConcertMode ? 'Atmos On' : 'Dolby Atmos Spatial'}</span>
             </motion.button>
 
             {/* Bass Boost Toggle */}

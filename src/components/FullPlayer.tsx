@@ -226,7 +226,7 @@ export const FullPlayer: React.FC = () => {
             <button 
               onClick={toggleConcertMode}
               className={`p-2 sm:p-3 rounded-full transition-all ${isConcertMode ? 'text-purple-400 bg-purple-400/10 shadow-[0_0_15px_rgba(192,132,252,0.3)]' : 'text-gray-400 hover:text-white'}`}
-              title={isConcertMode ? 'Concert Mode: ON (3D Spatial Reverb)' : 'Concert Mode: OFF'}
+              title={isConcertMode ? 'Dolby Atmos Spatial: ON' : 'Dolby Atmos Spatial: OFF'}
             >
               <AudioLines className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
