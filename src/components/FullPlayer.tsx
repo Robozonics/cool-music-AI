@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, SkipForward, SkipBack, ChevronDown, Download, Plus, X, Repeat, Share2, Video, Blend, ListMusic, Laptop2, Mic, MicOff, Moon, AudioLines, Zap } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, ChevronDown, Download, Plus, X, Repeat, Share2, Video, Blend, ListMusic, Laptop2, Mic, MicOff, Moon, AudioLines, Zap, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePlayerStore } from '../store/usePlayerStore';
 
@@ -31,6 +31,8 @@ export const FullPlayer: React.FC = () => {
   const toggleConcertMode = usePlayerStore(state => state.toggleConcertMode);
   const isBassBoostMode = usePlayerStore(state => state.isBassBoostMode);
   const toggleBassBoostMode = usePlayerStore(state => state.toggleBassBoostMode);
+  const isTimeMachineEnabled = usePlayerStore(state => state.isTimeMachineEnabled);
+  const toggleTimeMachine = usePlayerStore(state => state.toggleTimeMachine);
   const isVideoMode = usePlayerStore(state => state.isVideoMode);
   const toggleVideoMode = usePlayerStore(state => state.toggleVideoMode);
   const isCrossfadeEnabled = usePlayerStore(state => state.isCrossfadeEnabled);
@@ -235,6 +237,14 @@ export const FullPlayer: React.FC = () => {
               title={isBassBoostMode ? 'MAX Bass Boost: ON' : 'Bass Boost: OFF'}
             >
               <Zap className="w-5 h-5 sm:w-6 sm:h-6" />
+            </button>
+
+            <button 
+              onClick={toggleTimeMachine}
+              className={`p-2 sm:p-3 rounded-full transition-all ${isTimeMachineEnabled ? 'text-blue-400 bg-blue-400/10 shadow-[0_0_15px_rgba(96,165,250,0.3)]' : 'text-gray-400 hover:text-white'}`}
+              title={isTimeMachineEnabled ? 'Time Machine: ON (Auto-skinning UI)' : 'Time Machine: OFF'}
+            >
+              <Clock className={`w-5 h-5 sm:w-6 sm:h-6 ${isTimeMachineEnabled ? 'animate-[spin_4s_linear_infinite]' : ''}`} />
             </button>
 
             <button 

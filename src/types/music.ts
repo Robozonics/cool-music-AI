@@ -55,6 +55,7 @@ export interface Track {
   segment?: PlaylistSegment; // AI playlist segment
   mashupStreamUrls?: { id: string, url: string }[]; // Used to play multiple tracks concurrently
   arrangement?: DjEvent[]; // AI generated timeline for DJ actions
+  year?: number; // Release year of the track
 }
 
 export interface LyricLine {

@@ -196,6 +196,7 @@ export const searchSaavn = async (query: string): Promise<Track[]> => {
             streamUrl,
             source: 'saavn',
             sourceBadge: 'Studio 320k',
+            year: song.year ? parseInt(song.year, 10) : undefined,
           });
         }
         
@@ -271,6 +272,7 @@ export const searchSaavn = async (query: string): Promise<Track[]> => {
         streamUrl,
         source: 'saavn',
         sourceBadge: 'Studio 320k',
+        year: song.year ? parseInt(song.year, 10) : undefined,
       });
     }
     

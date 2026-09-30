@@ -75,6 +75,76 @@
     --color-bg: #030008; /* dark void */
     --color-panel: rgba(178, 0, 255, 0.08);
   }
+
+  /* TIME MACHINE ERAS */
+  [data-theme='theme-era-1930s'] { 
+    --color-primary: #D4AF37; /* Gold/Brass */
+    --color-bg: #2C241B; /* Sepia/Wood */
+    --color-panel: rgba(212, 175, 55, 0.1); 
+  }
+  [data-theme='theme-era-1940s'] { 
+    --color-primary: #B87333; /* Copper */
+    --color-bg: #1A1A1A; /* Classic Noir */
+    --color-panel: rgba(184, 115, 51, 0.1); 
+  }
+  [data-theme='theme-era-1950s'] { 
+    --color-primary: #98FF98; /* Mint Green */
+    --color-bg: #2B1B17; /* Retro Diner */
+    --color-panel: rgba(152, 255, 152, 0.1); 
+  }
+  [data-theme='theme-era-1960s'] { 
+    --color-primary: #FFB300; /* Mustard/Mod */
+    --color-bg: #3E2723; /* Warm Brown */
+    --color-panel: rgba(255, 179, 0, 0.1); 
+  }
+  [data-theme='theme-era-1970s'] { 
+    --color-primary: #FF4500; /* Disco Orange Red */
+    --color-bg: #190900; /* Deep Chocolate */
+    --color-panel: rgba(255, 69, 0, 0.1); 
+  }
+  [data-theme='theme-era-1980s'] { 
+    --color-primary: #FF00FF; /* Synthwave Magenta */
+    --color-bg: #000033; /* Dark Grid Blue */
+    --color-panel: rgba(255, 0, 255, 0.15); 
+  }
+  [data-theme='theme-era-1990s'] { 
+    --color-primary: #00FF00; /* Matrix/Winamp Green */
+    --color-bg: #111111; /* Metallic Gray */
+    --color-panel: rgba(0, 255, 0, 0.08); 
+  }
+  /* --- TIME MACHINE ERA VISUALS --- */
+  
+  /* 1930s: Sepia tone & Vintage */
+  [data-theme='theme-era-1930s'] img, [data-theme='theme-era-1930s'] video {
+    filter: sepia(100%) contrast(1.2) brightness(0.9) grayscale(0.5);
+  }
+  
+  /* 1980s: Synthwave Grid */
+  [data-theme='theme-era-1980s'] {
+    background-image: 
+      linear-gradient(rgba(255, 0, 255, 0.2) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 0, 255, 0.2) 1px, transparent 1px);
+    background-size: 30px 30px;
+    background-position: center bottom;
+  }
+  [data-theme='theme-era-1980s'] img {
+    filter: contrast(1.3) saturate(1.5) hue-rotate(-10deg);
+  }
+
+  /* 1990s: Winamp / Terminal */
+  [data-theme='theme-era-1990s'] {
+    font-family: 'Courier New', Courier, monospace !important;
+  }
+  [data-theme='theme-era-1990s'] button {
+    border-radius: 0 !important;
+    border: 2px solid #555 !important;
+    box-shadow: inset 1px 1px 0px #999, inset -1px -1px 0px #000;
+  }
+  [data-theme='theme-era-1990s'] img {
+    border: 4px solid #333;
+    border-radius: 0 !important;
+  }
+
 }
 
 @layer components {

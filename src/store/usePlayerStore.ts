@@ -423,6 +423,10 @@ interface PlayerState {
   isBassBoostMode: boolean;
   toggleBassBoostMode: () => void;
 
+  isTimeMachineEnabled: boolean;
+  toggleTimeMachine: () => void;
+  activeEraTheme: string | null;
+
   sleepTimerMs: number | null;
   sleepTimerEndAt: number | null;
   setSleepTimer: (ms: number | null) => void;
@@ -779,6 +783,8 @@ export const usePlayerStore = create<PlayerState>()(
     isKaraokeMode: false,
     isConcertMode: false,
     isBassBoostMode: false,
+    isTimeMachineEnabled: false,
+    activeEraTheme: null,
     sleepTimerMs: null,
     sleepTimerEndAt: null,
     
@@ -867,6 +873,21 @@ export const usePlayerStore = create<PlayerState>()(
        }
     },
 
+    toggleTimeMachine: () => {
+      const state = get();
+      const newMode = !state.isTimeMachineEnabled;
+      set({ isTimeMachineEnabled: newMode });
+      
+      // Update theme immediately if playing
+      const currentTrack = state.currentTrack;
+      if (newMode && currentTrack?.year && currentTrack.year >= 1930 && currentTrack.year <= 1999) {
+        const decade = Math.floor(currentTrack.year / 10) * 10;
+        set({ activeEraTheme: `theme-era-${decade}s` });
+      } else {
+        set({ activeEraTheme: null });
+      }
+    },
+
     discoverWeekly: null,
     setDiscoverWeekly: (tracks: Track[], generatedAt: number, vibeTitle?: string, vibeDescription?: string, vibeColor?: string) => 
       set({ discoverWeekly: { tracks, generatedAt, vibeTitle, vibeDescription, vibeColor } }),
@@ -921,7 +942,14 @@ export const usePlayerStore = create<PlayerState>()(
     setDuration: (duration: number) => set({ duration }),
 
     playTrack: (track: Track) => {
-      set({ currentTrack: track, currentTime: 0, duration: track.duration || 0, isAutoplayBlocked: false, isBuffering: false, isCrossfading: false });
+      // 1. Time Machine Logic
+      let eraTheme: string | null = null;
+      if (get().isTimeMachineEnabled && track.year && track.year >= 1930 && track.year <= 1999) {
+        const decade = Math.floor(track.year / 10) * 10;
+        eraTheme = `theme-era-${decade}s`;
+      }
+      
+      set({ currentTrack: track, currentTime: 0, duration: track.duration || 0, isAutoplayBlocked: false, isBuffering: false, isCrossfading: false, activeEraTheme: eraTheme });
 
       // Track recently played
       import('./useAuthStore').then(({ useAuthStore }) => {

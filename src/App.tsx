@@ -49,6 +49,7 @@ function App() {
   const setApiKeyModalOpen = usePlayerStore(state => state.setApiKeyModalOpen);
   const isPlaying = usePlayerStore(state => state.isPlaying);
   const theme = usePlayerStore(state => state.theme);
+  const activeEraTheme = usePlayerStore(state => state.activeEraTheme);
   
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
@@ -65,6 +66,14 @@ function App() {
       setAiCommandOpen(true);
     }
   });
+
+  useEffect(() => {
+    if (activeEraTheme) {
+      document.documentElement.setAttribute('data-theme', activeEraTheme);
+    } else {
+      document.documentElement.setAttribute('data-theme', theme);
+    }
+  }, [theme, activeEraTheme]);
 
   useEffect(() => {
     const handleOnline = () => setIsOffline(false);
