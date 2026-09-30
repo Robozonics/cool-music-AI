@@ -562,12 +562,10 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab }) => {
             <h2 className="text-xl font-display font-black text-white tracking-tight">YOUR LIKED SONGS</h2>
             <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">{likedTracks.length} TRACKS</span>
           </div>
-          <div className="flex gap-4 overflow-x-auto pb-6 snap-x hide-scrollbar -mx-3 px-3 md:-mx-6 md:px-6">
-            <div className="min-w-[280px] p-4 rounded-2xl bg-gradient-to-br from-pink-500/20 to-rose-500/10 border border-pink-500/20 backdrop-blur-md flex flex-col justify-center items-center text-center shadow-[0_0_30px_rgba(236,72,153,0.15)]">
-               <Heart className="w-8 h-8 text-pink-500 mb-2 fill-pink-500" />
-               <p className="text-white font-bold text-sm">You have {likedTracks.length} liked tracks.</p>
-               <p className="text-zinc-400 text-xs mt-1">Go to Vault to manage them.</p>
-            </div>
+          <div className="w-full py-8 px-6 sm:py-10 rounded-3xl bg-gradient-to-br from-pink-500/20 to-rose-500/10 border border-pink-500/20 backdrop-blur-md flex flex-col justify-center items-center text-center shadow-[0_0_30px_rgba(236,72,153,0.15)]">
+             <Heart className="w-10 h-10 sm:w-12 sm:h-12 text-pink-500 mb-3 fill-pink-500 drop-shadow-[0_0_15px_rgba(236,72,153,0.5)]" />
+             <p className="text-white font-black text-lg sm:text-xl mb-1.5">You have {likedTracks.length} liked tracks.</p>
+             <p className="text-zinc-400 text-xs sm:text-sm">Head over to the Vault to listen and manage them.</p>
           </div>
         </div>
       )}
