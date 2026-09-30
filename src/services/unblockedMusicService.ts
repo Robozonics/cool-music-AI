@@ -93,9 +93,9 @@ export const decryptSaavnUrl = (url: string) => {
       { mode: CryptoJS.mode.ECB, padding: CryptoJS.pad.Pkcs7 }
     );
     return decrypted.toString(CryptoJS.enc.Utf8)
-      .replace(/_(96|160)\.mp4$/, '_320.mp4')
-      .replace(/_(96|160)\.mp3$/, '_320.mp3')
-      .replace(/_(96|160)\.m4a$/, '_320.m4a');
+      .replace(/_(96|320)\.mp4$/, '_160.mp4')
+      .replace(/_(96|320)\.mp3$/, '_160.mp3')
+      .replace(/_(96|320)\.m4a$/, '_160.m4a');
   } catch (error) {
     console.error('Error decrypting URL', error);
     return '';

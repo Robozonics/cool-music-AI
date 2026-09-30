@@ -74,13 +74,13 @@ const initAudioContext = (forceKaraokeMode?: boolean) => {
     normalGain.gain.value = isKaraoke ? 0 : 1;
     nativeAudioFilter.connect(normalGain);
 
-    // Master Glue Compressor (DJ Style)
+    // Master Peak Limiter (Prevents clipping from Bass Boost without distorting)
     masterCompressor = audioCtx.createDynamicsCompressor();
-    masterCompressor.threshold.value = -20;
-    masterCompressor.knee.value = 10;
-    masterCompressor.ratio.value = 4;
-    masterCompressor.attack.value = 0.01;
-    masterCompressor.release.value = 0.25;
+    masterCompressor.threshold.value = -3; // Only catch high peaks
+    masterCompressor.knee.value = 5;
+    masterCompressor.ratio.value = 20; // Hard limiting
+    masterCompressor.attack.value = 0.005; // Fast attack to catch peaks
+    masterCompressor.release.value = 0.05; // Fast release
 
     normalGain.connect(masterCompressor);
     masterCompressor.connect(audioCtx.destination);
