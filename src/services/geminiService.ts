@@ -28,9 +28,9 @@ const groqKeys = [
 ].filter(Boolean) as string[];
 
 const GROQ_MODELS = [
-  'llama-3.1-70b-versatile',
-  'llama-3.1-8b-instant',
-  'mixtral-8x7b-32768'
+  'qwen/qwen3.8-27b',
+  'openai/gpt-oss-120b',
+  'allam-2-7b'
 ];
 
 const callGroqFallback = async (promptText: string, expectJson: boolean = true) => {
@@ -117,7 +117,7 @@ export const callGeminiDirectly = async (promptText: string, type: 'playlist' | 
   for (const apiKey of keys) {
     if (deadKeys.has(apiKey)) continue;
 
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`;
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
     let keyFailed = false;
 
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
