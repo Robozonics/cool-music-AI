@@ -39,6 +39,37 @@
   [data-theme='aura-teal'] { --color-primary: #008080; --color-bg: #001A1A; --color-panel: rgba(0, 128, 128, 0.08); }
   [data-theme='aura-emerald'] { --color-primary: #50C878; --color-bg: #0B1A10; --color-panel: rgba(80, 200, 120, 0.08); }
   [data-theme='aura-rose'] { --color-primary: #FF007F; --color-bg: #1A000D; --color-panel: rgba(255, 0, 127, 0.08); }
+  [data-theme='aura-y2k'] { --color-primary: #FF00CC; --color-bg: #110011; --color-panel: rgba(255, 0, 204, 0.08); }
+  [data-theme='aura-vaporwave'] { --color-primary: #00FFFF; --color-bg: #1A0033; --color-panel: rgba(0, 255, 255, 0.08); }
+  [data-theme='aura-goth'] { --color-primary: #DDA0DD; --color-bg: #0F0F1A; --color-panel: rgba(221, 160, 221, 0.08); }
+  [data-theme='aura-matcha'] { --color-primary: #C1E1C1; --color-bg: #0A120A; --color-panel: rgba(193, 225, 193, 0.08); }
+  [data-theme='aura-lavender'] { --color-primary: #E6E6FA; --color-bg: #100B1A; --color-panel: rgba(230, 230, 250, 0.08); }
+  [data-theme='aura-peach'] { --color-primary: #FFDAB9; --color-bg: #1A0F0A; --color-panel: rgba(255, 218, 185, 0.08); }
+  [data-theme='aura-electric'] { --color-primary: #6F00FF; --color-bg: #06001A; --color-panel: rgba(111, 0, 255, 0.08); }
+  [data-theme='aura-neon-lime'] { --color-primary: #39FF14; --color-bg: #051A05; --color-panel: rgba(57, 255, 20, 0.08); }
+  [data-theme='aura-blood'] { --color-primary: #8A0303; --color-bg: #140000; --color-panel: rgba(138, 3, 3, 0.08); }
+  [data-theme='aura-ice'] { --color-primary: #A5F2F3; --color-bg: #001414; --color-panel: rgba(165, 242, 243, 0.08); }
+  [data-theme='aura-slime'] { --color-primary: #BFFF00; --color-bg: #0A1400; --color-panel: rgba(191, 255, 0, 0.08); }
+  [data-theme='aura-barbie'] { --color-primary: #E0218A; --color-bg: #1A0010; --color-panel: rgba(224, 33, 138, 0.08); }
+  [data-theme='aura-sunset-glow'] { --color-primary: #FF7E67; --color-bg: #1A0B05; --color-panel: rgba(255, 126, 103, 0.08); }
+  [data-theme='aura-cosmic'] { --color-primary: #B0C4DE; --color-bg: #050A14; --color-panel: rgba(176, 196, 222, 0.08); }
+  [data-theme='aura-holographic'] { --color-primary: #E6A8D7; --color-bg: #0D0A14; --color-panel: rgba(230, 168, 215, 0.08); }
+  [data-theme='aura-grunge'] { --color-primary: #8F9779; --color-bg: #0F120F; --color-panel: rgba(143, 151, 121, 0.08); }
+  [data-theme='aura-ocean'] { --color-primary: #006994; --color-bg: #000A14; --color-panel: rgba(0, 105, 148, 0.08); }
+  [data-theme='aura-cherry'] { --color-primary: #D2042D; --color-bg: #140005; --color-panel: rgba(210, 4, 45, 0.08); }
+  [data-theme='aura-acid'] { --color-primary: #7DF9FF; --color-bg: #00141A; --color-panel: rgba(125, 249, 255, 0.08); }
+  [data-theme='aura-midnight-plum'] { --color-primary: #4A0E4E; --color-bg: #0A000A; --color-panel: rgba(74, 14, 78, 0.08); }
+  [data-theme='aura-toxic'] { --color-primary: #7FFF00; --color-bg: #051400; --color-panel: rgba(127, 255, 0, 0.08); }
+  [data-theme='aura-bubblegum'] { --color-primary: #FFC1CC; --color-bg: #140A0F; --color-panel: rgba(255, 193, 204, 0.08); }
+  [data-theme='aura-starlight'] { --color-primary: #F4F6F0; --color-bg: #0A0A0A; --color-panel: rgba(244, 246, 240, 0.08); }
+  [data-theme='aura-abyss'] { --color-primary: #2F4F4F; --color-bg: #050A0A; --color-panel: rgba(47, 79, 79, 0.08); }
+  [data-theme='aura-tangerine'] { --color-primary: #F28500; --color-bg: #140A00; --color-panel: rgba(242, 133, 0, 0.08); }
+  [data-theme='aura-raspberry'] { --color-primary: #E30B5D; --color-bg: #14000A; --color-panel: rgba(227, 11, 93, 0.08); }
+  [data-theme='aura-mint'] { --color-primary: #98FF98; --color-bg: #05140F; --color-panel: rgba(152, 255, 152, 0.08); }
+  [data-theme='aura-obsidian'] { --color-primary: #4B0082; --color-bg: #000000; --color-panel: rgba(75, 0, 130, 0.08); }
+  [data-theme='aura-chrome'] { --color-primary: #C0C0C0; --color-bg: #0A0A0A; --color-panel: rgba(192, 192, 192, 0.08); }
+  [data-theme='aura-sunflower'] { --color-primary: #FFC512; --color-bg: #141000; --color-panel: rgba(255, 197, 18, 0.08); }
+
   [data-theme='aura'] {
     --color-primary: #B200FF; /* intense purple */
     --color-bg: #030008; /* dark void */

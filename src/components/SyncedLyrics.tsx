@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { X, Globe, ChevronDown, Loader2, Mic, MicOff, AudioLines } from 'lucide-react';
+import { X, Globe, ChevronDown, Loader2, Mic, MicOff, AudioLines, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { fetchLyrics, translateLyrics, translatePlainLyrics } from '../services/lyricsService';
@@ -27,6 +27,8 @@ export const SyncedLyrics: React.FC<{ inline?: boolean }> = ({ inline = false })
   const toggleKaraokeMode = usePlayerStore(state => state.toggleKaraokeMode);
   const isConcertMode = usePlayerStore(state => state.isConcertMode);
   const toggleConcertMode = usePlayerStore(state => state.toggleConcertMode);
+  const isBassBoostMode = usePlayerStore(state => state.isBassBoostMode);
+  const toggleBassBoostMode = usePlayerStore(state => state.toggleBassBoostMode);
 
   const [synced, setSynced] = useState<LyricLine[] | null>(null);
   const [plain, setPlain] = useState<string | null>(null);
@@ -161,6 +163,20 @@ export const SyncedLyrics: React.FC<{ inline?: boolean }> = ({ inline = false })
               <span>{isConcertMode ? 'Concert On' : '3D Concert Mode'}</span>
             </motion.button>
 
+            {/* Bass Boost Toggle */}
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={toggleBassBoostMode}
+              className={`hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all ${
+                isBassBoostMode
+                  ? 'bg-orange-500/20 border-orange-500/40 text-orange-500'
+                  : 'bg-white/10 border-white/15 text-white hover:bg-white/15'
+              }`}
+            >
+              <Zap className="w-3 h-3" />
+              <span>{isBassBoostMode ? 'MAX Bass' : 'Bass Boost'}</span>
+            </motion.button>
+
             {/* Translation Toolbar */}
             {((synced && synced.length > 0) || plain) && !isLoading && (
               <div className="flex items-center gap-2 relative">
@@ -238,6 +254,11 @@ export const SyncedLyrics: React.FC<{ inline?: boolean }> = ({ inline = false })
       )}
 
       {/* ── Main lyric scroll ── */}
+      {showTranslation && (
+        <div className="w-full text-center py-2 bg-purple-500/10 border-y border-purple-500/20 text-[10px] text-purple-300/70 font-medium">
+          Translations are AI-generated for educational/accessibility purposes and are not official.
+        </div>
+      )}
       <div
         ref={containerRef}
         className={`w-full ${inline ? 'flex-1' : 'flex-1 max-w-2xl'} overflow-y-auto px-6 ${inline ? 'py-4' : 'py-8'} no-scrollbar relative`}

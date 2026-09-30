@@ -420,6 +420,9 @@ interface PlayerState {
   isConcertMode: boolean;
   toggleConcertMode: () => void;
 
+  isBassBoostMode: boolean;
+  toggleBassBoostMode: () => void;
+
   sleepTimerMs: number | null;
   sleepTimerEndAt: number | null;
   setSleepTimer: (ms: number | null) => void;
@@ -775,6 +778,7 @@ export const usePlayerStore = create<PlayerState>()(
     isApiKeyModalOpen: false,
     isKaraokeMode: false,
     isConcertMode: false,
+    isBassBoostMode: false,
     sleepTimerMs: null,
     sleepTimerEndAt: null,
     
@@ -844,6 +848,22 @@ export const usePlayerStore = create<PlayerState>()(
          normalGain.gain.setValueAtTime(normalGain.gain.value, t);
          const targetNormalGain = get().isKaraokeMode ? 0 : (newMode ? 0.7 : 1);
          normalGain.gain.linearRampToValueAtTime(targetNormalGain, t + 0.5); 
+       }
+    },
+
+    toggleBassBoostMode: () => {
+       const state = get();
+       const newMode = !state.isBassBoostMode;
+       set({ isBassBoostMode: newMode });
+       initAudioContext();
+       if (audioCtx && nativeBassFilter) {
+         if (audioCtx.state === 'suspended') {
+           audioCtx.resume().catch(e => console.warn('AudioContext resume failed:', e));
+         }
+         const t = audioCtx.currentTime;
+         nativeBassFilter.gain.cancelScheduledValues(t);
+         nativeBassFilter.gain.setValueAtTime(nativeBassFilter.gain.value, t);
+         nativeBassFilter.gain.linearRampToValueAtTime(newMode ? 10 : 0, t + 0.2); 
        }
     },
 
@@ -934,6 +954,11 @@ export const usePlayerStore = create<PlayerState>()(
             concertGain.gain.cancelScheduledValues(t);
             concertGain.gain.setValueAtTime(concert ? 0.6 : 0, t);
          }
+      }
+      if (nativeBassFilter && audioCtx) {
+         const t = audioCtx.currentTime;
+         nativeBassFilter.gain.cancelScheduledValues(t);
+         nativeBassFilter.gain.setValueAtTime(get().isBassBoostMode ? 10 : 0, t);
       }
       
       // Setup new auxiliary audios for mashups

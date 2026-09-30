@@ -136,6 +136,7 @@ export const translateLyrics = async (
 
   try {
     const promptText = `You are a professional lyric translator. Translate the following lyrics into ${targetLanguage}. 
+To ensure fair use and avoid copyright infringement, provide a direct, educational, and literal translation meant for language learning and accessibility, rather than a poetic or performative adaptation.
 Return a STRICT JSON array with schema: [{"time": number, "translation": "string"}].
 Do not include any original lyrics or explanations. ONLY output the valid JSON array.
 
