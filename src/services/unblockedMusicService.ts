@@ -306,6 +306,44 @@ export const searchYouTube = async (query: string): Promise<Track[]> => {
   }
 };
 
+export const searchYouTubeEngine = async (query: string): Promise<Track[]> => {
+  const PIPED_INSTANCES = [
+    'https://pipedapi.kavin.rocks',
+    'https://pipedapi.tokhmi.xyz',
+    'https://pipedapi.syncpundit.io',
+    'https://pi.ggtyler.dev/api',
+    'https://pipedapi.smnz.de'
+  ];
+
+  for (const instance of PIPED_INSTANCES) {
+    try {
+      const res = await fetch(`${instance}/search?q=${encodeURIComponent(query)}&filter=music_songs`);
+      if (!res.ok) continue;
+      const data = await res.json();
+      const items = data.items || [];
+      
+      if (items.length > 0) {
+        return items.slice(0, 15).map((t: any, index: number) => {
+          const videoId = t.url.replace('/watch?v=', '');
+          return {
+            id: `yt-${videoId}-${index}`,
+            title: t.title,
+            artist: t.uploaderName || 'YouTube Music',
+            thumbnail: t.thumbnail,
+            duration: t.duration || 180,
+            streamUrl: `/api/yt-stream?id=${videoId}`,
+            source: 'youtube',
+            sourceBadge: 'Global Audio',
+          };
+        });
+      }
+    } catch(e) {
+      continue;
+    }
+  }
+  return [];
+};
+
 export const searchGlobalFallback = async (query: string): Promise<Track[]> => {
   try {
     const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=10`);
@@ -328,12 +366,15 @@ export const searchGlobalFallback = async (query: string): Promise<Track[]> => {
 
 export const searchUnblocked = async (query: string): Promise<Track[]> => {
   try {
-    const [saavn, itunes] = await Promise.all([
+    const [saavn, itunes, yt] = await Promise.all([
       searchSaavn(query).catch(() => []),
-      searchGlobalFallback(query).catch(() => [])
+      searchGlobalFallback(query).catch(() => []),
+      searchYouTubeEngine(query).catch(() => [])
     ]);
-    return [...saavn, ...itunes];
+    
+    // Merge YouTube first (highest reliability), then Saavn, then iTunes previews
+    return [...yt, ...saavn, ...itunes];
   } catch (e) {
-    return await searchGlobalFallback(query);
+    return await searchYouTubeEngine(query);
   }
 };
