@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Smartphone, Monitor, Tv, Cast, Bluetooth, Wifi, QrCode,
   Copy, Check, Link2, Radio, Loader2,
-  Play, Pause, SkipForward, Volume2,
+  Play, Pause, SkipForward, Volume2, Repeat, Shuffle, Heart,
   Laptop, Watch, Speaker, Headphones, Lock, Globe
 } from 'lucide-react';
 import { usePlayerStore, nativeAudio } from '../store/usePlayerStore';
@@ -89,56 +89,133 @@ const RemoteControl: React.FC<{ deviceName: string; onDisconnect: () => void; is
     else setVolume(val);
   };
 
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  useEffect(() => {
+    const updateProgress = () => {
+      setProgress(nativeAudio.currentTime);
+      setDuration(nativeAudio.duration || 0);
+    };
+    nativeAudio.addEventListener('timeupdate', updateProgress);
+    updateProgress();
+    return () => nativeAudio.removeEventListener('timeupdate', updateProgress);
+  }, []);
+
+  const handleSeek = (val: number) => {
+    if (isRemoteSession && sendRemoteAction) sendRemoteAction({ action: 'seek', time: val });
+    else {
+      nativeAudio.currentTime = val;
+    }
+  };
+
+  const isShuffle = usePlayerStore(s => s.isShuffle);
+  const isRepeat = usePlayerStore(s => s.isRepeat);
+  const likedSongs = usePlayerStore(s => s.likedSongs);
+  const { toggleShuffle, toggleRepeat, toggleLike } = usePlayerStore.getState();
+
+  const handleShuffle = () => {
+    if (isRemoteSession && sendRemoteAction) sendRemoteAction({ action: 'shuffle' });
+    else toggleShuffle();
+  };
+
+  const handleRepeat = () => {
+    if (isRemoteSession && sendRemoteAction) sendRemoteAction({ action: 'repeat' });
+    else toggleRepeat();
+  };
+  
+  const handleLike = () => {
+    if (currentTrack) {
+      if (isRemoteSession && sendRemoteAction) sendRemoteAction({ action: 'like', trackId: currentTrack.id });
+      else toggleLike(currentTrack.id);
+    }
+  };
+
+  const formatTime = (time: number) => {
+    if (!time || isNaN(time)) return '0:00';
+    const mins = Math.floor(time / 60);
+    const secs = Math.floor(time % 60);
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-acid-lime/30 bg-acid-lime/5 overflow-hidden"
+      className="rounded-2xl border border-acid-lime/30 bg-acid-lime/5 overflow-hidden flex flex-col gap-2"
     >
-      <div className="p-3 border-b border-acid-lime/20 flex items-center justify-between">
+      <div className="p-3 border-b border-acid-lime/20 flex items-center justify-between bg-black/40">
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 bg-acid-lime rounded-full animate-pulse" />
-          <span className="text-xs font-bold text-acid-lime">Controlling: {deviceName}</span>
+          <div className="w-2 h-2 bg-acid-lime rounded-full animate-pulse shadow-[0_0_8px_rgba(204,255,0,0.8)]" />
+          <span className="text-xs font-bold text-acid-lime tracking-wide">CONTROLLING: {deviceName.toUpperCase()}</span>
         </div>
-        <button onClick={onDisconnect} className="text-xs text-gray-500 hover:text-white transition">
+        <button onClick={onDisconnect} className="text-xs font-semibold text-gray-400 hover:text-red-400 transition">
           Disconnect
         </button>
       </div>
       
       {currentTrack && (
-        <div className="p-3 flex items-center gap-3">
-          <img src={currentTrack.thumbnail} className="w-10 h-10 rounded-lg object-cover" alt="" />
+        <div className="p-4 flex items-center gap-4">
+          <img src={currentTrack.thumbnail} className="w-14 h-14 rounded-xl object-cover shadow-lg" alt="" />
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold text-white truncate">{currentTrack.title}</p>
-            <p className="text-[10px] text-gray-400 truncate">{currentTrack.artist}</p>
+            <p className="text-sm font-black text-white truncate">{currentTrack.title}</p>
+            <p className="text-xs text-gray-400 truncate">{currentTrack.artist}</p>
           </div>
+          <button onClick={handleLike} className="p-2">
+            <Heart className={`w-5 h-5 transition ${likedSongs.includes(currentTrack.id) ? 'fill-acid-lime text-acid-lime' : 'text-gray-400 hover:text-white'}`} />
+          </button>
         </div>
       )}
 
-      <div className="p-3 flex items-center justify-center gap-4">
+      {/* Progress Bar */}
+      <div className="px-4 flex flex-col gap-1">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-gray-400 w-8 tabular-nums">{formatTime(progress)}</span>
+          <input
+            type="range" min={0} max={duration || 100} step={1} value={progress}
+            onChange={e => handleSeek(parseFloat(e.target.value))}
+            className="flex-1 h-1.5 rounded-full bg-white/10 appearance-none cursor-pointer accent-acid-lime hover:h-2 transition-all"
+            style={{
+               background: `linear-gradient(to right, #ccff00 ${(progress / (duration || 1)) * 100}%, rgba(255,255,255,0.1) ${(progress / (duration || 1)) * 100}%)`
+            }}
+          />
+          <span className="text-[10px] text-gray-400 w-8 text-right tabular-nums">{formatTime(duration)}</span>
+        </div>
+      </div>
+
+      <div className="p-4 flex items-center justify-between px-6">
+        <button onClick={handleShuffle} className={`transition ${isShuffle ? 'text-acid-lime' : 'text-gray-500 hover:text-white'}`}>
+          <Shuffle className="w-4 h-4" />
+        </button>
         <button onClick={handlePrev} className="p-2 rounded-full hover:bg-white/10 text-white transition">
-          <SkipForward className="w-4 h-4 rotate-180" />
+          <SkipForward className="w-5 h-5 rotate-180 fill-white" />
         </button>
         <button
           onClick={handlePlayPause}
-          className="p-3 rounded-full bg-acid-lime text-black hover:bg-[#b3ff00] transition"
+          className="w-14 h-14 flex items-center justify-center rounded-full bg-acid-lime text-black hover:scale-105 transition shadow-[0_0_20px_rgba(204,255,0,0.3)]"
         >
-          {isPlaying ? <Pause className="w-5 h-5 fill-black" /> : <Play className="w-5 h-5 fill-black" />}
+          {isPlaying ? <Pause className="w-6 h-6 fill-black" /> : <Play className="w-6 h-6 fill-black ml-1" />}
         </button>
         <button onClick={handleNext} className="p-2 rounded-full hover:bg-white/10 text-white transition">
-          <SkipForward className="w-4 h-4" />
+          <SkipForward className="w-5 h-5 fill-white" />
+        </button>
+        <button onClick={handleRepeat} className={`transition ${isRepeat ? 'text-acid-lime' : 'text-gray-500 hover:text-white'}`}>
+          <Repeat className="w-4 h-4" />
         </button>
       </div>
 
       {/* Volume */}
-      <div className="px-4 pb-3 flex items-center gap-2">
-        <Volume2 className="w-3.5 h-3.5 text-gray-500" />
+      <div className="px-6 pb-5 flex items-center gap-3">
+        <Volume2 className="w-4 h-4 text-gray-500" />
         <input
           type="range" min={0} max={1} step={0.01} value={volume}
           onChange={e => handleVol(parseFloat(e.target.value))}
-          className="flex-1 h-1 accent-acid-lime cursor-pointer"
+          className="flex-1 h-1.5 rounded-full bg-white/10 appearance-none cursor-pointer accent-white"
+          style={{
+             background: `linear-gradient(to right, #fff ${volume * 100}%, rgba(255,255,255,0.1) ${volume * 100}%)`
+          }}
         />
-        <span className="text-xs text-gray-500 w-8 text-right tabular-nums">{Math.round(volume * 100)}%</span>
+        <span className="text-xs font-bold text-gray-500 w-8 text-right tabular-nums">{Math.round(volume * 100)}%</span>
       </div>
     </motion.div>
   );
@@ -279,6 +356,14 @@ export const ConnectDeviceModal: React.FC = () => {
         state.prevTrack();
       } else if (action.action === 'volume') {
         state.setVolume(action.value);
+      } else if (action.action === 'seek') {
+        nativeAudio.currentTime = action.time;
+      } else if (action.action === 'shuffle') {
+        state.toggleShuffle();
+      } else if (action.action === 'repeat') {
+        state.toggleRepeat();
+      } else if (action.action === 'like') {
+        state.toggleLike(action.trackId);
       }
     };
 
