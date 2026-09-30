@@ -306,6 +306,34 @@ export const searchYouTube = async (query: string): Promise<Track[]> => {
   }
 };
 
+export const searchGlobalFallback = async (query: string): Promise<Track[]> => {
+  try {
+    const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=10`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.results || []).map((t: any, index: number) => ({
+      id: `itunes-${t.trackId}-${index}`,
+      title: t.trackName,
+      artist: t.artistName,
+      thumbnail: t.artworkUrl100?.replace('100x100bb', '600x600bb') || 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=500&q=80',
+      duration: Math.floor((t.trackTimeMillis || 30000) / 1000),
+      streamUrl: t.previewUrl,
+      source: 'itunes',
+      sourceBadge: 'Global Audio',
+    })).filter((t: any) => t.streamUrl);
+  } catch (e) {
+    return [];
+  }
+};
+
 export const searchUnblocked = async (query: string): Promise<Track[]> => {
-  return await searchSaavn(query);
+  try {
+    const [saavn, itunes] = await Promise.all([
+      searchSaavn(query).catch(() => []),
+      searchGlobalFallback(query).catch(() => [])
+    ]);
+    return [...saavn, ...itunes];
+  } catch (e) {
+    return await searchGlobalFallback(query);
+  }
 };

@@ -73,8 +73,8 @@ export const SoundFusionLayout: React.FC<LayoutProps> = ({ children, activeTab, 
       */}
       <header className={`h-16 w-full shrink-0 flex items-center justify-between px-6 border-b z-50 ${isDark ? 'bg-white/5 border-white/10 backdrop-blur-2xl' : 'bg-white/50 border-black/10 backdrop-blur-2xl'}`}>
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-lg flex items-center justify-center shadow-[0_0_20px_rgba(59,130,246,0.3)]">
-            <AudioWaveform className="w-5 h-5 text-white" />
+          <div className="relative flex items-center justify-center w-8 h-8 rounded-full bg-[#1ED760] shadow-[0_0_15px_rgba(29,215,96,0.3)] overflow-hidden">
+            <AudioWaveform className="w-4 h-4 text-black" strokeWidth={3} />
           </div>
           <span className="font-display font-black text-xl tracking-tighter">MUSIFY</span>
         </div>

@@ -356,6 +356,8 @@ export const ConnectDeviceModal: React.FC = () => {
             nativeAudio.play().catch(() => {});
           } else if (e.data.action === 'seek' && e.data.time !== undefined) {
             nativeAudio.currentTime = e.data.time;
+          } else if (e.data.action === 'volume' && e.data.value !== undefined) {
+            usePlayerStore.getState().setVolume(e.data.value);
           }
         }
       } else if (e.data.type === 'heartbeat') {
@@ -381,6 +383,9 @@ export const ConnectDeviceModal: React.FC = () => {
         }
         if (state.isPlaying !== prevState.isPlaying) {
           bc.postMessage({ type: 'sync_action', action: state.isPlaying ? 'play' : 'pause', time: nativeAudio.currentTime });
+        }
+        if (state.volume !== prevState.volume) {
+          bc.postMessage({ type: 'sync_action', action: 'volume', value: state.volume });
         }
       });
 
@@ -438,6 +443,8 @@ export const ConnectDeviceModal: React.FC = () => {
               nativeAudio.play().catch(() => {});
             } else if (data.action === 'seek' && data.time !== undefined) {
               nativeAudio.currentTime = data.time;
+            } else if (data.action === 'volume' && data.value !== undefined) {
+              usePlayerStore.getState().setVolume(data.value);
             }
           }
         } else if (data.type === 'heartbeat') {
@@ -479,6 +486,9 @@ export const ConnectDeviceModal: React.FC = () => {
           }
           if (state.isPlaying !== prevState.isPlaying) {
             broadcastToPeers({ type: 'sync_action', action: state.isPlaying ? 'play' : 'pause', time: nativeAudio.currentTime });
+          }
+          if (state.volume !== prevState.volume) {
+            broadcastToPeers({ type: 'sync_action', action: 'volume', value: state.volume });
           }
         });
 
