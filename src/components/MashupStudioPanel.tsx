@@ -340,10 +340,10 @@ export const MashupStudioPanel: React.FC = () => {
         <div className="absolute top-0 right-0 w-32 h-32 bg-acid-lime/10 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10">
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-acid-lime/20 rounded-lg flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-acid-lime" />
+            <div className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 bg-acid-lime/20 rounded-lg flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-acid-lime shrink-0" />
             </div>
-            <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-acid-lime">AI MASHUP STUDIO</span>
+            <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-acid-lime whitespace-nowrap">AI MASHUP STUDIO</span>
           </div>
           <h3 className="text-lg sm:text-xl font-black text-white leading-tight">Create a Pro Mashup</h3>
           <p className="text-xs sm:text-sm text-gray-400 mt-1">Inspired by the best DJ sets — beatmatched, stem-separated, mastered.</p>
@@ -768,13 +768,13 @@ export const MashupStudioPanel: React.FC = () => {
           >
             {/* Header */}
             <div className="px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 border-b border-white/10 flex items-center justify-between shrink-0 bg-gradient-to-r from-acid-lime/10 via-transparent to-transparent">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 sm:w-9 sm:h-9 bg-acid-lime/15 rounded-xl flex items-center justify-center border border-acid-lime/30">
-                  <Wand2 className="w-4 h-4 text-acid-lime" />
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 shrink-0 bg-acid-lime/15 rounded-xl flex items-center justify-center border border-acid-lime/30">
+                  <Wand2 className="w-4 h-4 text-acid-lime shrink-0" />
                 </div>
-                <div>
-                  <h2 className="font-black text-sm sm:text-base text-white leading-tight">Mashup Studio</h2>
-                  <p className="text-[10px] text-gray-400">Pro AI-powered mixing engine</p>
+                <div className="min-w-0">
+                  <h2 className="font-black text-sm sm:text-base text-white leading-tight truncate">Mashup Studio</h2>
+                  <p className="text-[10px] text-gray-400 truncate">Pro AI-powered mixing engine</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
