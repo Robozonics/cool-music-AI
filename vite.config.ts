@@ -58,6 +58,27 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/youtube/, '')
       },
+      '/api/yt-search-proxy': {
+        target: 'https://pipedapi.kavin.rocks',
+        changeOrigin: true,
+        rewrite: (path) => {
+          const url = new URL(path, 'http://localhost');
+          const q = url.searchParams.get('q') || '';
+          return `/search?q=${encodeURIComponent(q)}&filter=music_songs`;
+        }
+      },
+      '/api/yt-stream': {
+        target: 'https://pipedapi.kavin.rocks',
+        changeOrigin: true,
+        rewrite: (path) => {
+          const url = new URL(path, 'http://localhost');
+          const id = url.searchParams.get('id') || '';
+          // We can't do a 302 redirect logic purely in vite proxy easily, 
+          // but we can return the streams JSON and have the client handle it.
+          // Since the client expects a redirect from /api/yt-stream, this won't work perfectly locally unless we handle the JSON.
+          return `/streams/${id}`;
+        }
+      },
       '/api/saavncdn': {
         target: 'https://aac.saavncdn.com',
         changeOrigin: true,

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Play, Download, Loader2, Sparkles, Plus, Mic, MicOff, Layers, Heart } from 'lucide-react';
-import { searchUnblocked } from '../services/unblockedMusicService';
+import { Search, Play, Download, Loader2, Sparkles, Plus, Mic, MicOff, Layers, Heart, Globe, Radio } from 'lucide-react';
+import { searchUnblocked, searchYouTubeEngine } from '../services/unblockedMusicService';
 import { searchBestMusicWithAI } from '../services/geminiService';
 import type { Track } from '../types/music';
 import { usePlayerStore } from '../store/usePlayerStore';
@@ -12,6 +12,7 @@ export const SearchView: React.FC = () => {
   const [results, setResults] = useState<Track[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchMode, setSearchMode] = useState<'standard' | 'ai'>('standard');
+  const [engine, setEngine] = useState<'saavn' | 'youtube'>('saavn');
   const [isListening, setIsListening] = useState(false);
   
   const playTrack = usePlayerStore(state => state.playTrack);
@@ -27,18 +28,22 @@ export const SearchView: React.FC = () => {
     '#sad #lofi #study'
   ];
 
-  const executeSearch = async (searchQuery: string) => {
+  const executeSearch = async (searchQuery: string, engineOverride?: 'saavn' | 'youtube') => {
     if (!searchQuery.trim()) return;
     
     setIsLoading(true);
     setResults([]);
     
+    const activeEngine = engineOverride || engine;
+
     try {
       if (searchMode === 'ai') {
         const tracks = await searchBestMusicWithAI(searchQuery);
         setResults(tracks);
       } else {
-        const tracks = await searchUnblocked(searchQuery);
+        const tracks = activeEngine === 'youtube' 
+          ? await searchYouTubeEngine(searchQuery)
+          : await searchUnblocked(searchQuery);
         setResults(tracks);
       }
     } catch (error: any) {
@@ -242,6 +247,32 @@ export const SearchView: React.FC = () => {
           </button>
         )}
       </form>
+      
+      {/* Engine Toggle */}
+      {searchMode === 'standard' && (
+        <div className="flex gap-2 mb-4">
+          <button
+            type="button"
+            onClick={() => { setEngine('saavn'); executeSearch(query, 'saavn'); }}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition-all ${
+              engine === 'saavn' ? 'bg-acid-lime text-black' : 'bg-white/5 text-zinc-400 hover:bg-white/10'
+            }`}
+          >
+            <Radio className="w-3.5 h-3.5" />
+            JioSaavn
+          </button>
+          <button
+            type="button"
+            onClick={() => { setEngine('youtube'); executeSearch(query, 'youtube'); }}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition-all ${
+              engine === 'youtube' ? 'bg-red-500 text-white' : 'bg-white/5 text-zinc-400 hover:bg-white/10'
+            }`}
+          >
+            <Globe className="w-3.5 h-3.5" />
+            YouTube (Global)
+          </button>
+        </div>
+      )}
       
       {isListening && (
         <div className="flex flex-col items-center justify-center mb-8 p-6 bg-red-500/10 border border-red-500/20 rounded-3xl">
