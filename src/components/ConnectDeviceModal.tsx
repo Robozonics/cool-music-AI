@@ -163,7 +163,7 @@ const RemoteControl: React.FC<{ deviceName: string; onDisconnect: () => void; is
             <p className="text-xs text-gray-400 truncate">{currentTrack.artist}</p>
           </div>
           <button onClick={handleLike} className="p-2">
-            <Heart className={`w-5 h-5 transition ${likedSongs.includes(currentTrack.id) ? 'fill-acid-lime text-acid-lime' : 'text-gray-400 hover:text-white'}`} />
+            <Heart className={`w-5 h-5 transition ${likedTracks.includes(currentTrack.id) ? 'fill-acid-lime text-acid-lime' : 'text-gray-400 hover:text-white'}`} />
           </button>
         </div>
       )}
@@ -306,7 +306,6 @@ export const ConnectDeviceModal: React.FC = () => {
         await (nativeAudio as any).setSinkId(deviceId);
       }
       setConnectedDevice(deviceName);
-      setTab('remote');
       showToast('success', `Connected to ${deviceName}`);
     } catch (e) {
       console.error('Failed to set audio output device', e);
