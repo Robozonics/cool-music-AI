@@ -929,20 +929,15 @@ export const usePlayerStore = create<PlayerState>()(
 
       nativeAudio.volume = get().volume;
       nativeAudio.playbackRate = get().playbackRate;
-      if (track.source === 'archive') {
-        nativeAudio.removeAttribute('crossorigin');
-        crossfadeAudio.removeAttribute('crossorigin');
-        try { if (nativeAudioSource) nativeAudioSource.disconnect(); } catch(e){}
-      } else {
-        nativeAudio.crossOrigin = "anonymous";
-        crossfadeAudio.crossOrigin = "anonymous";
-        try {
-          if (nativeAudioSource && nativeBassFilter) {
-            nativeAudioSource.disconnect();
-            nativeAudioSource.connect(nativeBassFilter);
-          }
-        } catch(e){}
-      }
+      nativeAudio.crossOrigin = "anonymous";
+      crossfadeAudio.crossOrigin = "anonymous";
+      
+      try {
+        if (nativeAudioSource && nativeBassFilter) {
+          nativeAudioSource.disconnect();
+          nativeAudioSource.connect(nativeBassFilter);
+        }
+      } catch (e) {}
 
       if (finalStreamUrl) {
         const isDifferent = !nativeAudio.src || !nativeAudio.src.endsWith(finalStreamUrl);
