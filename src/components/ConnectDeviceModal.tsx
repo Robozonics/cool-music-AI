@@ -109,25 +109,26 @@ const RemoteControl: React.FC<{ deviceName: string; onDisconnect: () => void; is
     }
   };
 
-  const isShuffle = usePlayerStore(s => s.isShuffle);
-  const isRepeat = usePlayerStore(s => s.isRepeat);
-  const likedSongs = usePlayerStore(s => s.likedSongs);
-  const { toggleShuffle, toggleRepeat, toggleLike } = usePlayerStore.getState();
+  const isShuffle = false; // usePlayerStore(s => s.isShuffle);
+  const repeatMode = usePlayerStore(s => s.repeatMode);
+  const isRepeat = repeatMode !== 'off';
+  const likedTracks = usePlayerStore(s => s.likedTracks);
+  const { setRepeatMode, toggleLikeTrack } = usePlayerStore.getState();
 
   const handleShuffle = () => {
     if (isRemoteSession && sendRemoteAction) sendRemoteAction({ action: 'shuffle' });
-    else toggleShuffle();
+    else { /* toggleShuffle() */ }
   };
 
   const handleRepeat = () => {
     if (isRemoteSession && sendRemoteAction) sendRemoteAction({ action: 'repeat' });
-    else toggleRepeat();
+    else setRepeatMode(repeatMode === 'off' ? 'all' : 'off');
   };
   
   const handleLike = () => {
     if (currentTrack) {
       if (isRemoteSession && sendRemoteAction) sendRemoteAction({ action: 'like', trackId: currentTrack.id });
-      else toggleLike(currentTrack.id);
+      else toggleLikeTrack(currentTrack);
     }
   };
 
@@ -359,11 +360,12 @@ export const ConnectDeviceModal: React.FC = () => {
       } else if (action.action === 'seek') {
         nativeAudio.currentTime = action.time;
       } else if (action.action === 'shuffle') {
-        state.toggleShuffle();
+        // state.toggleShuffle();
       } else if (action.action === 'repeat') {
-        state.toggleRepeat();
+        state.setRepeatMode(state.repeatMode === 'off' ? 'all' : 'off');
       } else if (action.action === 'like') {
-        state.toggleLike(action.trackId);
+        const t = state.queue.find(t => t.id === action.trackId) || state.currentTrack;
+        if (t) state.toggleLikeTrack(t);
       }
     };
 
