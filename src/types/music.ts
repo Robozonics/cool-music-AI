@@ -1,4 +1,4 @@
-export type MusicSource = 'saavn' | 'audius' | 'invidious';
+export type MusicSource = 'saavn' | 'audius' | 'invidious' | 'archive';
 export type PlaylistSegment = 'foundation' | 'peak' | 'cooldown';
 
 export interface DjEvent {

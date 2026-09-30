@@ -34,7 +34,6 @@ export const FullPlayer: React.FC = () => {
   const setShareSnippetOpen = usePlayerStore(state => state.setShareSnippetOpen);
   
   const sleepTimerMs = usePlayerStore(state => state.sleepTimerMs);
-  const sleepTimerEndAt = usePlayerStore(state => state.sleepTimerEndAt);
   const setSleepTimer = usePlayerStore(state => state.setSleepTimer);
 
   const toggleRepeat = () => {

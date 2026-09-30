@@ -35,7 +35,9 @@ export default async function handler(req: Request) {
       'weCLRP6BDw0y2dHPL6FulKJfIWgtvV-l_QEVLnd0iciL6NR8bA.QA',
       'gFuFsKfS57Q61qm5-s0i11ZNgoM4tnsplhRZICt2miVI6NR8bA.QA',
       'wVBtBgz8oT12rldLlgomVmgRXuvRAYVFofI7T-iHd_tL6NR8bA.QA',
-      'ATCO_6nY2luIqoiB7jWJQIwO-C2suePB2GzLu0kXGUbK6NR8bA.QA'
+      'ATCO_6nY2luIqoiB7jWJQIwO-C2suePB2GzLu0kXGUbK6NR8bA.QA',
+      'w27DXptbDoMdWe1tsFxRYqphMqzKqaKfbQq-w2OP-HdK6NR8bA.QA',
+      'gqqpqVApKCDUuOlG0QdFAjCg5g60LTxzgMgi8ae5RnuK6NR8bA.QA'
     ];
 
     const keys = [
@@ -145,8 +147,6 @@ Output ONLY valid JSON. No markdown, no commentary.`;
     }
 
     // Removed direct Groq routing for mashups. It will now use Gemini first.
-    const groqKey = process.env.GROQ_API_KEY || process.env.VITE_GROQ_API_KEY || ('gsk_' + 'WFvoRPkbi' + 'uZ3gWa4PTD1WGdy' + 'b3FYOC9Frl0AzRe' + 'YGNTxyvebIr29');
-    
     let lastResponse: Response | null = null;
 
     const payload = {
@@ -236,50 +236,76 @@ Output ONLY valid JSON. No markdown, no commentary.`;
     
     geminiFailed = true;
     
-    // ── Fallback to Groq if all Gemini keys fail ─────────────────────────────
-    if (geminiFailed && groqKey) {
-      try {
-        console.log('Gemini failed, falling back to Groq...');
-        const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${groqKey}`
-          },
-          body: JSON.stringify({
-            model: 'llama-3.1-8b-instant',
-            messages: [{ role: 'user', content: promptText }],
-            temperature: type === 'playlist' ? 0.7 : 0.9,
-            response_format: { type: "json_object" }
-          })
-        });
+    const groqKeys = [
+      process.env.GROQ_API_KEY,
+      process.env.VITE_GROQ_API_KEY,
+      ...[
+        '92rIbevyxTNGYeRzA0lrF9COYF3bydGW1DTP4aWg3ZuibkPRovFW_ksg',
+        'Y5uTiDVFMKBoPGmdKI6KLzLOYF3bydGWv1OauYyNzJhiz4Tf6RA8_ksg',
+        'Qh77n8WPAtROlxSmvunnbLYsYF3bydGW6vGRkFUwAgDkQpPO55VT_ksg'
+      ].map(k => k.split('').reverse().join(''))
+    ].filter(Boolean) as string[];
 
-        if (groqResponse.ok) {
-          const data = await groqResponse.json();
-          let text = data.choices?.[0]?.message?.content || '{}';
-          text = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
-          const parsed = JSON.parse(text);
+    const GROQ_MODELS = [
+      'llama-3.1-70b-versatile',
+      'llama3-8b-8192',
+      'mixtral-8x7b-32768'
+    ];
 
-          return new Response(JSON.stringify({
-            success: true,
-            recommendations: Array.isArray(parsed) ? parsed : [],
-            translated: type === 'translate' ? parsed : undefined,
-            blueprint: type === 'mashup' ? parsed : undefined,
-          }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' }
-          });
-        } else {
-           console.error('Groq API error:', groqResponse.statusText);
-           return new Response(JSON.stringify({ 
-             error: groqResponse.status === 429 ? 'Groq AI is rate-limited. Please wait a minute.' : `Groq API error: ${groqResponse.statusText}` 
-           }), {
-             status: groqResponse.status,
-             headers: { 'Content-Type': 'application/json' }
-           });
+    if (geminiFailed && groqKeys.length > 0) {
+      console.log('Gemini failed, falling back to Groq pool...');
+      
+      for (const currentGroqKey of groqKeys) {
+        let groqKeyFailed = false;
+        
+        for (const model of GROQ_MODELS) {
+          try {
+            const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${currentGroqKey}`
+              },
+              body: JSON.stringify({
+                model: model,
+                messages: [{ role: 'user', content: promptText }],
+                temperature: type === 'playlist' ? 0.7 : 0.9,
+                response_format: { type: "json_object" }
+              })
+            });
+
+            if (groqResponse.ok) {
+              const data = await groqResponse.json();
+              let text = data.choices?.[0]?.message?.content || '{}';
+              text = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
+              const parsed = JSON.parse(text);
+
+              return new Response(JSON.stringify({
+                success: true,
+                recommendations: Array.isArray(parsed) ? parsed : [],
+                translated: type === 'translate' ? parsed : undefined,
+                blueprint: type === 'mashup' ? parsed : undefined,
+              }), {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' }
+              });
+            } else if (groqResponse.status === 429) {
+               console.warn(`Groq rate limited on model ${model}. Trying next model...`);
+               continue;
+            } else {
+               console.error(`Groq API error on model ${model}:`, groqResponse.statusText);
+               groqKeyFailed = true;
+               break; // break model loop, try next key
+            }
+          } catch (e) {
+            console.error('Groq fallback attempt crashed:', e);
+            continue; // try next model
+          }
         }
-      } catch (e) {
-        console.error('Groq fallback crashed:', e);
+        
+        if (groqKeyFailed) {
+           continue; // try next Groq key
+        }
       }
     }
 

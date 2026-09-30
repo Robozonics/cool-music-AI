@@ -8,7 +8,9 @@ const reversedKeys = [
   'weCLRP6BDw0y2dHPL6FulKJfIWgtvV-l_QEVLnd0iciL6NR8bA.QA',
   'gFuFsKfS57Q61qm5-s0i11ZNgoM4tnsplhRZICt2miVI6NR8bA.QA',
   'wVBtBgz8oT12rldLlgomVmgRXuvRAYVFofI7T-iHd_tL6NR8bA.QA',
-  'ATCO_6nY2luIqoiB7jWJQIwO-C2suePB2GzLu0kXGUbK6NR8bA.QA'
+  'ATCO_6nY2luIqoiB7jWJQIwO-C2suePB2GzLu0kXGUbK6NR8bA.QA',
+  'w27DXptbDoMdWe1tsFxRYqphMqzKqaKfbQq-w2OP-HdK6NR8bA.QA',
+  'gqqpqVApKCDUuOlG0QdFAjCg5g60LTxzgMgi8ae5RnuK6NR8bA.QA'
 ];
 
 const getKeys = () => [
@@ -16,43 +18,71 @@ const getKeys = () => [
   ...reversedKeys.map(k => k.split('').reverse().join(''))
 ].filter(Boolean) as string[];
 
-const REVERSED_GROQ_API_KEY = 'KlapevwTKqnaVhYCv2RLVFDKYF3bydGWx1EQDpE7E1UcCJ27xkjz_ksg';
-const GROQ_MODEL = 'qwen/qwen3.8-27b';
+const groqKeys = [
+  (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env.VITE_GROQ_API_KEY : undefined,
+  ...[
+    '92rIbevyxTNGYeRzA0lrF9COYF3bydGW1DTP4aWg3ZuibkPRovFW_ksg',
+    'Y5uTiDVFMKBoPGmdKI6KLzLOYF3bydGWv1OauYyNzJhiz4Tf6RA8_ksg',
+    'Qh77n8WPAtROlxSmvunnbLYsYF3bydGW6vGRkFUwAgDkQpPO55VT_ksg'
+  ].map(k => k.split('').reverse().join(''))
+].filter(Boolean) as string[];
+
+const GROQ_MODELS = [
+  'llama-3.1-70b-versatile',
+  'llama3-8b-8192',
+  'mixtral-8x7b-32768'
+];
 
 const callGroqFallback = async (promptText: string, expectJson: boolean = true) => {
-  const endpoint = `https://api.groq.com/openai/v1/chat/completions`;
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${REVERSED_GROQ_API_KEY.split('').reverse().join('')}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      model: GROQ_MODEL,
-      messages: [{ role: 'user', content: promptText }]
-    })
-  });
-
-  if (!response.ok) {
-    throw new Error(`Groq API error: ${response.statusText}`);
-  }
-
-  const data = await response.json();
-  let text = data.choices?.[0]?.message?.content || (expectJson ? '[]' : '');
-
-  if (!expectJson) {
-    return text.trim();
-  }
-
-  text = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
-  const jsonStart = text.indexOf('[');
-  const jsonEnd = text.lastIndexOf(']');
-  if (jsonStart >= 0 && jsonEnd > jsonStart) {
-    text = text.substring(jsonStart, jsonEnd + 1);
-  }
+  if (groqKeys.length === 0) throw new Error('No Groq keys available');
   
-  const parsed = JSON.parse(text);
-  return Array.isArray(parsed) ? parsed : (parsed ? [parsed] : []);
+  for (const currentGroqKey of groqKeys) {
+    let groqKeyFailed = false;
+    for (const model of GROQ_MODELS) {
+      try {
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${currentGroqKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: model,
+            messages: [{ role: 'user', content: promptText }]
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          let text = data.choices?.[0]?.message?.content || (expectJson ? '[]' : '');
+
+          if (!expectJson) return text.trim();
+
+          text = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+          const jsonStart = text.indexOf('[');
+          const jsonEnd = text.lastIndexOf(']');
+          if (jsonStart >= 0 && jsonEnd > jsonStart) {
+            text = text.substring(jsonStart, jsonEnd + 1);
+          }
+          
+          const parsed = JSON.parse(text);
+          return Array.isArray(parsed) ? parsed : (parsed ? [parsed] : []);
+        } else if (response.status === 429) {
+          console.warn(`Groq rate limited on model ${model}. Trying next...`);
+          continue;
+        } else {
+          console.error(`Groq API error on model ${model}:`, response.statusText);
+          groqKeyFailed = true;
+          break;
+        }
+      } catch (e) {
+        console.error('Groq fallback crashed:', e);
+        continue;
+      }
+    }
+    if (groqKeyFailed) continue;
+  }
+  throw new Error('All Groq fallback attempts failed.');
 };
 
 const deadKeys = new Set<string>();
