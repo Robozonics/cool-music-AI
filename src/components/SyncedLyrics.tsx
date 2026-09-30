@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { X, Globe, ChevronDown, Loader2, Mic, MicOff } from 'lucide-react';
+import { X, Globe, ChevronDown, Loader2, Mic, MicOff, AudioLines } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { fetchLyrics, translateLyrics, translatePlainLyrics } from '../services/lyricsService';
@@ -25,6 +25,8 @@ export const SyncedLyrics: React.FC<{ inline?: boolean }> = ({ inline = false })
   const setLyricsOpen = usePlayerStore(state => state.setLyricsOpen);
   const isKaraokeMode = usePlayerStore(state => state.isKaraokeMode);
   const toggleKaraokeMode = usePlayerStore(state => state.toggleKaraokeMode);
+  const isConcertMode = usePlayerStore(state => state.isConcertMode);
+  const toggleConcertMode = usePlayerStore(state => state.toggleConcertMode);
 
   const [synced, setSynced] = useState<LyricLine[] | null>(null);
   const [plain, setPlain] = useState<string | null>(null);
@@ -143,6 +145,20 @@ export const SyncedLyrics: React.FC<{ inline?: boolean }> = ({ inline = false })
             >
               {isKaraokeMode ? <MicOff className="w-3 h-3" /> : <Mic className="w-3 h-3" />}
               <span>{isKaraokeMode ? 'Karaoke On' : 'Full Karaoke Mode'}</span>
+            </motion.button>
+
+            {/* Concert Mode Toggle */}
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={toggleConcertMode}
+              className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all ${
+                isConcertMode
+                  ? 'bg-purple-400/20 border-purple-400/40 text-purple-400'
+                  : 'bg-white/10 border-white/15 text-white hover:bg-white/15'
+              }`}
+            >
+              <AudioLines className="w-3 h-3" />
+              <span>{isConcertMode ? 'Concert On' : '3D Concert Mode'}</span>
             </motion.button>
 
             {/* Translation Toolbar */}

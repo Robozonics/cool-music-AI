@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, SkipForward, SkipBack, ChevronDown, Download, Plus, X, Repeat, Share2, Video, Blend, ListMusic, Laptop2, Mic, MicOff, Moon } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, ChevronDown, Download, Plus, X, Repeat, Share2, Video, Blend, ListMusic, Laptop2, Mic, MicOff, Moon, AudioLines } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePlayerStore } from '../store/usePlayerStore';
 
@@ -27,6 +27,8 @@ export const FullPlayer: React.FC = () => {
   
   const isKaraokeMode = usePlayerStore(state => state.isKaraokeMode);
   const toggleKaraokeMode = usePlayerStore(state => state.toggleKaraokeMode);
+  const isConcertMode = usePlayerStore(state => state.isConcertMode);
+  const toggleConcertMode = usePlayerStore(state => state.toggleConcertMode);
   const isVideoMode = usePlayerStore(state => state.isVideoMode);
   const toggleVideoMode = usePlayerStore(state => state.toggleVideoMode);
   const isCrossfadeEnabled = usePlayerStore(state => state.isCrossfadeEnabled);
@@ -215,6 +217,14 @@ export const FullPlayer: React.FC = () => {
               title={isKaraokeMode ? 'Karaoke Mode: ON (Vocal Suppressed)' : 'Karaoke Mode: OFF'}
             >
               {isKaraokeMode ? <MicOff className="w-5 h-5 sm:w-6 sm:h-6" /> : <Mic className="w-5 h-5 sm:w-6 sm:h-6" />}
+            </button>
+
+            <button 
+              onClick={toggleConcertMode}
+              className={`p-2 sm:p-3 rounded-full transition-all ${isConcertMode ? 'text-purple-400 bg-purple-400/10 shadow-[0_0_15px_rgba(192,132,252,0.3)]' : 'text-gray-400 hover:text-white'}`}
+              title={isConcertMode ? 'Concert Mode: ON (3D Spatial Reverb)' : 'Concert Mode: OFF'}
+            >
+              <AudioLines className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
 
             <button 

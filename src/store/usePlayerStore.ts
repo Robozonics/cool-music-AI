@@ -32,6 +32,8 @@ export let nativeAudioFilter: BiquadFilterNode | null = null;
 export let nativeBassFilter: BiquadFilterNode | null = null;
 export let normalGain: GainNode | null = null;
 export let karaokeGain: GainNode | null = null;
+export let concertGain: GainNode | null = null;
+export let concertConvolver: ConvolverNode | null = null;
 export let masterCompressor: DynamicsCompressorNode | null = null;
 
 interface AuxContext {
@@ -176,6 +178,37 @@ const initAudioContext = (forceKaraokeMode?: boolean) => {
     sideGain.connect(karaokeGain);
 
     karaokeGain.connect(masterCompressor!);
+
+    // 5. 3D Spatial Audio / Concert Mode (Stadium Reverb & Stereo Widening)
+    concertGain = audioCtx.createGain();
+    concertGain.gain.value = 0; // Off by default
+
+    // Create synthetic stadium impulse response
+    const sampleRate = audioCtx.sampleRate;
+    const length = sampleRate * 3.5; // 3.5 second reverb tail
+    const impulse = audioCtx.createBuffer(2, length, sampleRate);
+    for (let i = 0; i < 2; i++) {
+      const channel = impulse.getChannelData(i);
+      for (let j = 0; j < length; j++) {
+        // Exponential decay of white noise
+        channel[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / length, 4);
+      }
+    }
+    
+    concertConvolver = audioCtx.createConvolver();
+    concertConvolver.buffer = impulse;
+
+    // A bit of EQ on the reverb to make it sound like a large arena (muddy lows, rolled off highs)
+    const concertEq = audioCtx.createBiquadFilter();
+    concertEq.type = 'bandpass';
+    concertEq.frequency.value = 1000;
+    concertEq.Q.value = 0.5;
+    
+    // Tap from the main audio into the convolver, then EQ, then concertGain, then master
+    nativeAudioFilter.connect(concertConvolver);
+    concertConvolver.connect(concertEq);
+    concertEq.connect(concertGain);
+    concertGain.connect(masterCompressor!);
   }
   if (audioCtx.state === 'suspended') {
     audioCtx.resume();
@@ -383,6 +416,9 @@ interface PlayerState {
 
   isKaraokeMode: boolean;
   toggleKaraokeMode: () => void;
+
+  isConcertMode: boolean;
+  toggleConcertMode: () => void;
 
   sleepTimerMs: number | null;
   sleepTimerEndAt: number | null;
@@ -738,6 +774,7 @@ export const usePlayerStore = create<PlayerState>()(
     isAutoplayBlocked: false,
     isApiKeyModalOpen: false,
     isKaraokeMode: false,
+    isConcertMode: false,
     sleepTimerMs: null,
     sleepTimerEndAt: null,
     
@@ -785,6 +822,28 @@ export const usePlayerStore = create<PlayerState>()(
            karaokeGain.gain.setValueAtTime(karaokeGain.gain.value, t);
            karaokeGain.gain.linearRampToValueAtTime(newMode ? 1 : 0, t + 0.05);
          }
+       }
+    },
+
+    toggleConcertMode: () => {
+       const state = get();
+       const newMode = !state.isConcertMode;
+       set({ isConcertMode: newMode });
+       initAudioContext();
+       if (audioCtx && concertGain && normalGain) {
+         if (audioCtx.state === 'suspended') {
+           audioCtx.resume().catch(e => console.warn('AudioContext resume failed:', e));
+         }
+         const t = audioCtx.currentTime;
+         
+         concertGain.gain.cancelScheduledValues(t);
+         concertGain.gain.setValueAtTime(concertGain.gain.value, t);
+         concertGain.gain.linearRampToValueAtTime(newMode ? 0.6 : 0, t + 0.5);
+         
+         normalGain.gain.cancelScheduledValues(t);
+         normalGain.gain.setValueAtTime(normalGain.gain.value, t);
+         const targetNormalGain = get().isKaraokeMode ? 0 : (newMode ? 0.7 : 1);
+         normalGain.gain.linearRampToValueAtTime(targetNormalGain, t + 0.5); 
        }
     },
 
@@ -863,13 +922,18 @@ export const usePlayerStore = create<PlayerState>()(
       currentArrangement = track.arrangement || [];
       
       const mode = get().isKaraokeMode;
+      const concert = get().isConcertMode;
       initAudioContext(mode);
       if (normalGain && karaokeGain && audioCtx) {
          const t = audioCtx.currentTime;
          normalGain.gain.cancelScheduledValues(t);
          karaokeGain.gain.cancelScheduledValues(t);
-         normalGain.gain.setValueAtTime(mode ? 0 : 1, t);
+         normalGain.gain.setValueAtTime(mode ? 0 : (concert ? 0.7 : 1), t);
          karaokeGain.gain.setValueAtTime(mode ? 1 : 0, t);
+         if (concertGain) {
+            concertGain.gain.cancelScheduledValues(t);
+            concertGain.gain.setValueAtTime(concert ? 0.6 : 0, t);
+         }
       }
       
       // Setup new auxiliary audios for mashups
