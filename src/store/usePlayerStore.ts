@@ -929,13 +929,8 @@ export const usePlayerStore = create<PlayerState>()(
 
       nativeAudio.volume = get().volume;
       nativeAudio.playbackRate = get().playbackRate;
-      if (track.source === 'archive') {
-        nativeAudio.removeAttribute('crossorigin');
-        crossfadeAudio.removeAttribute('crossorigin');
-      } else {
-        nativeAudio.crossOrigin = "anonymous";
-        crossfadeAudio.crossOrigin = "anonymous";
-      }
+      nativeAudio.crossOrigin = "anonymous";
+      crossfadeAudio.crossOrigin = "anonymous";
 
       if (finalStreamUrl) {
         const isDifferent = !nativeAudio.src || !nativeAudio.src.endsWith(finalStreamUrl);
