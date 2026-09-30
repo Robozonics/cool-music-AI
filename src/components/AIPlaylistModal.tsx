@@ -150,7 +150,7 @@ export const AIPlaylistModal: React.FC<AIPlaylistModalProps> = ({ isOpen, onClos
             "
           >
             {/* Header */}
-            <div className="px-6 pt-6 pb-4 border-b border-white/5 shrink-0">
+            <div className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b border-white/5 shrink-0">
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-[0_0_15px_rgba(139,92,246,0.6)]">
@@ -178,15 +178,15 @@ export const AIPlaylistModal: React.FC<AIPlaylistModalProps> = ({ isOpen, onClos
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
-                    className="p-6 space-y-5"
+                    className="p-4 sm:p-6 space-y-4 sm:space-y-5"
                   >
                     {/* Bell curve visualisation */}
-                    <div className="grid grid-cols-3 gap-2 mb-2">
+                    <div className="grid grid-cols-3 gap-1.5 sm:gap-2 mb-2">
                       {CURVE_SEGMENTS.map(seg => (
-                        <div key={seg.segment} className={`p-3 rounded-2xl border text-center ${SEGMENT_META[seg.segment].bg}`}>
-                          <div className="text-2xl mb-1">{seg.icon}</div>
-                          <p className={`text-xs font-bold ${SEGMENT_META[seg.segment].color}`}>{seg.label}</p>
-                          <p className="text-[10px] text-zinc-500 font-mono">Tracks {seg.range}</p>
+                        <div key={seg.segment} className={`p-2 sm:p-3 rounded-xl sm:rounded-2xl border text-center ${SEGMENT_META[seg.segment].bg}`}>
+                          <div className="text-lg sm:text-2xl mb-0.5 sm:mb-1">{seg.icon}</div>
+                          <p className={`text-[10px] sm:text-xs font-bold ${SEGMENT_META[seg.segment].color}`}>{seg.label}</p>
+                          <p className="text-[9px] sm:text-[10px] text-zinc-500 font-mono">Tracks {seg.range}</p>
                         </div>
                       ))}
                     </div>
@@ -309,10 +309,10 @@ export const AIPlaylistModal: React.FC<AIPlaylistModalProps> = ({ isOpen, onClos
                     key="results"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="p-6 space-y-4"
+                    className="p-4 sm:p-6 space-y-3 sm:space-y-4"
                   >
                     {/* Summary pills */}
-                    <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                       <span className="text-xs font-bold text-white">{generatedTracks.length} tracks for <span className="text-purple-400">"{seedSong}"</span></span>
                       {[foundationTracks, peakTracks, cooldownTracks].map((arr, idx) => {
                         const seg = ['foundation', 'peak', 'cooldown'][idx] as PlaylistSegment;
@@ -326,7 +326,7 @@ export const AIPlaylistModal: React.FC<AIPlaylistModalProps> = ({ isOpen, onClos
                     </div>
 
                     {/* Track list */}
-                    <div className="space-y-1.5 max-h-[340px] overflow-y-auto pr-1 no-scrollbar">
+                    <div className="space-y-1 sm:space-y-1.5 max-h-[280px] sm:max-h-[340px] overflow-y-auto pr-1 no-scrollbar">
                       {generatedTracks.map((track, i) => {
                         const seg = track.segment ?? 'peak';
                         const meta = SEGMENT_META[seg];
@@ -336,7 +336,7 @@ export const AIPlaylistModal: React.FC<AIPlaylistModalProps> = ({ isOpen, onClos
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: i * 0.02 }}
-                            className={`flex items-center gap-3 p-2.5 rounded-xl border transition-all cursor-pointer ${
+                            className={`flex items-center gap-2 sm:gap-3 p-2 sm:p-2.5 rounded-xl border transition-all cursor-pointer ${
                               selectedTrackIds.has(track.id)
                                 ? 'bg-white/10 border-purple-500/30'
                                 : 'bg-white/3 border-transparent opacity-50'
@@ -352,9 +352,9 @@ export const AIPlaylistModal: React.FC<AIPlaylistModalProps> = ({ isOpen, onClos
                               type="checkbox" 
                               checked={selectedTrackIds.has(track.id)} 
                               readOnly 
-                              className="w-4 h-4 rounded border-white/20 bg-black/20 text-purple-500 focus:ring-0 cursor-pointer"
+                              className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded border-white/20 bg-black/20 text-purple-500 focus:ring-0 cursor-pointer shrink-0"
                             />
-                            <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 shadow-md">
+                            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg overflow-hidden shrink-0 shadow-md">
                               <img src={track.thumbnail} alt={track.title} className="w-full h-full object-cover" />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -385,9 +385,9 @@ export const AIPlaylistModal: React.FC<AIPlaylistModalProps> = ({ isOpen, onClos
 
             {/* Footer actions (results phase) */}
             {phase === 'results' && (
-              <div className="px-6 py-4 border-t border-white/5 bg-[#060210] shrink-0 z-10">
+              <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-white/5 bg-[#060210] shrink-0 z-10">
                 {isSaving ? (
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <input
                       type="text"
                       autoFocus
@@ -395,33 +395,35 @@ export const AIPlaylistModal: React.FC<AIPlaylistModalProps> = ({ isOpen, onClos
                       value={playlistName}
                       onChange={e => setPlaylistName(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && handleSavePlaylist()}
-                      className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-white text-sm focus:outline-none focus:border-purple-500"
+                      className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500"
                     />
-                    <button
-                      onClick={() => setIsSaving(false)}
-                      className="px-4 py-2 rounded-xl text-zinc-400 hover:text-white transition-colors text-sm font-bold"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleSavePlaylist}
-                      disabled={!playlistName.trim()}
-                      className="px-6 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white text-sm font-bold shadow-lg transition-colors"
-                    >
-                      Save
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setIsSaving(false)}
+                        className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-zinc-400 hover:text-white transition-colors text-sm font-bold border border-white/10 sm:border-0"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleSavePlaylist}
+                        disabled={!playlistName.trim()}
+                        className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white text-sm font-bold shadow-lg transition-colors"
+                      >
+                        Save
+                      </button>
+                    </div>
                   </div>
                 ) : (
-                  <div className="flex gap-3">
+                  <div className="flex gap-2 sm:gap-3">
                     <button
                       onClick={handleReset}
-                      className="w-12 h-12 flex shrink-0 items-center justify-center rounded-2xl border border-white/10 text-zinc-400 hover:text-white hover:border-white/20 transition-all"
+                      className="w-10 h-10 sm:w-12 sm:h-12 flex shrink-0 items-center justify-center rounded-xl sm:rounded-2xl border border-white/10 text-zinc-400 hover:text-white hover:border-white/20 transition-all"
                     >
                       <X className="w-5 h-5" />
                     </button>
                     <button
                       onClick={() => setIsSaving(true)}
-                      className="flex-1 py-3 rounded-2xl border border-purple-500/30 text-purple-300 hover:bg-purple-500/10 hover:border-purple-500/50 transition-all text-sm font-bold shadow-[0_0_15px_rgba(139,92,246,0.1)]"
+                      className="flex-1 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl border border-purple-500/30 text-purple-300 hover:bg-purple-500/10 hover:border-purple-500/50 transition-all text-xs sm:text-sm font-bold shadow-[0_0_15px_rgba(139,92,246,0.1)]"
                     >
                       Save Playlist
                     </button>
@@ -429,7 +431,7 @@ export const AIPlaylistModal: React.FC<AIPlaylistModalProps> = ({ isOpen, onClos
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.97 }}
                       onClick={handleLoadAndPlay}
-                      className="flex-[1.5] py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-sm font-black shadow-[0_0_25px_rgba(139,92,246,0.4)] transition-all flex items-center justify-center gap-2"
+                      className="flex-[1.5] py-2.5 sm:py-3 rounded-xl sm:rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-xs sm:text-sm font-black shadow-[0_0_25px_rgba(139,92,246,0.4)] transition-all flex items-center justify-center gap-1.5 sm:gap-2"
                     >
                       <Play className="w-4 h-4 fill-white" />
                       Play Selected

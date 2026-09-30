@@ -110,14 +110,52 @@
 
 .aura-animated-bg {
   background: 
-    radial-gradient(circle at 10% 10%, rgba(178, 0, 255, 0.4) 0%, transparent 50%),
-    radial-gradient(circle at 90% 90%, rgba(0, 229, 255, 0.4) 0%, transparent 50%),
-    radial-gradient(circle at 50% 50%, rgba(255, 0, 255, 0.3) 0%, transparent 60%),
-    radial-gradient(circle at 80% 20%, rgba(204, 255, 0, 0.15) 0%, transparent 40%);
+    radial-gradient(circle at 10% 10%, rgba(178, 0, 255, 0.5) 0%, transparent 50%),
+    radial-gradient(circle at 90% 90%, rgba(0, 229, 255, 0.45) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(255, 0, 255, 0.35) 0%, transparent 60%),
+    radial-gradient(circle at 80% 20%, rgba(204, 255, 0, 0.18) 0%, transparent 40%),
+    radial-gradient(circle at 30% 70%, rgba(255, 77, 0, 0.2) 0%, transparent 45%);
   background-size: 200% 200%;
-  animation: aura-mesh-morph 15s ease-in-out infinite;
-  opacity: 0.25;
+  animation: aura-mesh-morph 12s ease-in-out infinite;
+  opacity: 0.3;
   filter: blur(40px);
+}
+
+/* Aura header glow */
+[data-theme='aura'] .aura-header-glow {
+  background: linear-gradient(90deg, rgba(178,0,255,0.15), rgba(255,0,255,0.12), rgba(0,229,255,0.15), rgba(178,0,255,0.15));
+  background-size: 300% 100%;
+  animation: aura-shimmer 6s ease-in-out infinite;
+}
+
+/* Aura bottom nav glow */
+[data-theme='aura'] .aura-nav-glow {
+  box-shadow: 0 -4px 30px rgba(178,0,255,0.3), 0 -2px 15px rgba(0,229,255,0.2), inset 0 1px 1px rgba(255,255,255,0.08);
+}
+
+/* Aura mini player glow */
+[data-theme='aura'] .aura-player-glow {
+  box-shadow: 0 0 40px rgba(178,0,255,0.25), 0 0 20px rgba(255,0,255,0.15), inset 0 1px 1px rgba(255,255,255,0.06);
+}
+
+@keyframes aura-shimmer {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Aura theme accent overrides for mobile */
+[data-theme='aura'] .text-acid-lime {
+  color: #B200FF;
+  text-shadow: 0 0 10px rgba(178,0,255,0.5);
+}
+
+[data-theme='aura'] .bg-acid-lime {
+  background: linear-gradient(135deg, #B200FF 0%, #FF00FF 50%, #00E5FF 100%);
+}
+
+[data-theme='aura'] .shadow-acid-lime {
+  box-shadow: 0 0 15px rgba(178,0,255,0.4);
 }
 
 .genz-playing-bg {

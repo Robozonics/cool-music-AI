@@ -244,6 +244,10 @@ export const ConnectDeviceModal: React.FC = () => {
       peerRef.current = null;
     }
     if (bcRef.current) {
+      // Clean up host heartbeat/seek listeners
+      if ((bcRef.current as any)._hostCleanup) {
+        (bcRef.current as any)._hostCleanup();
+      }
       bcRef.current.close();
       bcRef.current = null;
     }
@@ -275,6 +279,27 @@ export const ConnectDeviceModal: React.FC = () => {
       }
     };
 
+    // Helper: load a synced track on the joiner side — waits for the audio source to
+    // be ready before setting currentTime and playing, which fixes the "title only" bug.
+    const loadSyncedTrack = (track: any, time?: number, shouldPlay?: boolean) => {
+      usePlayerStore.getState().playTrack(track);
+      const onReady = () => {
+        nativeAudio.removeEventListener('canplay', onReady);
+        if (time !== undefined && Number.isFinite(time)) nativeAudio.currentTime = time;
+        if (shouldPlay === false) {
+          nativeAudio.pause();
+        } else {
+          nativeAudio.play().catch(() => {});
+        }
+      };
+      // If audio is already ready (e.g. cached), fire immediately; otherwise wait
+      if (nativeAudio.readyState >= 3) {
+        onReady();
+      } else {
+        nativeAudio.addEventListener('canplay', onReady);
+      }
+    };
+
     // 1. Always set up BroadcastChannel for same-device/same-browser fast path
     const bc = new BroadcastChannel(`musify-sync-${code}`);
     bcRef.current = bc;
@@ -286,14 +311,12 @@ export const ConnectDeviceModal: React.FC = () => {
           showToast('info', `${e.data.peerId} joined locally!`);
           const state = usePlayerStore.getState();
           if (state.currentTrack) {
-             bc.postMessage({ type: 'play_track', track: state.currentTrack, time: state.currentTime, isPlaying: state.isPlaying });
+             bc.postMessage({ type: 'play_track', track: state.currentTrack, time: nativeAudio.currentTime, isPlaying: !nativeAudio.paused });
           }
         }
       } else if (e.data.type === 'play_track' && e.data.track) {
         if (!isHost) {
-          usePlayerStore.getState().playTrack(e.data.track);
-          if (e.data.time !== undefined) nativeAudio.currentTime = e.data.time;
-          if (e.data.isPlaying === false) nativeAudio.pause();
+          loadSyncedTrack(e.data.track, e.data.time, e.data.isPlaying !== false);
         }
       } else if (e.data.type === 'sync_action') {
         if (!isHost) {
@@ -306,6 +329,14 @@ export const ConnectDeviceModal: React.FC = () => {
             nativeAudio.currentTime = e.data.time;
           }
         }
+      } else if (e.data.type === 'heartbeat') {
+        // Real-time time sync from host — correct drift if > 1.5s
+        if (!isHost && e.data.time !== undefined) {
+          const drift = Math.abs(nativeAudio.currentTime - e.data.time);
+          if (drift > 1.5) {
+            nativeAudio.currentTime = e.data.time;
+          }
+        }
       } else if (e.data.type === 'remote_action') {
         if (isHost) handleRemoteAction(e.data.action);
       }
@@ -314,14 +345,33 @@ export const ConnectDeviceModal: React.FC = () => {
     bc.postMessage({ type: 'peer_joined', peerId: peerName });
 
     if (isHost) {
+      // Broadcast store state changes
       usePlayerStore.subscribe((state, prevState) => {
         if (state.currentTrack?.id !== prevState.currentTrack?.id) {
-          bc.postMessage({ type: 'play_track', track: state.currentTrack });
+          bc.postMessage({ type: 'play_track', track: state.currentTrack, time: nativeAudio.currentTime, isPlaying: !nativeAudio.paused });
         }
         if (state.isPlaying !== prevState.isPlaying) {
-          bc.postMessage({ type: 'sync_action', action: state.isPlaying ? 'play' : 'pause', time: state.currentTime });
+          bc.postMessage({ type: 'sync_action', action: state.isPlaying ? 'play' : 'pause', time: nativeAudio.currentTime });
         }
       });
+
+      // Forward seek events from host nativeAudio
+      const onHostSeek = () => {
+        bc.postMessage({ type: 'sync_action', action: 'seek', time: nativeAudio.currentTime });
+      };
+      nativeAudio.addEventListener('seeked', onHostSeek);
+
+      // Heartbeat: sync currentTime every 2s so peers stay locked
+      const heartbeatId = setInterval(() => {
+        if (!nativeAudio.paused) {
+          bc.postMessage({ type: 'heartbeat', time: nativeAudio.currentTime });
+        }
+      }, 2000);
+      // Stash cleanup handles on the bc object
+      (bc as any)._hostCleanup = () => {
+        nativeAudio.removeEventListener('seeked', onHostSeek);
+        clearInterval(heartbeatId);
+      };
     }
 
     // 2. Robust WebRTC sync using PeerJS
@@ -348,16 +398,7 @@ export const ConnectDeviceModal: React.FC = () => {
           }
         } else if (data.type === 'play_track' && data.track) {
           if (!isHost) {
-            usePlayerStore.getState().playTrack(data.track);
-            // Delay setting currentTime slightly to allow src to load
-            setTimeout(() => {
-              if (data.time !== undefined) nativeAudio.currentTime = data.time;
-              if (data.isPlaying === false) {
-                nativeAudio.pause();
-              } else {
-                nativeAudio.play().catch(() => {});
-              }
-            }, 100);
+            loadSyncedTrack(data.track, data.time, data.isPlaying !== false);
           }
         } else if (data.type === 'sync_action') {
           if (!isHost) {
@@ -367,6 +408,14 @@ export const ConnectDeviceModal: React.FC = () => {
               if (data.time !== undefined) nativeAudio.currentTime = data.time;
               nativeAudio.play().catch(() => {});
             } else if (data.action === 'seek' && data.time !== undefined) {
+              nativeAudio.currentTime = data.time;
+            }
+          }
+        } else if (data.type === 'heartbeat') {
+          // Real-time time sync from host — correct drift if > 1.5s
+          if (!isHost && data.time !== undefined) {
+            const drift = Math.abs(nativeAudio.currentTime - data.time);
+            if (drift > 1.5) {
               nativeAudio.currentTime = data.time;
             }
           }
@@ -403,6 +452,19 @@ export const ConnectDeviceModal: React.FC = () => {
             broadcastToPeers({ type: 'sync_action', action: state.isPlaying ? 'play' : 'pause', time: nativeAudio.currentTime });
           }
         });
+
+        // Forward seek events from host nativeAudio
+        const onHostSeekRTC = () => {
+          broadcastToPeers({ type: 'sync_action', action: 'seek', time: nativeAudio.currentTime });
+        };
+        nativeAudio.addEventListener('seeked', onHostSeekRTC);
+
+        // Heartbeat: sync currentTime every 2s so peers stay perfectly locked
+        const heartbeatIdRTC = setInterval(() => {
+          if (!nativeAudio.paused) {
+            broadcastToPeers({ type: 'heartbeat', time: nativeAudio.currentTime });
+          }
+        }, 2000);
         peerRef.current._unsub = unsub;
 
       } else {

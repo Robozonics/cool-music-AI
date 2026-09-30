@@ -26,7 +26,7 @@ export const MiniPlayer: React.FC = () => {
           style={{ bottom: 'calc(env(safe-area-inset-bottom, 1rem) + 4rem + 20px)' }}
         >
           <div 
-            className="relative bg-[#0a0a0a]/60 backdrop-blur-2xl border border-white/10 rounded-2xl flex items-center p-2 cursor-pointer shadow-[0_20px_50px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.1)] hover:bg-[#111111]/80 transition-colors group" 
+            className="relative bg-[#0a0a0a]/60 backdrop-blur-2xl border border-white/10 rounded-2xl flex items-center p-2 cursor-pointer shadow-[0_20px_50px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.1)] hover:bg-[#111111]/80 transition-colors group aura-player-glow" 
             onClick={() => setFullPlayerOpen(true)}
           >
             {/* Ambient Aura Background */}
