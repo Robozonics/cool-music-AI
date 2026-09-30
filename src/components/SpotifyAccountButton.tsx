@@ -10,13 +10,19 @@ export const SpotifyAccountButton: React.FC = () => {
   const setApiKeyModalOpen = usePlayerStore(state => state.setApiKeyModalOpen);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const initial = getUserInitial(user);
   const displayName = getUserDisplayName(user);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (
+        dropdownRef.current && 
+        !dropdownRef.current.contains(target) &&
+        (!menuRef.current || !menuRef.current.contains(target))
+      ) {
         setIsDropdownOpen(false);
       }
     };
@@ -53,6 +59,7 @@ export const SpotifyAccountButton: React.FC = () => {
       {isDropdownOpen && createPortal(
         <AnimatePresence>
           <motion.div
+            ref={menuRef}
             initial={{ opacity: 0, scale: 0.95, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 8 }}
