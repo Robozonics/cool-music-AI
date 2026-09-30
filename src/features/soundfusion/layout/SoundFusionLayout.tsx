@@ -6,9 +6,8 @@ import { usePlayerStore } from '../../../store/usePlayerStore';
 import { useMashupStore } from '../../../store/useMashupStore';
 import { SpotifyAccountButton } from '../../../components/SpotifyAccountButton';
 import { MashupStudioPanel } from '../../../components/MashupStudioPanel';
-import { CollabPlaylistModal } from '../../../components/CollabPlaylistModal';
 import { AuthModal } from '../../../components/AuthModal';
-import { Camera, Sun, Moon, AudioWaveform, Layers, Users } from 'lucide-react';
+import { Camera, Sun, Moon, AudioWaveform, Layers } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 
@@ -26,7 +25,7 @@ export const SoundFusionLayout: React.FC<LayoutProps> = ({ children, activeTab, 
   const isMashupOpen = useMashupStore(state => state.isOpen);
   const setMashupOpen = useMashupStore(state => state.setIsOpen);
   const [isDark, setIsDark] = useState(true);
-  const [isCollabOpen, setIsCollabOpen] = useState(false);
+
 
   // Toggle dark/light theme class on document body
   useEffect(() => {
@@ -101,15 +100,7 @@ export const SoundFusionLayout: React.FC<LayoutProps> = ({ children, activeTab, 
             <span>Share Snippet</span>
           </motion.button>
 
-          {/* Party / Collab session */}
-          <button
-            onClick={() => setIsCollabOpen(true)}
-            className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${isDark ? 'bg-white/10 hover:bg-fuchsia-500/20 hover:text-fuchsia-300 text-white' : 'bg-black/10 hover:bg-fuchsia-500/10 text-black'}`}
-            title="Group Listening Session"
-          >
-            <Users className="w-4 h-4" />
-          </button>
-          
+
           <button 
             onClick={() => setMashupOpen(!isMashupOpen)}
             className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${isMashupOpen ? 'bg-acid-lime text-black shadow-[0_0_15px_rgba(204,255,0,0.4)]' : isDark ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-black/10 hover:bg-black/20 text-black'}`}
@@ -229,7 +220,6 @@ export const SoundFusionLayout: React.FC<LayoutProps> = ({ children, activeTab, 
       <FloatingGlassPlayer />
 
       {/* Modals */}
-      <CollabPlaylistModal isOpen={isCollabOpen} onClose={() => setIsCollabOpen(false)} />
       <AuthModal />
     </div>
   );

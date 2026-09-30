@@ -18,13 +18,12 @@ import { ConnectDeviceModal } from './components/ConnectDeviceModal';
 import { SamplesFeed } from './components/SamplesFeed';
 import { QueuePanel } from './components/QueuePanel';
 import { MobileAICommandBox } from './components/MobileAICommandBox';
-import { CollabPlaylistModal } from './components/CollabPlaylistModal';
 import { AuthModal } from './components/AuthModal';
 import { SpotifyAccountButton } from './components/SpotifyAccountButton';
 import { ToastContainer } from './components/ToastNotification';
 import { SleepTimer } from './components/SleepTimer';
 import { usePlayerStore } from './store/usePlayerStore';
-import { WifiOff, AlertTriangle, Settings, Sparkles, Mic, Layers, Users, Moon } from 'lucide-react';
+import { WifiOff, AlertTriangle, Settings, Sparkles, Mic, Layers, Moon } from 'lucide-react';
 import { useAudioAnalyzer } from './store/useAudioAnalyzer';
 import { SoundFusionLayout } from './features/soundfusion/layout/SoundFusionLayout';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
@@ -54,7 +53,6 @@ function App() {
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [isAiCommandOpen, setAiCommandOpen] = useState(false);
-  const [isCollabOpen, setIsCollabOpen] = useState(false);
   const isMashupOpen = useMashupStore(state => state.isOpen);
   const setMashupOpen = useMashupStore(state => state.setIsOpen);
   const [isSleepTimerOpen, setSleepTimerOpen] = useState(false);
@@ -169,13 +167,7 @@ function App() {
             >
               <Sparkles className="w-6 h-6" />
             </button>
-            <button
-              onClick={() => setIsCollabOpen(true)}
-              className="p-2 shrink-0 text-fuchsia-400 hover:text-fuchsia-300 transition"
-              title="Group Listening Session"
-            >
-              <Users className="w-5 h-5" />
-            </button>
+
             <button 
               onClick={() => setMashupOpen(!isMashupOpen)}
               className={`p-2 shrink-0 transition rounded-full ${isMashupOpen ? 'text-acid-lime bg-acid-lime/10 shadow-[0_0_15px_rgba(204,255,0,0.4)]' : 'text-gray-400 hover:text-white'}`}
@@ -238,7 +230,6 @@ function App() {
       <VisualCanvasEngine />
       <AddToPlaylistModal />
       <QueuePanel />
-      <CollabPlaylistModal isOpen={isCollabOpen} onClose={() => setIsCollabOpen(false)} />
       <AuthModal />
       <SleepTimer isOpen={isSleepTimerOpen} onClose={() => setSleepTimerOpen(false)} />
       <ToastContainer />

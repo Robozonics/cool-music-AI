@@ -19,7 +19,17 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose }) => 
     { id: 'midnight', name: 'Midnight', color: '#00E5FF', bg: '#000B18' },
     { id: 'sunset', name: 'Sunset', color: '#FF4D00', bg: '#1A0500' },
     { id: 'aura', name: 'Aura', color: '#B200FF', bg: '#030008' },
-  ] as const;
+    { id: 'aura-blue', name: 'Aura Blue', color: '#0066FF', bg: '#000B1A' },
+    { id: 'aura-green', name: 'Aura Green', color: '#00FF66', bg: '#001A0B' },
+    { id: 'aura-red', name: 'Aura Red', color: '#FF0033', bg: '#1A0005' },
+    { id: 'aura-pink', name: 'Aura Pink', color: '#FF0099', bg: '#1A0010' },
+    { id: 'aura-yellow', name: 'Aura Yellow', color: '#FFD700', bg: '#1A1600' },
+    { id: 'aura-orange', name: 'Aura Orange', color: '#FF6600', bg: '#1A0A00' },
+    { id: 'aura-cyan', name: 'Aura Cyan', color: '#00FFFF', bg: '#001A1A' },
+    { id: 'aura-teal', name: 'Aura Teal', color: '#008080', bg: '#001A1A' },
+    { id: 'aura-emerald', name: 'Aura Emerald', color: '#50C878', bg: '#0B1A10' },
+    { id: 'aura-rose', name: 'Aura Rose', color: '#FF007F', bg: '#1A000D' },
+  ];
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -46,7 +56,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose }) => 
             <Palette className="w-5 h-5 text-[var(--color-primary)]" />
             <h3>Aura Themes</h3>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
             {themes.map(t => (
               <button
                 key={t.id}

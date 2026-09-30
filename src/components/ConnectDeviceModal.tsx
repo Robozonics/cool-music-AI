@@ -284,10 +284,30 @@ export const ConnectDeviceModal: React.FC = () => {
 
     // Helper: load a synced track on the joiner side — waits for the audio source to
     // be ready before setting currentTime and playing, which fixes the "title only" bug.
-    const loadSyncedTrack = (track: any, time?: number, shouldPlay?: boolean) => {
-      usePlayerStore.getState().playTrack(track);
+    const loadSyncedTrack = async (track: any, time?: number, shouldPlay?: boolean) => {
+      let syncedTrack = { ...track, isOffline: false };
+      
+      if (!syncedTrack.streamUrl || syncedTrack.streamUrl.startsWith('blob:') || syncedTrack.streamUrl.startsWith('file:')) {
+         try {
+           const { fetchFreshSaavnUrl, searchUnblocked } = await import('../services/unblockedMusicService');
+           if (syncedTrack.source === 'saavn' && syncedTrack.id.startsWith('saavn-')) {
+              syncedTrack.streamUrl = await fetchFreshSaavnUrl(syncedTrack.id);
+           } else {
+              const results = await searchUnblocked(`${syncedTrack.title} ${syncedTrack.artist}`);
+              if (results && results.length > 0) {
+                 syncedTrack.streamUrl = results[0].streamUrl;
+              }
+           }
+         } catch (e) {
+           console.error('Failed to fetch fresh URL for synced track', e);
+         }
+      }
+
+      usePlayerStore.getState().playTrack(syncedTrack);
+      
       const onReady = () => {
         nativeAudio.removeEventListener('canplay', onReady);
+        nativeAudio.removeEventListener('error', onError);
         if (time !== undefined && Number.isFinite(time)) nativeAudio.currentTime = time;
         if (shouldPlay === false) {
           nativeAudio.pause();
@@ -295,11 +315,17 @@ export const ConnectDeviceModal: React.FC = () => {
           nativeAudio.play().catch(() => {});
         }
       };
+      const onError = () => {
+        nativeAudio.removeEventListener('canplay', onReady);
+        nativeAudio.removeEventListener('error', onError);
+      };
+      
       // If audio is already ready (e.g. cached), fire immediately; otherwise wait
       if (nativeAudio.readyState >= 3) {
         onReady();
       } else {
         nativeAudio.addEventListener('canplay', onReady);
+        nativeAudio.addEventListener('error', onError);
       }
     };
 

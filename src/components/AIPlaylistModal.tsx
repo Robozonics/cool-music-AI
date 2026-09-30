@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Sparkles, Play, ChevronRight, Loader2, AlertCircle } from 'lucide-react';
 import { generateAIPlaylist } from '../services/geminiService';
@@ -120,10 +121,12 @@ export const AIPlaylistModal: React.FC<AIPlaylistModalProps> = ({ isOpen, onClos
   const peakTracks = generatedTracks.filter(t => t.segment === 'peak');
   const cooldownTracks = generatedTracks.filter(t => t.segment === 'cooldown');
 
-  return (
+  if (!isOpen && phase === 'input') return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center sm:p-4">
+        <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center sm:p-4 pointer-events-auto">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -445,6 +448,7 @@ export const AIPlaylistModal: React.FC<AIPlaylistModalProps> = ({ isOpen, onClos
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };

@@ -29,6 +29,16 @@
     --color-panel: rgba(255, 77, 0, 0.05);
   }
 
+    [data-theme='aura-blue'] { --color-primary: #0066FF; --color-bg: #000B1A; --color-panel: rgba(0, 102, 255, 0.08); }
+  [data-theme='aura-green'] { --color-primary: #00FF66; --color-bg: #001A0B; --color-panel: rgba(0, 255, 102, 0.08); }
+  [data-theme='aura-red'] { --color-primary: #FF0033; --color-bg: #1A0005; --color-panel: rgba(255, 0, 51, 0.08); }
+  [data-theme='aura-pink'] { --color-primary: #FF0099; --color-bg: #1A0010; --color-panel: rgba(255, 0, 153, 0.08); }
+  [data-theme='aura-yellow'] { --color-primary: #FFD700; --color-bg: #1A1600; --color-panel: rgba(255, 215, 0, 0.08); }
+  [data-theme='aura-orange'] { --color-primary: #FF6600; --color-bg: #1A0A00; --color-panel: rgba(255, 102, 0, 0.08); }
+  [data-theme='aura-cyan'] { --color-primary: #00FFFF; --color-bg: #001A1A; --color-panel: rgba(0, 255, 255, 0.08); }
+  [data-theme='aura-teal'] { --color-primary: #008080; --color-bg: #001A1A; --color-panel: rgba(0, 128, 128, 0.08); }
+  [data-theme='aura-emerald'] { --color-primary: #50C878; --color-bg: #0B1A10; --color-panel: rgba(80, 200, 120, 0.08); }
+  [data-theme='aura-rose'] { --color-primary: #FF007F; --color-bg: #1A000D; --color-panel: rgba(255, 0, 127, 0.08); }
   [data-theme='aura'] {
     --color-primary: #B200FF; /* intense purple */
     --color-bg: #030008; /* dark void */
@@ -122,20 +132,20 @@
 }
 
 /* Aura header glow */
-[data-theme='aura'] .aura-header-glow {
-  background: linear-gradient(90deg, rgba(178,0,255,0.15), rgba(255,0,255,0.12), rgba(0,229,255,0.15), rgba(178,0,255,0.15));
+[data-theme^='aura'] .aura-header-glow {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--color-primary) 15%, transparent), color-mix(in srgb, var(--color-primary) 12%, transparent), color-mix(in srgb, var(--color-primary) 15%, transparent));
   background-size: 300% 100%;
   animation: aura-shimmer 6s ease-in-out infinite;
 }
 
 /* Aura bottom nav glow */
-[data-theme='aura'] .aura-nav-glow {
-  box-shadow: 0 -4px 30px rgba(178,0,255,0.3), 0 -2px 15px rgba(0,229,255,0.2), inset 0 1px 1px rgba(255,255,255,0.08);
+[data-theme^='aura'] .aura-nav-glow {
+  box-shadow: 0 -4px 30px color-mix(in srgb, var(--color-primary) 30%, transparent), 0 -2px 15px color-mix(in srgb, var(--color-primary) 20%, transparent), inset 0 1px 1px rgba(255,255,255,0.08);
 }
 
 /* Aura mini player glow */
-[data-theme='aura'] .aura-player-glow {
-  box-shadow: 0 0 40px rgba(178,0,255,0.25), 0 0 20px rgba(255,0,255,0.15), inset 0 1px 1px rgba(255,255,255,0.06);
+[data-theme^='aura'] .aura-player-glow {
+  box-shadow: 0 0 40px color-mix(in srgb, var(--color-primary) 25%, transparent), 0 0 20px color-mix(in srgb, var(--color-primary) 15%, transparent), inset 0 1px 1px rgba(255,255,255,0.06);
 }
 
 @keyframes aura-shimmer {
@@ -145,17 +155,17 @@
 }
 
 /* Aura theme accent overrides for mobile */
-[data-theme='aura'] .text-acid-lime {
-  color: #B200FF;
-  text-shadow: 0 0 10px rgba(178,0,255,0.5);
+[data-theme^='aura'] .text-acid-lime {
+  color: var(--color-primary);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--color-primary) 50%, transparent);
 }
 
-[data-theme='aura'] .bg-acid-lime {
-  background: linear-gradient(135deg, #B200FF 0%, #FF00FF 50%, #00E5FF 100%);
+[data-theme^='aura'] .bg-acid-lime {
+  background: linear-gradient(135deg, var(--color-primary) 0%, color-mix(in srgb, var(--color-primary) 80%, white) 50%, var(--color-primary) 100%);
 }
 
-[data-theme='aura'] .shadow-acid-lime {
-  box-shadow: 0 0 15px rgba(178,0,255,0.4);
+[data-theme^='aura'] .shadow-acid-lime {
+  box-shadow: 0 0 15px color-mix(in srgb, var(--color-primary) 40%, transparent);
 }
 
 .genz-playing-bg {
@@ -279,3 +289,5 @@ html, body {
 .force-spin-animation {
   animation: force-spin 10s linear infinite;
 }
+
+

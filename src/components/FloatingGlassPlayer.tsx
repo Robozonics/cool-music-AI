@@ -19,9 +19,7 @@ import {
   Blend,
   Video,
   X,
-  Users,
 } from 'lucide-react';
-import { CollabPlaylistModal } from './CollabPlaylistModal';
 import { usePlayerStore } from '../store/usePlayerStore';
 
 export const FloatingGlassPlayer: React.FC = () => {
@@ -64,7 +62,7 @@ export const FloatingGlassPlayer: React.FC = () => {
   const [showQueue, setShowQueue] = useState<boolean>(false);
   const [showEqualizer, setShowEqualizer] = useState<boolean>(false);
   const [eqPreset] = useState<string>('Bass Boost');
-  const [isCollabOpen, setIsCollabOpen] = useState<boolean>(false);
+
 
   const formatTime = (seconds: number): string => {
     if (isNaN(seconds)) return '0:00';
@@ -362,15 +360,7 @@ export const FloatingGlassPlayer: React.FC = () => {
             <Laptop2 className="w-3 h-3 lg:w-4 lg:h-4" />
           </motion.button>
 
-          {/* Collab / Party Session */}
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setIsCollabOpen(true)}
-            title="Group Listening Session"
-            className="hidden xl:flex items-center gap-1 p-1.5 lg:p-2 rounded-xl transition-all text-zinc-400 hover:text-purple-400 shrink-0"
-          >
-            <Users className="w-3 h-3 lg:w-4 lg:h-4" />
-          </motion.button>
+
 
           {/* Crossfade Toggle — Visual pill showing ON/OFF */}
           <motion.button
@@ -462,8 +452,7 @@ export const FloatingGlassPlayer: React.FC = () => {
         </div>
       </motion.div>
 
-      {/* Collab modal */}
-      <CollabPlaylistModal isOpen={isCollabOpen} onClose={() => setIsCollabOpen(false)} />
+
     </div>
   );
 };
