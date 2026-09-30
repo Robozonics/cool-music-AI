@@ -332,7 +332,8 @@ SCHEMA:
       "bar_start": 1,
       "bar_end": 8,
       "active_stems": [
-        { "track_id": "${anchorTrack.id}", "stem_type": "instrumental", "volume_db": 0, "pitch_shift_semitones": 0 }
+        { "track_id": "${anchorTrack.id}", "stem_type": "instrumental", "volume_db": 0, "pitch_shift_semitones": 0 },
+        { "track_id": "${secondaryTracks[0]?.id || 'track2'}", "stem_type": "vocals", "volume_db": 2, "pitch_shift_semitones": 0 }
       ],
       "effects": { "transition_type": "none" }
     }
