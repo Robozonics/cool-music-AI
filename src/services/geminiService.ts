@@ -28,9 +28,10 @@ const groqKeys = [
 ].filter(Boolean) as string[];
 
 const GROQ_MODELS = [
-  'qwen/qwen3.8-27b',
-  'openai/gpt-oss-120b',
-  'allam-2-7b'
+  'llama-3.3-70b-versatile',
+  'llama3-70b-8192',
+  'mixtral-8x7b-32768',
+  'gemma2-9b-it'
 ];
 
 const callGroqFallback = async (promptText: string, expectJson: boolean = true) => {
@@ -117,60 +118,75 @@ export const callGeminiDirectly = async (promptText: string, type: 'playlist' | 
   for (const apiKey of keys) {
     if (deadKeys.has(apiKey)) continue;
 
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
+    const GEMINI_MODELS = [
+      'gemini-2.0-flash',
+      'gemini-1.5-flash',
+      'gemini-1.5-flash-8b'
+    ];
     let keyFailed = false;
 
-    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-      try {
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
+    for (const model of GEMINI_MODELS) {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      let modelSuccess = false;
+      for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        try {
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
 
-        if (!response.ok) {
-          lastResponse = response;
-          if (response.status === 429) {
-            console.warn(`Key ending in ${apiKey.slice(-5)} rate limited (429). Switching to next key...`);
-            deadKeys.add(apiKey);
+          if (!response.ok) {
+            lastResponse = response;
+            if (response.status === 429) {
+              console.warn(`Key ending in ${apiKey.slice(-5)} rate limited (429). Switching to next key...`);
+              deadKeys.add(apiKey);
+              keyFailed = true;
+              break;
+            }
+            // 404 = model doesn't exist, try next model
+            if (response.status === 404) {
+              console.warn(`Model ${model} not found (404). Trying next model...`);
+              break;
+            }
+            if (response.status === 503 && attempt < MAX_RETRIES) {
+              await new Promise(resolve => setTimeout(resolve, attempt * 500));
+              continue;
+            }
+            console.error(`Gemini API error (Status ${response.status}) on model ${model}:`, response.statusText);
+            if (response.status === 503 || response.status === 400 || response.status >= 500) {
+              deadKeys.add(apiKey);
+            }
             keyFailed = true;
             break;
           }
-          if (response.status === 503 && attempt < MAX_RETRIES) {
-            await new Promise(resolve => setTimeout(resolve, attempt * 500)); // reduce wait time to 500ms
+
+          const data = await response.json();
+          let text = data.candidates?.[0]?.content?.parts?.[0]?.text || (expectJson ? '[]' : '');
+          
+          if (!expectJson) {
+            return text.trim();
+          }
+
+          text = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+          const jsonStart = text.indexOf('[');
+          const jsonEnd = text.lastIndexOf(']');
+          if (jsonStart >= 0 && jsonEnd > jsonStart) {
+            text = text.substring(jsonStart, jsonEnd + 1);
+          }
+          
+          const parsed = JSON.parse(text);
+          return Array.isArray(parsed) ? parsed : (parsed ? [parsed] : []);
+        } catch (error) {
+          if (attempt < MAX_RETRIES) {
+            await new Promise(resolve => setTimeout(resolve, attempt * 1000));
             continue;
           }
-          console.error(`Gemini API error (Status ${response.status}):`, response.statusText);
-          if (response.status === 503 || response.status === 400 || response.status >= 500) {
-            deadKeys.add(apiKey);
-          }
           keyFailed = true;
-          break;
         }
-
-        const data = await response.json();
-        let text = data.candidates?.[0]?.content?.parts?.[0]?.text || (expectJson ? '[]' : '');
-        
-        if (!expectJson) {
-          return text.trim();
-        }
-
-        text = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
-        const jsonStart = text.indexOf('[');
-        const jsonEnd = text.lastIndexOf(']');
-        if (jsonStart >= 0 && jsonEnd > jsonStart) {
-          text = text.substring(jsonStart, jsonEnd + 1);
-        }
-        
-        const parsed = JSON.parse(text);
-        return Array.isArray(parsed) ? parsed : (parsed ? [parsed] : []);
-      } catch (error) {
-        if (attempt < MAX_RETRIES) {
-          await new Promise(resolve => setTimeout(resolve, attempt * 1000));
-          continue;
-        }
-        keyFailed = true;
       }
+      if (keyFailed) break; // key is dead, stop trying models with this key
+      if (modelSuccess) break;
     }
     if (keyFailed) continue;
   }
