@@ -247,11 +247,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         const { usePlayerStore } = await import('./usePlayerStore');
         const playerState = usePlayerStore.getState();
         
+        const newPlaylists = [...playerState.savedPlaylists];
+        let hasChanges = false;
+        
         for (const cloudPlaylist of playlists) {
-          const existing = playerState.savedPlaylists.find(p => p.name === cloudPlaylist.name);
+          const localId = cloudPlaylist.id.replace(`${user.id}_`, '');
+          const existing = newPlaylists.find(p => p.id === localId || p.name === cloudPlaylist.name);
           if (!existing && cloudPlaylist.tracks) {
-            playerState.savePlaylist(cloudPlaylist.name, cloudPlaylist.tracks);
+            newPlaylists.push({
+              id: localId,
+              name: cloudPlaylist.name,
+              tracks: cloudPlaylist.tracks
+            });
+            hasChanges = true;
           }
+        }
+        
+        if (hasChanges) {
+          usePlayerStore.setState({ savedPlaylists: newPlaylists });
         }
       }
 
@@ -265,10 +278,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         const { usePlayerStore } = await import('./usePlayerStore');
         const playerState = usePlayerStore.getState();
         
+        let hasLikeChanges = false;
+        const newLikedTrackDetails = [...(playerState.likedTrackDetails || [])];
+        const newLikedTracks = [...playerState.likedTracks];
+
         for (const like of likes) {
-          if (like.track_data && !playerState.likedTracks.includes(like.track_id)) {
-            playerState.toggleLikeTrack(like.track_data);
+          if (like.track_data && !newLikedTracks.includes(like.track_id)) {
+            newLikedTracks.push(like.track_id);
+            newLikedTrackDetails.push(like.track_data);
+            hasLikeChanges = true;
           }
+        }
+
+        if (hasLikeChanges) {
+           usePlayerStore.setState({ likedTracks: newLikedTracks, likedTrackDetails: newLikedTrackDetails });
         }
       }
 
@@ -287,7 +310,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ cloudSyncStatus: 'syncing' });
 
     try {
-      // Upsert playlists
+      // 1. Fetch current cloud playlists to handle deletions
+      try {
+        const { data: cloudPlaylists } = await supabase.from('playlists').select('id').eq('user_id', user.id);
+        if (cloudPlaylists) {
+          const localIds = playlists.map(p => `${user.id}_${p.id}`);
+          const toDelete = cloudPlaylists.filter(cp => !localIds.includes(cp.id));
+          for (const cp of toDelete) {
+            await supabase.from('playlists').delete().eq('id', cp.id);
+          }
+        }
+      } catch (e) {}
+
+      // 2. Upsert playlists
       for (const playlist of playlists) {
         try {
           await supabase

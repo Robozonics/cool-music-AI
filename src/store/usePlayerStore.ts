@@ -1323,33 +1323,57 @@ export const usePlayerStore = create<PlayerState>()(
       return id;
     },
 
-    addTrackToPlaylist: (playlistId: string, track: Track) => set(state => ({
-      savedPlaylists: state.savedPlaylists.map(p => 
-        p.id === playlistId 
-          ? { ...p, tracks: [...p.tracks, track] }
-          : p
-      )
-    })),
+    addTrackToPlaylist: (playlistId: string, track: Track) => {
+      set(state => ({
+        savedPlaylists: state.savedPlaylists.map(p => 
+          p.id === playlistId 
+            ? { ...p, tracks: [...p.tracks, track] }
+            : p
+        )
+      }));
+      import('./useAuthStore').then(({ useAuthStore }) => {
+        const state = get();
+        useAuthStore.getState().pushPlaylistsToCloud(state.savedPlaylists, state.likedTracks, state.likedTrackDetails || []);
+      }).catch(() => { /* ignore */ });
+    },
 
-    removeTrackFromPlaylist: (playlistId: string, trackId: string) => set(state => ({
-      savedPlaylists: state.savedPlaylists.map(p =>
-        p.id === playlistId
-          ? { ...p, tracks: p.tracks.filter(t => t.id !== trackId) }
-          : p
-      )
-    })),
+    removeTrackFromPlaylist: (playlistId: string, trackId: string) => {
+      set(state => ({
+        savedPlaylists: state.savedPlaylists.map(p =>
+          p.id === playlistId
+            ? { ...p, tracks: p.tracks.filter(t => t.id !== trackId) }
+            : p
+        )
+      }));
+      import('./useAuthStore').then(({ useAuthStore }) => {
+        const state = get();
+        useAuthStore.getState().pushPlaylistsToCloud(state.savedPlaylists, state.likedTracks, state.likedTrackDetails || []);
+      }).catch(() => { /* ignore */ });
+    },
 
-    reorderPlaylist: (playlistId: string, newTracks: Track[]) => set(state => ({
-      savedPlaylists: state.savedPlaylists.map(p =>
-        p.id === playlistId
-          ? { ...p, tracks: newTracks }
-          : p
-      )
-    })),
+    reorderPlaylist: (playlistId: string, newTracks: Track[]) => {
+      set(state => ({
+        savedPlaylists: state.savedPlaylists.map(p =>
+          p.id === playlistId
+            ? { ...p, tracks: newTracks }
+            : p
+        )
+      }));
+      import('./useAuthStore').then(({ useAuthStore }) => {
+        const state = get();
+        useAuthStore.getState().pushPlaylistsToCloud(state.savedPlaylists, state.likedTracks, state.likedTrackDetails || []);
+      }).catch(() => { /* ignore */ });
+    },
 
-    deletePlaylist: (id: string) => set(state => ({
-      savedPlaylists: state.savedPlaylists.filter(p => p.id !== id)
-    })),
+    deletePlaylist: (id: string) => {
+      set(state => ({
+        savedPlaylists: state.savedPlaylists.filter(p => p.id !== id)
+      }));
+      import('./useAuthStore').then(({ useAuthStore }) => {
+        const state = get();
+        useAuthStore.getState().pushPlaylistsToCloud(state.savedPlaylists, state.likedTracks, state.likedTrackDetails || []);
+      }).catch(() => { /* ignore */ });
+    },
   };
 }, {
   name: 'musify-storage',
