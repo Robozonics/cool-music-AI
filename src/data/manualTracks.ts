@@ -24,12 +24,12 @@ export const MANUAL_TRACKS: Track[] = [
     sourceBadge: 'Exclusive'
   },
   {
-    id: 'manual-coke-studio-jhol',
-    title: 'Jhol',
-    artist: 'Maanu X Annural Khalid',
-    thumbnail: 'https://img.youtube.com/vi/Irm3oHDa1H4/hqdefault.jpg',
-    duration: 240,
-    streamUrl: '/tracks/jhol.mp3',
+    id: 'archive-afreen-coke',
+    title: 'Afreen Afreen',
+    artist: 'Rahat Fateh Ali Khan & Momina Mustehsan',
+    thumbnail: 'https://img.youtube.com/vi/kw4tT7SCmaY/hqdefault.jpg',
+    duration: 380,
+    streamUrl: '/tracks/afreen.mp3',
     source: 'archive',
     sourceBadge: 'Coke Studio'
   },
