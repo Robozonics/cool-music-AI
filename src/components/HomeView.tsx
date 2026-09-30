@@ -162,7 +162,7 @@ const DiscoverWeeklyBanner: React.FC = () => {
       <div className="relative z-10 w-40 h-40 md:w-56 md:h-56 rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] shrink-0 group-hover:scale-105 transition-transform duration-700">
         <div className="absolute inset-0" style={{ backgroundColor: auraColor, opacity: 0.8 }} />
         <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 opacity-50 mix-blend-overlay">
-          {discoverWeekly?.tracks.slice(0, 4).map((t, i) => (
+          {(discoverWeekly?.tracks || []).slice(0, 4).map((t, i) => (
             <img key={i} src={t.thumbnail} className="w-full h-full object-cover" alt="" />
           ))}
         </div>
