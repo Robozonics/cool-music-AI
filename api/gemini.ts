@@ -170,8 +170,8 @@ Output ONLY valid JSON. No markdown, no commentary.`;
         try {
           const isRetryOnAlternativeModel = attempt === 2;
           const endpoint = isRetryOnAlternativeModel 
-            ? `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent`
-            : `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent`;
+            ? `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`
+            : `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent`;
 
           const response = await fetch(endpoint, {
             method: 'POST',
@@ -186,7 +186,7 @@ Output ONLY valid JSON. No markdown, no commentary.`;
             lastResponse = response;
             if (response.status === 429) {
               if (attempt === 1) {
-                 console.warn(`Key rate limited on primary model. Trying gemini-3.7-flash...`);
+                 console.warn(`Key rate limited on primary model. Trying gemini-1.5-flash...`);
                  continue;
               }
               console.warn(`Key rate limited on BOTH models. Switching to next key...`);
@@ -248,9 +248,9 @@ Output ONLY valid JSON. No markdown, no commentary.`;
     ].filter(Boolean) as string[]).slice(0, 2); // Max 2 Groq keys to prevent Vercel timeouts
 
     const GROQ_MODELS = [
-      'qwen/qwen3.8-27b',
-      'openai/gpt-oss-120b',
-      'allam-2-7b'
+      'llama-3.1-70b-versatile',
+      'llama-3.1-8b-instant',
+      'mixtral-8x7b-32768'
     ];
 
     if (geminiFailed && groqKeys.length > 0) {
