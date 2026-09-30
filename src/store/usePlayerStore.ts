@@ -185,7 +185,6 @@ const initAudioContext = (forceKaraokeMode?: boolean) => {
     concertGain.gain.value = 0; // Off by default (controlled by UI)
 
     const splitterSpatial = audioCtx.createChannelSplitter(2);
-    const mergerSpatial = audioCtx.createChannelMerger(2);
 
     // Left and Right delays for the Haas effect (psychoacoustic 3D widening)
     const delayL = audioCtx.createDelay();
