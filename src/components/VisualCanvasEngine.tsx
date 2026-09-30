@@ -33,6 +33,7 @@ export const VisualCanvasEngine = () => {
 
   // 1. Load YT API
   useEffect(() => {
+    if (!isVideoMode && !playerRef.current) return; // Don't load YT API until user actually requests Video Mode
     if (!window.YT) {
       const tag = document.createElement('script');
       tag.src = 'https://www.youtube.com/iframe_api';
@@ -42,11 +43,13 @@ export const VisualCanvasEngine = () => {
     } else {
       setIsReady(true);
     }
-  }, []);
+  }, [isVideoMode]);
 
   // 2. Fetch Video ID when track changes
   useEffect(() => {
     if (!currentTrack) return;
+    if (!isVideoMode && !playerRef.current) return; // Don't fetch if video mode is never used
+    
     let isActive = true;
     const fetchVideo = async () => {
       try {
@@ -62,7 +65,7 @@ export const VisualCanvasEngine = () => {
     };
     fetchVideo();
     return () => { isActive = false; };
-  }, [currentTrack?.id]);
+  }, [currentTrack?.id, isVideoMode]);
 
   // 3. Initialize & Update Player
   useEffect(() => {

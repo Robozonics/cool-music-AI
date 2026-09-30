@@ -141,19 +141,19 @@ function App() {
       >
         <div className={`absolute inset-0 transition-opacity duration-1000 pointer-events-none -z-20 opacity-20 ${isPlaying ? 'genz-playing-bg' : 'opacity-0'}`} />
         {theme === 'aura' && <div className="absolute inset-0 aura-animated-bg pointer-events-none -z-15" />}
-        {/* Aura theme: extra floating orbs */}
+        {/* Aura theme: extra floating orbs - Optimized for mobile performance */}
         {theme === 'aura' && (
           <div className="absolute inset-0 overflow-hidden pointer-events-none -z-18">
-            <div className="absolute top-[10%] left-[20%] w-[50vw] h-[50vw] rounded-full bg-violet-500/30 blur-[60px] mix-blend-screen animate-pulse" style={{ animationDuration: '6s' }} />
-            <div className="absolute bottom-[20%] right-[5%] w-[45vw] h-[45vw] rounded-full bg-fuchsia-500/25 blur-[70px] mix-blend-screen animate-pulse" style={{ animationDuration: '9s' }} />
+            <div className="absolute top-[10%] left-[20%] w-[50vw] h-[50vw] rounded-full bg-violet-500/20 blur-[60px] opacity-70" />
+            <div className="absolute bottom-[20%] right-[5%] w-[45vw] h-[45vw] rounded-full bg-fuchsia-500/20 blur-[70px] opacity-70" />
           </div>
         )}
-        {/* Default orbs (non-aura) */}
+        {/* Default orbs (non-aura) - Removed animate-pulse for mobile performance */}
         {theme !== 'aura' && (
           <div className="absolute inset-0 overflow-hidden pointer-events-none -z-20">
-            <div className="absolute -top-[20%] -left-[10%] w-[70vw] h-[70vw] rounded-full bg-purple-600/25 blur-[80px] mix-blend-screen animate-pulse" style={{ animationDuration: '8s' }} />
-            <div className="absolute top-[40%] -right-[20%] w-[60vw] h-[60vw] rounded-full bg-cyan-600/20 blur-[90px] mix-blend-screen animate-pulse" style={{ animationDuration: '12s' }} />
-            <div className="absolute -bottom-[10%] left-[10%] w-[80vw] h-[80vw] rounded-full bg-pink-600/20 blur-[100px] mix-blend-screen animate-pulse" style={{ animationDuration: '10s' }} />
+            <div className="absolute -top-[20%] -left-[10%] w-[70vw] h-[70vw] rounded-full bg-purple-600/20 blur-[80px] opacity-70" />
+            <div className="absolute top-[40%] -right-[20%] w-[60vw] h-[60vw] rounded-full bg-cyan-600/15 blur-[90px] opacity-70" />
+            <div className="absolute -bottom-[10%] left-[10%] w-[80vw] h-[80vw] rounded-full bg-pink-600/15 blur-[100px] opacity-70" />
           </div>
         )}
         <div className="absolute inset-0 bg-obsidian/70 vibe-pulse pointer-events-none -z-10" />

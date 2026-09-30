@@ -437,7 +437,7 @@ interface HomeViewProps {
   setActiveTab?: (tab: TabType) => void;
 }
 
-export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab }) => {
+export const HomeView: React.FC<HomeViewProps> = React.memo(({ setActiveTab }) => {
   const [sectionsData, setSectionsData] = useState<Record<string, Track[]>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isAIPlaylistOpen, setIsAIPlaylistOpen] = useState(false);
@@ -656,4 +656,4 @@ export const HomeView: React.FC<HomeViewProps> = ({ setActiveTab }) => {
       })}
     </div>
   );
-};
+});
