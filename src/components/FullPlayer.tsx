@@ -1,9 +1,10 @@
 import React from 'react';
-import { Play, Pause, SkipForward, SkipBack, ChevronDown, Download, Plus, X, Repeat, Share2, Video, Blend, ListMusic, Laptop2, Mic, MicOff } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, ChevronDown, Download, Plus, X, Repeat, Share2, Video, Blend, ListMusic, Laptop2, Mic, MicOff, Moon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePlayerStore } from '../store/usePlayerStore';
 
 export const FullPlayer: React.FC = () => {
+  const [showSleepTimerModal, setShowSleepTimerModal] = React.useState(false);
   const currentTrack = usePlayerStore(state => state.currentTrack);
   const isPlaying = usePlayerStore(state => state.isPlaying);
   const currentTime = usePlayerStore(state => state.currentTime);
@@ -31,6 +32,10 @@ export const FullPlayer: React.FC = () => {
   const isCrossfadeEnabled = usePlayerStore(state => state.isCrossfadeEnabled);
   const toggleCrossfade = usePlayerStore(state => state.toggleCrossfade);
   const setShareSnippetOpen = usePlayerStore(state => state.setShareSnippetOpen);
+  
+  const sleepTimerMs = usePlayerStore(state => state.sleepTimerMs);
+  const sleepTimerEndAt = usePlayerStore(state => state.sleepTimerEndAt);
+  const setSleepTimer = usePlayerStore(state => state.setSleepTimer);
 
   const toggleRepeat = () => {
     if (repeatMode === 'off') setRepeatMode('all');
@@ -228,6 +233,14 @@ export const FullPlayer: React.FC = () => {
             >
               <Laptop2 className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
+            
+            <button 
+              onClick={() => setShowSleepTimerModal(true)}
+              className={`p-2 sm:p-3 rounded-full transition-colors ${sleepTimerMs ? 'text-indigo-400 shadow-[0_0_15px_rgba(129,140,248,0.3)]' : 'text-gray-400 hover:text-white'}`}
+              title="Sleep Timer"
+            >
+              <Moon className="w-5 h-5 sm:w-6 sm:h-6" />
+            </button>
           </div>
         </div>
 
@@ -317,6 +330,61 @@ export const FullPlayer: React.FC = () => {
         </div>
       </motion.div>
       )}
+
+      {/* Sleep Timer Modal */}
+      {showSleepTimerModal && (
+        <motion.div 
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        >
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+            className="bg-zinc-900 border border-white/10 rounded-3xl p-6 w-full max-w-sm"
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                <Moon className="w-5 h-5 text-indigo-400" />
+                Sleep Timer
+              </h3>
+              <button onClick={() => setShowSleepTimerModal(false)} className="p-2 text-zinc-400 hover:text-white transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              {[15, 30, 45, 60].map(mins => (
+                <button
+                  key={mins}
+                  onClick={() => {
+                    setSleepTimer(mins * 60 * 1000);
+                    setShowSleepTimerModal(false);
+                  }}
+                  className={`py-3 rounded-xl font-bold transition-all ${
+                    sleepTimerMs === mins * 60 * 1000 
+                      ? 'bg-indigo-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.4)]'
+                      : 'bg-white/5 text-zinc-300 hover:bg-white/10'
+                  }`}
+                >
+                  {mins} mins
+                </button>
+              ))}
+            </div>
+            
+            {sleepTimerMs && (
+              <button
+                onClick={() => {
+                  setSleepTimer(null);
+                  setShowSleepTimerModal(false);
+                }}
+                className="w-full py-3 rounded-xl font-bold bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-all"
+              >
+                Cancel Timer
+              </button>
+            )}
+          </motion.div>
+        </motion.div>
+      )}
+
     </AnimatePresence>
   );
 };

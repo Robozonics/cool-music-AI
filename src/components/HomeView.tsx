@@ -421,6 +421,15 @@ const SECTIONS: Section[] = [
       "Softcore The Neighbourhood",
       "Daylight David Kushner"
     ]
+  },
+  {
+    title: "COMMUNITY REQUESTS",
+    seeds: [
+      "Pal Pal (with Talwiinder) Afusic",
+      "Majboor Sheheryar Rehan",
+      "Jhol Coke Studio Pakistan",
+      "Mahi Gal Coke Studio Pakistan"
+    ]
   }
 ];
 

@@ -384,6 +384,10 @@ interface PlayerState {
   isKaraokeMode: boolean;
   toggleKaraokeMode: () => void;
 
+  sleepTimerMs: number | null;
+  sleepTimerEndAt: number | null;
+  setSleepTimer: (ms: number | null) => void;
+
   isQueueOpen: boolean;
   setQueueOpen: (open: boolean) => void;
 
@@ -734,6 +738,30 @@ export const usePlayerStore = create<PlayerState>()(
     isAutoplayBlocked: false,
     isApiKeyModalOpen: false,
     isKaraokeMode: false,
+    sleepTimerMs: null,
+    sleepTimerEndAt: null,
+    
+    setSleepTimer: (ms: number | null) => {
+      const state = get();
+      if ((state as any).sleepTimerInterval) {
+        clearInterval((state as any).sleepTimerInterval);
+      }
+      if (ms === null) {
+        set({ sleepTimerMs: null, sleepTimerEndAt: null });
+        return;
+      }
+      
+      const endAt = Date.now() + ms;
+      set({ sleepTimerMs: ms, sleepTimerEndAt: endAt });
+      
+      const interval = setInterval(() => {
+        if (Date.now() >= endAt) {
+          get().togglePlay(); // Pause
+          get().setSleepTimer(null); // Reset
+        }
+      }, 1000);
+      set({ sleepTimerInterval: interval } as any);
+    },
 
     setApiKeyModalOpen: (open: boolean) => set({ isApiKeyModalOpen: open }),
 
@@ -901,8 +929,12 @@ export const usePlayerStore = create<PlayerState>()(
 
       nativeAudio.volume = get().volume;
       nativeAudio.playbackRate = get().playbackRate;
-      if (!nativeAudio.crossOrigin) {
+      if (track.source === 'archive') {
+        nativeAudio.removeAttribute('crossorigin');
+        crossfadeAudio.removeAttribute('crossorigin');
+      } else {
         nativeAudio.crossOrigin = "anonymous";
+        crossfadeAudio.crossOrigin = "anonymous";
       }
 
       if (finalStreamUrl) {

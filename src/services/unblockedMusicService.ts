@@ -1,5 +1,6 @@
 import CryptoJS from 'crypto-js';
 import type { Track } from '../types/music';
+import { MANUAL_TRACKS } from '../data/manualTracks';
 import { Capacitor } from '@capacitor/core';
 
 const SAAVN_BASE = 'https://www.jiosaavn.com/api.php';
@@ -307,5 +308,10 @@ export const searchYouTube = async (query: string): Promise<Track[]> => {
 };
 
 export const searchUnblocked = async (query: string): Promise<Track[]> => {
-  return await searchSaavn(query);
+  const manualMatches = MANUAL_TRACKS.filter(t => 
+    t.title.toLowerCase().includes(query.toLowerCase()) || 
+    t.artist.toLowerCase().includes(query.toLowerCase())
+  );
+  const saavnResults = await searchSaavn(query).catch(() => []);
+  return [...manualMatches, ...saavnResults];
 };
