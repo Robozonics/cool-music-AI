@@ -153,11 +153,11 @@ export const FavoriteArtistsRow: React.FC<FavoriteArtistsRowProps> = ({ onSearch
                       onClick={() => handleSelectArtist(artist.name)}
                       className="group flex flex-col items-center gap-3 cursor-pointer"
                     >
-                      <div className="w-full aspect-square rounded-full overflow-hidden bg-white/5 border-2 border-transparent group-hover:border-acid-lime transition-all shadow-lg group-hover:shadow-[0_0_20px_rgba(163,230,53,0.3)]">
+                      <div className="w-full relative aspect-square rounded-full overflow-hidden bg-white/5 border-2 border-transparent group-hover:border-acid-lime transition-all shadow-lg group-hover:shadow-[0_0_20px_rgba(163,230,53,0.3)]">
                         <img 
                           src={artist.image} 
                           alt={artist.name} 
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
                         />
                       </div>
                       <span className="text-white font-bold text-sm text-center line-clamp-2 px-1 group-hover:text-acid-lime transition-colors">

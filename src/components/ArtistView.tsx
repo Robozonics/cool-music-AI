@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Play, Heart, Plus, Loader2, ArrowLeft, ListPlus } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
-import { searchUnblocked } from '../services/unblockedMusicService';
+import { searchUnblocked, searchArtists } from '../services/unblockedMusicService';
 import type { Track } from '../types/music';
 
 interface ArtistViewProps {
@@ -13,6 +13,7 @@ export const ArtistView: React.FC<ArtistViewProps> = ({ artistName, setActiveTab
   const [tracks, setTracks] = useState<Track[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [artistImage, setArtistImage] = useState<string | null>(null);
   
   const playTrack = usePlayerStore(state => state.playTrack);
   const setQueue = usePlayerStore(state => state.setQueue);
@@ -20,18 +21,24 @@ export const ArtistView: React.FC<ArtistViewProps> = ({ artistName, setActiveTab
   const toggleLikeTrack = usePlayerStore(state => state.toggleLikeTrack);
 
   useEffect(() => {
-    const fetchArtistTracks = async () => {
+    const fetchArtistData = async () => {
       setIsLoading(true);
       try {
-        const results = await searchUnblocked(`${artistName} top songs`);
+        const [results, artistInfo] = await Promise.all([
+          searchUnblocked(`${artistName} top songs`),
+          searchArtists(artistName)
+        ]);
         setTracks(results);
+        if (artistInfo && artistInfo.length > 0) {
+          setArtistImage(artistInfo[0].image);
+        }
       } catch (e) {
         console.error(e);
       } finally {
         setIsLoading(false);
       }
     };
-    fetchArtistTracks();
+    fetchArtistData();
   }, [artistName]);
 
   const handlePlayAll = () => {
@@ -53,9 +60,9 @@ export const ArtistView: React.FC<ArtistViewProps> = ({ artistName, setActiveTab
       {/* Header */}
       <div className="relative w-full h-64 md:h-80 bg-zinc-900 overflow-hidden shrink-0">
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-black/50 to-transparent z-10" />
-        {tracks.length > 0 && (
+        {(artistImage || tracks.length > 0) && (
           <img 
-            src={tracks[0].thumbnail.replace('150x150', '500x500')} 
+            src={artistImage || tracks[0].thumbnail.replace('150x150', '500x500')} 
             className="w-full h-full object-cover opacity-50"
             alt={artistName}
           />
