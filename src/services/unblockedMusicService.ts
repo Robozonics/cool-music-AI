@@ -341,8 +341,8 @@ export const searchArtists = async (query: string): Promise<SaavnArtist[]> => {
     
     return data.data.map((a: any) => {
       // Deezer returns picture_xl for 1000x1000 or picture_big for 500x500
-      let imageUrl = a.picture_xl || a.picture_big || a.picture_medium || a.picture;
-      if (!imageUrl || imageUrl.includes('000000-80-0-0.jpg')) {
+      let imageUrl = a.picture_xl || a.picture_big || a.picture_medium || a.picture || a.image;
+      if (!imageUrl || imageUrl.includes('user/blank')) {
         imageUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(a.name)}&background=random&size=500`;
       }
       
