@@ -337,16 +337,16 @@ export const MashupStudioPanel: React.FC = () => {
   const renderSelectCount = () => (
     <div className="flex-1 flex flex-col overflow-y-auto p-4 sm:p-5 space-y-5">
       {/* Hero */}
-      <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] p-4 sm:p-5 border border-white/10 shadow-lg">
+      <div className="relative mt-2 md:mt-0 rounded-2xl overflow-hidden bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] p-5 md:p-6 border border-white/10 shadow-lg">
         <div className="absolute top-0 right-0 w-32 h-32 bg-acid-lime/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-2">
+        <div className="relative z-10 flex flex-col justify-center min-h-[80px]">
+          <div className="flex items-center gap-2 mb-3">
             <div className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 bg-acid-lime/20 rounded-lg flex items-center justify-center">
               <Sparkles className="w-4 h-4 text-acid-lime shrink-0" />
             </div>
-            <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-acid-lime whitespace-nowrap">AI MASHUP STUDIO</span>
+            <span className="text-[11px] sm:text-xs font-black uppercase tracking-widest text-acid-lime whitespace-nowrap">AI MASHUP STUDIO</span>
           </div>
-          <h3 className="text-lg sm:text-xl font-black text-white leading-tight">Create a Pro Mashup</h3>
+          <h3 className="text-xl sm:text-2xl font-black text-white leading-tight">Create a Pro Mashup</h3>
           <p className="text-xs sm:text-sm text-gray-400 mt-1">Inspired by the best DJ sets — beatmatched, stem-separated, mastered.</p>
         </div>
       </div>

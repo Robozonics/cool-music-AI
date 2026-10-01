@@ -814,31 +814,35 @@ export const ConnectDeviceModal: React.FC = () => {
                     </div>
                     <div className="space-y-1.5">
                       {/* Cast Button */}
-                      <motion.button
-                        whileHover={{ x: 2 }}
+                      <button
                         onClick={async () => {
                           try {
                             // Check for iOS Safari AirPlay support first
-                            if ((nativeAudio as any).webkitShowPlaybackTargetPicker) {
+                            if (typeof (nativeAudio as any).webkitShowPlaybackTargetPicker === 'function') {
                               (nativeAudio as any).webkitShowPlaybackTargetPicker();
                             } 
                             // Standard Remote Playback API (Chrome for Android / Chromecast)
-                            else if ((nativeAudio as any).remote && (nativeAudio as any).remote.prompt) {
-                              await (nativeAudio as any).remote.prompt();
+                            else if ((nativeAudio as any).remote && typeof (nativeAudio as any).remote.prompt === 'function') {
+                              // Wrap in a promise with timeout in case the WebView hangs
+                              const promptPromise = (nativeAudio as any).remote.prompt();
+                              const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000));
+                              await Promise.race([promptPromise, timeoutPromise]);
                             } 
                             else {
-                              showToast('error', 'Native Cast/AirPlay is not supported on this browser.');
+                              showToast('error', 'Native Cast/AirPlay is not supported on this device. Please use Sync Code.');
                             }
                           } catch (e: any) {
                             console.error('Cast prompt cancelled or failed', e);
-                            if (e.name === 'NotFoundError') {
+                            if (e.name === 'NotFoundError' || e.message === 'NotFoundError') {
                               showToast('error', 'No casting devices found nearby.');
+                            } else if (e.message === 'timeout') {
+                              showToast('error', 'Cast dialog timed out. Your device may not support native casting.');
                             } else if (e.name !== 'NotAllowedError') {
-                              showToast('error', 'Failed to connect to cast device.');
+                              showToast('error', 'Failed to connect to cast device. Try Sync Code instead.');
                             }
                           }
                         }}
-                        className="w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left bg-white/3 hover:bg-white/8 border border-transparent hover:border-white/15"
+                        className="w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left bg-white/3 active:scale-95 active:bg-white/10 hover:bg-white/8 border border-transparent hover:border-white/15"
                       >
                         <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/5 text-zinc-400">
                           <Cast className="w-4 h-4" />
@@ -849,7 +853,7 @@ export const ConnectDeviceModal: React.FC = () => {
                             AirPlay or Google Cast
                           </p>
                         </div>
-                      </motion.button>
+                      </button>
                       
                       {devices.filter(d => d.type !== 'headphones').map(device => (
                         <motion.button
