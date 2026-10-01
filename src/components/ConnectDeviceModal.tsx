@@ -809,14 +809,24 @@ export const ConnectDeviceModal: React.FC = () => {
                         whileHover={{ x: 2 }}
                         onClick={async () => {
                           try {
-                            if ((nativeAudio as any).remote && (nativeAudio as any).remote.prompt) {
+                            // Check for iOS Safari AirPlay support first
+                            if ((nativeAudio as any).webkitShowPlaybackTargetPicker) {
+                              (nativeAudio as any).webkitShowPlaybackTargetPicker();
+                            } 
+                            // Standard Remote Playback API (Chrome for Android / Chromecast)
+                            else if ((nativeAudio as any).remote && (nativeAudio as any).remote.prompt) {
                               await (nativeAudio as any).remote.prompt();
-                            } else {
-                              (window as any).showToast?.('error', 'Native Cast is not supported on your browser');
+                            } 
+                            else {
+                              showToast('error', 'Native Cast/AirPlay is not supported on this browser.');
                             }
-                          } catch (e) {
-                            console.log('Cast prompt cancelled or failed', e);
-                            (window as any).showToast?.('error', 'Cast prompt cancelled or failed.');
+                          } catch (e: any) {
+                            console.error('Cast prompt cancelled or failed', e);
+                            if (e.name === 'NotFoundError') {
+                              showToast('error', 'No casting devices found nearby.');
+                            } else if (e.name !== 'NotAllowedError') {
+                              showToast('error', 'Failed to connect to cast device.');
+                            }
                           }
                         }}
                         className="w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left bg-white/3 hover:bg-white/8 border border-transparent hover:border-white/15"
