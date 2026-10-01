@@ -1387,7 +1387,6 @@ export const usePlayerStore = create<PlayerState>()(
     },
 
     favoriteArtists: [
-      "Sai Abhyankar",
       "Anirudh Ravichander",
       "GV Prakash",
       "Aditya Rikhari",

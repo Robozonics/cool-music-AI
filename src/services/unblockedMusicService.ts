@@ -1,5 +1,11 @@
 import CryptoJS from 'crypto-js';
 import type { Track } from '../types/music';
+
+export interface SaavnArtist {
+  id: string;
+  name: string;
+  image: string;
+}
 import { MANUAL_TRACKS } from '../data/manualTracks';
 import { Capacitor } from '@capacitor/core';
 
@@ -316,4 +322,34 @@ export const searchUnblocked = async (query: string): Promise<Track[]> => {
   );
   const saavnResults = await searchSaavn(query).catch(() => []);
   return [...manualMatches, ...saavnResults];
+};
+
+export const searchArtists = async (query: string): Promise<SaavnArtist[]> => {
+  try {
+    const searchUrl = `${SAAVN_BASE}?__call=autocomplete.get&_marker=0&query=${encodeURIComponent(query)}&ctx=android&_format=json`;
+    const res = await fetch(proxifyUrl(searchUrl, 'saavn'));
+    if (!res.ok) return [];
+    
+    const data = await res.json();
+    if (!data.artists?.data) return [];
+    
+    return data.artists.data.map((a: any) => {
+      let imageUrl = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&q=80';
+      if (typeof a.image === 'string') {
+        imageUrl = a.image.replace(/50x50|150x150/g, '500x500');
+      } else if (Array.isArray(a.image) && a.image.length > 0) {
+        const img = a.image[a.image.length - 1];
+        imageUrl = (img.link || img.url || imageUrl).replace(/50x50|150x150/g, '500x500');
+      }
+      
+      return {
+        id: a.id,
+        name: decodeHtml(a.title || a.name || 'Unknown Artist'),
+        image: imageUrl
+      };
+    });
+  } catch (error) {
+    console.error("Failed to search artists:", error);
+    return [];
+  }
 };

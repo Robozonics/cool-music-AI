@@ -49,7 +49,7 @@ export const ArtistView: React.FC<ArtistViewProps> = ({ artistName, setActiveTab
   const filteredTracks = tracks.filter(t => t.title.toLowerCase().includes(searchQuery.toLowerCase()) || t.artist.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
-    <div className="w-full h-full flex flex-col bg-[#0a0a0a] text-white">
+    <div className="w-full bg-[#0a0a0a] text-white">
       {/* Header */}
       <div className="relative w-full h-64 md:h-80 bg-zinc-900 overflow-hidden shrink-0">
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-black/50 to-transparent z-10" />
@@ -69,7 +69,7 @@ export const ArtistView: React.FC<ArtistViewProps> = ({ artistName, setActiveTab
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6 space-y-6">
+      <div className="px-4 md:px-8 py-6 space-y-6">
         {/* Action Buttons & Search */}
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
           <div className="flex gap-4 w-full md:w-auto">
