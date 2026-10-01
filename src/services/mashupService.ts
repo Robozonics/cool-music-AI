@@ -161,9 +161,13 @@ export const blueprintToDjEvents = (
     }
 
     // Process stems in this block
+    const stemsInBlock = new Set<string>();
+    
     for (const stem of block.active_stems) {
       const matched = resolveTrack(stem.track_id, allTracks);
       const tid = matched.id;
+      stemsInBlock.add(tid);
+      
       const linearVol = Math.min(1, Math.max(0, dbToLinear(stem.volume_db)));
 
       if (!activeTrackIds.has(tid)) {
@@ -238,6 +242,18 @@ export const blueprintToDjEvents = (
       } else {
         // Full track or 'other': reset filters
         events.push({ timestamp: blockStartSec, trackId: tid, type: 'filter_reset' });
+      }
+    }
+
+    // Identify tracks that were playing but are NOT in the current block (AI decided to cut them)
+    for (const tid of activeTrackIds) {
+      if (!stemsInBlock.has(tid)) {
+        events.push({
+          timestamp: blockStartSec,
+          trackId: tid,
+          type: block.effects?.transition_type === 'crossfade' ? 'fade_out' : 'cut',
+        });
+        activeTrackIds.delete(tid);
       }
     }
   }

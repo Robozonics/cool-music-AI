@@ -304,6 +304,10 @@ const executeDjEvent = (evt: DjEvent, volume: number, globalPlaybackRate: number
         targetAudio!.pause();
       });
       break;
+    case 'cut':
+      targetAudio.pause();
+      targetAudio.volume = 0;
+      break;
     case 'fade_in':
       if (evt.seekTo !== undefined && Number.isFinite(evt.seekTo)) {
         targetAudio.currentTime = Math.max(0, evt.seekTo);
