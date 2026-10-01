@@ -7,6 +7,8 @@ export default async function handler(req: any, res: any) {
     'Access-Control-Allow-Headers',
     'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
   );
+  // Cache aggressively on Vercel CDN for 24 hours
+  res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=43200');
 
   if (req.method === 'OPTIONS') {
     res.status(200).end();
@@ -36,17 +38,36 @@ export default async function handler(req: any, res: any) {
       data.data.map(async (artist: any) => {
         try {
           const wikiQuery = artist.name.replace(/ /g, '_');
-          const wikiRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(wikiQuery)}`);
+          // Fast timeout (800ms) for Wikipedia so it never delays the search
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 800);
+          
+          const wikiRes = await fetch(
+            `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(wikiQuery)}`,
+            { signal: controller.signal }
+          );
+          clearTimeout(timeoutId);
+          
           if (wikiRes.ok) {
             const wikiData = await wikiRes.json();
-            if (wikiData.originalimage && wikiData.originalimage.source) {
-              return { ...artist, picture_xl: wikiData.originalimage.source, picture: wikiData.thumbnail?.source || wikiData.originalimage.source };
+            if (wikiData.thumbnail?.source || wikiData.originalimage?.source) {
+              const bestImage = wikiData.thumbnail?.source || wikiData.originalimage?.source;
+              return { 
+                ...artist, 
+                picture_xl: wikiData.originalimage?.source || bestImage, 
+                picture: bestImage,
+                image: bestImage // explicitly set image for frontend mapped type
+              };
             }
           }
         } catch (e) {
-          // Ignore wiki errors and fallback
+          // Ignore wiki timeout/errors and fallback instantly to Deezer images
         }
-        return artist;
+        // Fallback mapping
+        return {
+          ...artist,
+          image: artist.picture_xl || artist.picture_medium || artist.picture
+        };
       })
     );
 
