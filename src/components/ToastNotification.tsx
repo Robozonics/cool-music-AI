@@ -16,6 +16,7 @@ export const showToast = (type: Toast['type'], message: string, duration = 3000)
   const toast: Toast = { id: `toast-${++toastIdCounter}`, type, message, duration };
   toastListeners.forEach(fn => fn(toast));
 };
+(window as any).showToast = showToast;
 
 export const ToastContainer: React.FC = () => {
   const [toasts, setToasts] = useState<Toast[]>([]);
