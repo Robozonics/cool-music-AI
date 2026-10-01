@@ -326,25 +326,24 @@ export const searchUnblocked = async (query: string): Promise<Track[]> => {
 
 export const searchArtists = async (query: string): Promise<SaavnArtist[]> => {
   try {
-    const searchUrl = `${SAAVN_BASE}?__call=autocomplete.get&_marker=0&query=${encodeURIComponent(query)}&ctx=android&_format=json`;
-    const res = await fetch(proxifyUrl(searchUrl, 'saavn'));
+    // We use Deezer API for artist search because it provides high quality official artist images
+    // whereas JioSaavn autocomplete often returns generic placeholders.
+    const res = await fetch(`https://api.deezer.com/search/artist?q=${encodeURIComponent(query)}&limit=10`);
     if (!res.ok) return [];
     
     const data = await res.json();
-    if (!data.artists?.data) return [];
+    if (!data.data || data.data.length === 0) return [];
     
-    return data.artists.data.map((a: any) => {
-      let imageUrl = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&q=80';
-      if (typeof a.image === 'string') {
-        imageUrl = a.image.replace(/50x50|150x150/g, '500x500');
-      } else if (Array.isArray(a.image) && a.image.length > 0) {
-        const img = a.image[a.image.length - 1];
-        imageUrl = (img.link || img.url || imageUrl).replace(/50x50|150x150/g, '500x500');
+    return data.data.map((a: any) => {
+      // Deezer returns picture_xl for 1000x1000 or picture_big for 500x500
+      let imageUrl = a.picture_xl || a.picture_big || a.picture_medium || a.picture;
+      if (!imageUrl || imageUrl.includes('000000-80-0-0.jpg')) {
+        imageUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(a.name)}&background=random&size=500`;
       }
       
       return {
-        id: a.id,
-        name: decodeHtml(a.title || a.name || 'Unknown Artist'),
+        id: a.id.toString(),
+        name: a.name,
         image: imageUrl
       };
     });
