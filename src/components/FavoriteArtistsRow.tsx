@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, X, User } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
-import { searchUnblocked } from '../services/saavnApi';
+import { searchUnblocked } from '../services/unblockedMusicService';
+import type { Track } from '../types/music';
 
 interface ArtistBubbleProps {
   artist: string;
@@ -14,7 +15,7 @@ const ArtistBubble: React.FC<ArtistBubbleProps> = ({ artist, onSearchArtist, rem
 
   useEffect(() => {
     let mounted = true;
-    searchUnblocked(`${artist} best songs`).then(res => {
+    searchUnblocked(`${artist} best songs`).then((res: Track[]) => {
       if (mounted && res.length > 0) {
         setImageUrl(res[0].thumbnail.replace('150x150', '500x500'));
       }

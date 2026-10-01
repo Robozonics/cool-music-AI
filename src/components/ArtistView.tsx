@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Play, Heart, Plus, Loader2, ArrowLeft, MoreVertical, ListPlus } from 'lucide-react';
+import { Play, Heart, Plus, Loader2, ArrowLeft, ListPlus } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
-import { searchUnblocked } from '../services/saavnApi';
-import { Track } from '../types/music';
-import { motion, AnimatePresence } from 'framer-motion';
+import { searchUnblocked } from '../services/unblockedMusicService';
+import type { Track } from '../types/music';
 
 interface ArtistViewProps {
   artistName: string;
