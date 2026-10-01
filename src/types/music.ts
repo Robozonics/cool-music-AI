@@ -18,6 +18,7 @@ export interface ActiveStem {
   stem_type: 'drums' | 'bass' | 'vocals' | 'hard_vocals' | 'other' | 'full' | 'instrumental';
   volume_db: number;
   pitch_shift_semitones: number;
+  start_time_sec?: number; // Tells engine to seek to this specific second in the track
 }
 
 export interface TimelineBlock {

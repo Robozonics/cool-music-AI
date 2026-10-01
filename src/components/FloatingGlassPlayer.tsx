@@ -371,7 +371,7 @@ export const FloatingGlassPlayer: React.FC = () => {
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={() => setConnectModalOpen(true)}
-            className={`hidden xl:block p-1.5 lg:p-2 rounded-xl transition-all text-zinc-400 hover:text-white shrink-0`}
+            className={`block p-1.5 lg:p-2 rounded-xl transition-all text-zinc-400 hover:text-white shrink-0`}
             title="Musify Connect – Switch Devices"
           >
             <Laptop2 className="w-3 h-3 lg:w-4 lg:h-4" />

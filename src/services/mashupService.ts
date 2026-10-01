@@ -177,12 +177,12 @@ export const blueprintToDjEvents = (
         const hasPlayedBefore = events.some(e => e.trackId === tid && (e.type === 'play' || e.type === 'fade_in'));
         
         if (!hasPlayedBefore) {
-          // Absolute first time it enters, seek to 0
+          // First time it enters, seek to AI requested time or 0
           events.push({
             timestamp: Math.max(0, blockStartSec - 0.1),
             trackId: tid,
             type: 'seek',
-            seekTo: 0,
+            seekTo: stem.start_time_sec || 0,
           });
 
           // Sync tempo with the final bpm
@@ -203,6 +203,7 @@ export const blueprintToDjEvents = (
           trackId: tid,
           type: transType === 'crossfade' ? 'fade_in' : 'play',
           volume: linearVol,
+          ...(stem.start_time_sec !== undefined && hasPlayedBefore ? { seekTo: stem.start_time_sec } : {}) // If it was playing before, but AI wants a hard seek, pass it to play
         });
 
         // Apply pitch shift approximation via a note in volume (handled natively now if preservesPitch is toggled, but leaving for legacy)
@@ -332,7 +333,7 @@ CRITICAL AUDIO ENGINEERING RULES:
    - Epic Climax Singing: "hard_vocals" (applies a 600Hz high-pass and volume boost).
 3. NEVER have two tracks active with \`stem_type: "full"\` at the same time. NEVER have two tracks active with \`stem_type: "vocals"\` at the same time.
 4. **Volume Control (CRITICAL)**: The instrumental/background track MUST have its volume_db lowered (e.g. -6 to -10) to make room for the vocals of the other track. When both tracks play, one MUST be the clear foreground (volume_db: 0 or +2) and the other MUST be the clear background (volume_db: -6 to -10). Do NOT play both tracks at volume_db: 0.
-5. **Mastering:** Use stem isolation properly for a sidechain effect.
+5. **Seeking Control (NEW)**: Use \`start_time_sec\` to tell the engine EXACTLY which second to start playing a track from when it enters. Skip boring intros by setting \`start_time_sec: 45\` or jump straight to the drop. You can also re-trigger a drop by using it again!
 
 CRITICAL PERFORMANCE RULE (PREVENT TIMEOUTS):
 To keep the JSON efficient, use 6 to 12 \`timeline_blocks\`. Group your arrangement into logical chunks (e.g., Intro, Build, Drop, Swap, Outro). DO NOT create a new block for every single bar. 
@@ -352,8 +353,8 @@ Now, output your precise logic for these specific songs into the following JSON 
       "bar_start": 1,
       "bar_end": 16,
       "active_stems": [
-        { "track_id": "${anchorTrack.id}", "stem_type": "instrumental", "volume_db": 0, "pitch_shift_semitones": 0 },
-        { "track_id": "${secondaryTracks[0]?.id || 'track2'}", "stem_type": "vocals", "volume_db": 2, "pitch_shift_semitones": 0 }
+        { "track_id": "${anchorTrack.id}", "stem_type": "instrumental", "volume_db": 0, "pitch_shift_semitones": 0, "start_time_sec": 0 },
+        { "track_id": "${secondaryTracks[0]?.id || 'track2'}", "stem_type": "vocals", "volume_db": 2, "pitch_shift_semitones": 0, "start_time_sec": 30 }
       ],
       "effects": { "transition_type": "none" }
     }
