@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, X, Search, User } from 'lucide-react';
+import { Plus, X, User } from 'lucide-react';
 import { usePlayerStore } from '../store/usePlayerStore';
 
 interface FavoriteArtistsRowProps {
