@@ -498,6 +498,10 @@ interface PlayerState {
   // Discover Weekly
   discoverWeekly: { tracks: Track[], generatedAt: number, vibeTitle?: string, vibeDescription?: string, vibeColor?: string } | null;
   setDiscoverWeekly: (tracks: Track[], generatedAt: number, vibeTitle?: string, vibeDescription?: string, vibeColor?: string) => void;
+
+  favoriteArtists: string[];
+  addFavoriteArtist: (artist: string) => void;
+  removeFavoriteArtist: (artist: string) => void;
 }
 
 export const normalizeStreamUrl = (url?: string): string => {
@@ -1381,6 +1385,24 @@ export const usePlayerStore = create<PlayerState>()(
         useAuthStore.getState().pushPlaylistsToCloud(state.savedPlaylists, state.likedTracks, state.likedTrackDetails || []);
       }).catch(() => { /* ignore */ });
     },
+
+    favoriteArtists: [
+      "Sai Abhyankar",
+      "Anirudh Ravichander",
+      "GV Prakash",
+      "Aditya Rikhari",
+      "Talwiinder",
+      "Arijit Singh",
+      "Taylor Swift"
+    ],
+    addFavoriteArtist: (artist: string) => set(state => ({
+      favoriteArtists: state.favoriteArtists.includes(artist) 
+        ? state.favoriteArtists 
+        : [...state.favoriteArtists, artist]
+    })),
+    removeFavoriteArtist: (artist: string) => set(state => ({
+      favoriteArtists: state.favoriteArtists.filter(a => a !== artist)
+    })),
   };
 }, {
   name: 'musify-storage',
@@ -1389,7 +1411,8 @@ export const usePlayerStore = create<PlayerState>()(
     likedTracks: state.likedTracks,
     likedTrackDetails: state.likedTrackDetails,
     theme: state.theme,
-    discoverWeekly: state.discoverWeekly
+    discoverWeekly: state.discoverWeekly,
+    favoriteArtists: state.favoriteArtists
   }),
   onRehydrateStorage: () => (hydratedState) => {
     if (!hydratedState) return;

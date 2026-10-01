@@ -8,6 +8,7 @@ import { RecentlyPlayedSection } from './RecentlyPlayedSection';
 import { AIPlaylistModal } from './AIPlaylistModal';
 import type { TabType } from './BottomNav';
 import { generateAIPlaylist, generateAuraAnalysis, callGeminiDirectly } from '../services/geminiService';
+import { FavoriteArtistsRow } from './FavoriteArtistsRow';
 
 const getMostRecentMonday = () => {
   const d = new Date();
@@ -441,6 +442,7 @@ export const HomeView: React.FC<HomeViewProps> = React.memo(({ setActiveTab }) =
   const [sectionsData, setSectionsData] = useState<Record<string, Track[]>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isAIPlaylistOpen, setIsAIPlaylistOpen] = useState(false);
+  const [artistSpotlight, setArtistSpotlight] = useState<{name: string, tracks: Track[]} | null>(null);
   
   const playTrack = usePlayerStore(state => state.playTrack);
   const setQueue = usePlayerStore(state => state.setQueue);
@@ -480,6 +482,18 @@ export const HomeView: React.FC<HomeViewProps> = React.memo(({ setActiveTab }) =
     playTrack(track);
   };
 
+  const handleSearchArtist = async (artist: string) => {
+    try {
+      setArtistSpotlight(null); // Clear previous
+      const results = await searchUnblocked(`${artist} best songs`);
+      if (results.length > 0) {
+        setArtistSpotlight({ name: artist, tracks: results.slice(0, 15) });
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex flex-col justify-center items-center h-full space-y-4">
@@ -498,6 +512,92 @@ export const HomeView: React.FC<HomeViewProps> = React.memo(({ setActiveTab }) =
 
       {/* Discover Weekly Banner */}
       <DiscoverWeeklyBanner />
+      
+      {/* Favorite Artists */}
+      <FavoriteArtistsRow onSearchArtist={handleSearchArtist} />
+      
+      {/* Artist Spotlight Result */}
+      {artistSpotlight && (
+        <div className="bg-gradient-to-br from-zinc-800/50 to-zinc-900/50 p-6 rounded-3xl border border-zinc-700/50 shadow-2xl relative mt-4">
+          <div className="absolute top-4 right-4">
+            <button onClick={() => setArtistSpotlight(null)} className="p-2 bg-black/40 rounded-full hover:bg-black/60 transition text-white">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+          </div>
+          <h2 className="text-sm font-bold tracking-[0.2em] uppercase text-acid-lime mb-6">Featuring: {artistSpotlight.name}</h2>
+          
+          <motion.div 
+              initial="hidden"
+              animate="show"
+              variants={{
+                hidden: { opacity: 0 },
+                show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+              }}
+              className="flex flex-col space-y-2 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar"
+            >
+              {artistSpotlight.tracks.map((track, i) => {
+                const num = (i + 1).toString().padStart(2, '0');
+                return (
+                  <motion.div 
+                    key={track.id}
+                    variants={{
+                      hidden: { opacity: 0, y: 20 },
+                      show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
+                    }}
+                    className="group relative flex items-center p-3 md:p-5 rounded-2xl md:rounded-3xl bg-white/5 hover:bg-white/10 transition-all cursor-pointer overflow-hidden border border-white/10 hover:border-acid-lime/50 hover:scale-[1.02] shadow-[0_10px_30px_rgba(0,0,0,0.5)] hover:shadow-[0_15px_40px_rgba(163,230,53,0.15)]"
+                    onClick={() => handlePlay(track, artistSpotlight.tracks)}
+                  >
+                    <div className="absolute -right-8 -top-12 text-[160px] font-display font-black text-white/5 pointer-events-none select-none transition-all duration-700 group-hover:text-acid-lime/10 group-hover:-translate-x-8 group-hover:scale-110">
+                      {num}
+                    </div>
+                    
+                    <div className="relative w-16 h-16 rounded-xl overflow-hidden shadow-lg mr-6 flex-shrink-0">
+                      <img 
+                        src={track.thumbnail} 
+                        alt={track.title} 
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&q=80';
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-sm">
+                        <Play className="w-6 h-6 text-acid-lime fill-current" />
+                      </div>
+                    </div>
+                    
+                    <div className="relative z-10 flex flex-col justify-center overflow-hidden flex-1">
+                      <h3 className="font-display font-bold text-lg text-white truncate transition-colors group-hover:text-acid-lime">{track.title}</h3>
+                      <p className="text-zinc-400 font-sans text-sm truncate">{track.artist}</p>
+                    </div>
+
+                    <div className="relative z-10 ml-4 shrink-0 flex items-center gap-1">
+                      <motion.button
+                        whileTap={{ scale: 0.8 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleLikeTrack(track);
+                        }}
+                        className="p-3 text-zinc-500 hover:text-pink-500 hover:bg-white/10 rounded-full transition-all"
+                      >
+                        <Heart className={`w-6 h-6 ${likedTracks.includes(track.id) ? 'fill-pink-500 text-pink-500' : ''}`} />
+                      </motion.button>
+                      <motion.button
+                        whileTap={{ scale: 0.8 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          usePlayerStore.getState().openAddToPlaylistModal(track);
+                        }}
+                        className="p-3 text-zinc-500 hover:text-white hover:bg-white/10 rounded-full transition-all"
+                      >
+                        <Plus className="w-6 h-6" />
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+        </div>
+      )}
       
       {/* Geo-Tagged Discovery Banner */}
       <GeoDiscoveryBanner />
