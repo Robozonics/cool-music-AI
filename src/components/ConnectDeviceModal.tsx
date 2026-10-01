@@ -804,30 +804,33 @@ export const ConnectDeviceModal: React.FC = () => {
                       <Wifi className="w-3 h-3" /> Network Devices
                     </div>
                     <div className="space-y-1.5">
-                      {'remote' in nativeAudio && (
-                        <motion.button
-                          whileHover={{ x: 2 }}
-                          onClick={async () => {
-                            try {
+                      {/* Cast Button */}
+                      <motion.button
+                        whileHover={{ x: 2 }}
+                        onClick={async () => {
+                          try {
+                            if ((nativeAudio as any).remote && (nativeAudio as any).remote.prompt) {
                               await (nativeAudio as any).remote.prompt();
-                            } catch (e) {
-                              console.log('Cast prompt cancelled or failed', e);
-                              (window as any).showToast?.('info', 'Cast unavailable due to DJ Engine. Use "Host Session" instead!');
+                            } else {
+                              (window as any).showToast?.('error', 'Native Cast is not supported on your browser');
                             }
-                          }}
-                          className="w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left bg-white/3 hover:bg-white/8 border border-transparent hover:border-white/15"
-                        >
-                          <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/5 text-zinc-400">
-                            <Cast className="w-4 h-4" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-sm font-bold text-white">Cast to Device</p>
-                            <p className="text-[10px] text-zinc-500">
-                              AirPlay or Google Cast
-                            </p>
-                          </div>
-                        </motion.button>
-                      )}
+                          } catch (e) {
+                            console.log('Cast prompt cancelled or failed', e);
+                            (window as any).showToast?.('error', 'Cast prompt cancelled or failed.');
+                          }
+                        }}
+                        className="w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left bg-white/3 hover:bg-white/8 border border-transparent hover:border-white/15"
+                      >
+                        <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/5 text-zinc-400">
+                          <Cast className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-bold text-white">Cast to Device</p>
+                          <p className="text-[10px] text-zinc-500">
+                            AirPlay or Google Cast
+                          </p>
+                        </div>
+                      </motion.button>
                       
                       {devices.filter(d => d.type !== 'headphones').map(device => (
                         <motion.button

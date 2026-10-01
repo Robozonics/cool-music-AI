@@ -276,7 +276,8 @@ export const MashupStudioPanel: React.FC = () => {
   const handleGenerate = async () => {
     if (!canGenerate || !anchorTrackId) return;
     try {
-      const generatedTrack = await generateAiMashup(selectedTracks, anchorTrackId);
+      const activeStyleLabel = MASHUP_STYLES.find(s => s.id === selectedStyle)?.label || 'DJ Blend';
+      const generatedTrack = await generateAiMashup(selectedTracks, anchorTrackId, activeStyleLabel);
       setQueue([generatedTrack, ...queue]);
       playTrack(generatedTrack);
       setStatus('idle');

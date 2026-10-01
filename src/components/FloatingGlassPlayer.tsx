@@ -44,6 +44,9 @@ export const FloatingGlassPlayer: React.FC = () => {
   const isLyricsOpen = usePlayerStore(state => state.isLyricsOpen);
   const setLyricsOpen = usePlayerStore(state => state.setLyricsOpen);
   
+  const isKaraokeMode = usePlayerStore(state => state.isKaraokeMode);
+  const toggleKaraokeMode = usePlayerStore(state => state.toggleKaraokeMode);
+  
   const likedTracks = usePlayerStore(state => state.likedTracks);
   const toggleLikeTrack = usePlayerStore(state => state.toggleLikeTrack);
   const repeatMode = usePlayerStore(state => state.repeatMode);
@@ -128,7 +131,7 @@ export const FloatingGlassPlayer: React.FC = () => {
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: 'spring', damping: 20, stiffness: 100 }}
-        className="relative grid grid-cols-3 lg:grid-cols-[1fr_1.5fr_1fr] items-center h-22 px-4 lg:px-6 rounded-[2rem] bg-white/5 backdrop-blur-3xl border border-white/10 shadow-[0_15px_50px_rgba(0,0,0,0.6)] py-4 gap-2 lg:gap-4 overflow-hidden"
+        className="mobile-player-dock relative grid grid-cols-3 lg:grid-cols-[1fr_1.5fr_1fr] items-center h-22 px-4 lg:px-6 rounded-[2rem] bg-white/5 backdrop-blur-3xl border border-white/10 shadow-[0_15px_50px_rgba(0,0,0,0.6)] py-4 gap-2 lg:gap-4 overflow-hidden"
       >
         {/* Glowing Ambient Mesh Overlay inside Player Bar */}
         <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 via-pink-500/10 to-cyan-500/10 opacity-50 blur-xl pointer-events-none" />
@@ -323,8 +326,22 @@ export const FloatingGlassPlayer: React.FC = () => {
           >
             <Video className="w-3 h-3 lg:w-4 lg:h-4" />
           </motion.button>
+
+          {/* Karaoke Voice Suppression Toggle */}
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={toggleKaraokeMode}
+            title={isKaraokeMode ? 'Karaoke Mode: ON' : 'Karaoke Mode: OFF'}
+            className={`p-1.5 lg:p-2 rounded-xl transition-all shrink-0 hidden sm:block ${
+              isKaraokeMode
+                ? 'bg-acid-lime/20 text-acid-lime border border-acid-lime/40 shadow-[0_0_10px_rgba(163,230,53,0.2)]'
+                : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            <Mic2 className="w-3 h-3 lg:w-4 lg:h-4" />
+          </motion.button>
           
-          {/* Karaoke Lyrics Toggle */}
+          {/* Lyrics Toggle */}
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={() => setLyricsOpen(!isLyricsOpen)}

@@ -144,7 +144,12 @@
     border: 4px solid #333;
     border-radius: 0 !important;
   }
-
+  [data-theme='theme-era-1990s'] .mobile-player-dock {
+    border-radius: 0 !important;
+    border: 4px solid #555 !important;
+    box-shadow: inset 2px 2px 0px #999, inset -2px -2px 0px #000 !important;
+    background: #111 !important;
+  }
 }
 
 @layer components {
