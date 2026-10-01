@@ -115,25 +115,29 @@ export const FavoriteArtistsRow: React.FC<FavoriteArtistsRowProps> = ({ onSearch
 
       {/* Add Artist Modal */}
       {isAdding && (
-        <div className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex flex-col animate-in fade-in zoom-in-95 duration-300">
+        <div className="fixed inset-0 z-[200] bg-zinc-950/95 backdrop-blur-3xl flex flex-col animate-in fade-in zoom-in-95 duration-300">
           {/* Header & Search */}
-          <div className="sticky top-0 w-full pt-12 pb-6 px-4 md:px-8 bg-gradient-to-b from-black/80 to-transparent z-10">
-            <div className="flex items-center gap-4 max-w-3xl mx-auto">
-              <button 
-                onClick={() => setIsAdding(false)} 
-                className="p-3 text-white hover:bg-white/10 hover:text-acid-lime rounded-full transition-all group"
-              >
-                <X className="w-6 h-6 group-hover:scale-110 transition-transform" />
-              </button>
-              <div className="relative flex-1">
+          <div className="sticky top-0 w-full pt-12 pb-8 px-4 md:px-8 bg-gradient-to-b from-black via-black/80 to-transparent z-20">
+            <div className="flex flex-col gap-6 max-w-4xl mx-auto">
+              <div className="flex items-center justify-between">
+                <h2 className="text-acid-lime font-black tracking-widest uppercase text-sm md:text-base">Curate your vibe</h2>
+                <button 
+                  onClick={() => setIsAdding(false)} 
+                  className="p-3 bg-white/5 hover:bg-acid-lime hover:text-black rounded-full transition-all group shadow-xl"
+                >
+                  <X className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                </button>
+              </div>
+              <div className="relative flex-1 group">
                 <input
                   type="text"
                   autoFocus
                   value={newArtist}
                   onChange={e => setNewArtist(e.target.value)}
-                  placeholder="Search for any artist..."
-                  className="w-full bg-white/5 border border-white/10 hover:border-white/20 focus:border-acid-lime/50 focus:bg-white/10 text-xl text-white font-bold placeholder-zinc-500 outline-none py-4 px-6 rounded-2xl transition-all shadow-inner"
+                  placeholder="Who are you listening to?"
+                  className="w-full bg-transparent border-b-4 border-white/10 hover:border-white/30 focus:border-acid-lime text-3xl md:text-5xl text-white font-black placeholder-zinc-700 outline-none py-4 md:py-6 transition-all"
                 />
+                <div className="absolute bottom-0 left-0 h-1 bg-acid-lime w-0 group-focus-within:w-full transition-all duration-500 ease-out"></div>
               </div>
             </div>
           </div>
