@@ -292,14 +292,20 @@ export const generateAiMashup = async (tracks: Track[], anchorTrackId: string, s
     setStatus('syncing', 30);
     
     const promptText = `You are a Grammy-winning DJ, music producer, and Audio Data Scientist. 
-The user wants a highly emotional, beautifully intertwined mashup (like the viral Saiyara x Sahiba mashup), but it MUST be top-notch, intense, and long enough.
-You must sequence these tracks musically over a bar-based timeline. 
+We want to create a manual-style, YouTube-quality mashup of these specific songs:
+1 (ANCHOR): ${anchorTrack.title} by ${anchorTrack.artist}
+${secondaryTracks.map((t, i) => `${i + 2}: ${t.title} by ${t.artist}`).join('\n')}
+
+Think deeply about these specific songs. How would you mashup THESE exact songs? 
+Where should we cut? Where should we pause? Where should we play both? 
+Where should we play the vocals of one song exactly over the beat of the other? 
+Set the logic just like a professional YouTuber does manually. Make it highly emotional, perfectly intertwined, and intense.
 
 CRITICAL MASHUP RULES:
 1. **Theme/Style**: The user selected "${selectedStyle}" as the mashup style. Adhere strongly to the vibe of this style.
 2. **Length**: The mashup MUST be exactly 96 bars long.
-3. **Aggressive Intertwining**: Swap vocals back and forth every 8 to 16 bars. Layer Track 2's vocals over Track 1's instrumental, then immediately swap. DO NOT OVERLAP VOCALS. When Track 1 vocals are playing, Track 2 MUST be instrumental/drums, and vice versa. Overlapping vocals sound messy.
-4. **Effects & Tempo**: You MUST estimate the BPM for each track based on its title and artist. If you don't know, guess a standard EDM/Pop tempo (e.g. 120-130). Then, calculate a final_bpm that works well for both. Include these in the \`track_bpms\` object! Use transition effects heavily between blocks (high_pass_sweep, low_pass_sweep, cut, crossfade) to build tension. 
+3. **Aggressive Intertwining**: Put your manual mashup logic to work. Swap vocals back and forth every 8 to 16 bars. Layer Track 2's vocals over Track 1's instrumental, then immediately swap. DO NOT OVERLAP VOCALS. When Track 1 vocals are playing, Track 2 MUST be instrumental/drums, and vice versa. Use strategic pauses or cuts (e.g. drop the volume to 0 for a bar before a beat drop).
+4. **Effects & Tempo**: You MUST estimate the BPM for each specific track based on its title and artist. If you don't know, guess a standard EDM/Pop tempo (e.g. 120-130). Then, calculate a final_bpm that works well for both. Include these in the \`track_bpms\` object! Use transition effects heavily between blocks (high_pass_sweep, low_pass_sweep, cut, crossfade) to build tension. 
 5. **Harden the Voice**: Use \`pitch_shift_semitones\` on vocal stems (e.g., +1, -1, or -2) to "harden" or shift the voice for a unique effect. Increase volume_db (e.g. +2) for vocals during the climax.
 
 CRITICAL AUDIO ENGINEERING RULES:
@@ -315,11 +321,7 @@ CRITICAL AUDIO ENGINEERING RULES:
 CRITICAL PERFORMANCE RULE (PREVENT TIMEOUTS):
 To keep the JSON efficient, you MUST cover the 96 bars using exactly 6 to 8 \`timeline_blocks\`. Group the arrangement into 16-bar chunks (e.g., 1-16, 17-32, 33-48). DO NOT create a new block for every single bar. 
 
-TRACKS:
-1 (ANCHOR): ${anchorTrack.title} by ${anchorTrack.artist} (Duration: ${anchorTrack.duration}s)
-${secondaryTracks.map((t, i) => `${i + 2}: ${t.title} by ${t.artist} (Duration: ${t.duration}s)`).join('\n')}
-
-SCHEMA:
+Now, output your precise logic for these specific songs into the following JSON SCHEMA:
 {
   "mashup_metadata": {
     "final_bpm": 128,
