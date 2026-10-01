@@ -69,7 +69,7 @@ export const FullPlayer: React.FC = () => {
           animate={{ y: 0 }}
           exit={{ y: '100%' }}
           transition={{ type: 'spring', damping: 28, stiffness: 250 }}
-          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-3xl flex flex-col"
+          className="fixed inset-0 z-50 bg-obsidian backdrop-blur-3xl flex flex-col"
         >
       {/* Background blur */}
       <div 
@@ -119,7 +119,7 @@ export const FullPlayer: React.FC = () => {
         </div>
 
         {isVideoMode ? (
-          <div className="w-full aspect-square max-h-[40vh] md:max-h-none rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] mb-6 relative bg-black flex items-center justify-center">
+          <div className="w-full aspect-square max-h-[40vh] md:max-h-none rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] mb-6 relative bg-obsidian flex items-center justify-center">
             <iframe
               src={`https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(videoSearchQuery)}&autoplay=1&mute=1`}
               title="YouTube video player"
