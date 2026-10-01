@@ -4,6 +4,7 @@ import { SearchView } from './components/SearchView';
 import { MoodView } from './components/MoodView';
 import { OfflineVault } from './components/OfflineVault';
 import { PlaylistView } from './components/PlaylistView';
+import { ArtistView } from './components/ArtistView';
 import { BottomNav } from './components/BottomNav';
 import type { TabType } from './components/BottomNav';
 import { MiniPlayer } from './components/MiniPlayer';
@@ -91,6 +92,9 @@ function App() {
   const renderContent = () => {
     if (activeTab.startsWith('playlist:')) {
       return <PlaylistView playlistId={activeTab.split(':')[1]} setActiveTab={setActiveTab} />;
+    }
+    if (activeTab.startsWith('artist:')) {
+      return <ArtistView artistName={activeTab.split(':')[1]} setActiveTab={setActiveTab} />;
     }
     
     switch (activeTab) {
