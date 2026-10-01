@@ -328,7 +328,12 @@ export const searchArtists = async (query: string): Promise<SaavnArtist[]> => {
   try {
     // We use Deezer API for artist search because it provides high quality official artist images
     // whereas JioSaavn autocomplete often returns generic placeholders.
-    const res = await fetch(`https://api.deezer.com/search/artist?q=${encodeURIComponent(query)}&limit=10`);
+    // Proxied via /api/deezer to bypass CORS constraints on mobile/web browsers
+    const apiUrl = import.meta.env.DEV 
+      ? `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://api.deezer.com/search/artist?q=${encodeURIComponent(query)}&limit=10`)}`
+      : `/api/deezer?q=${encodeURIComponent(query)}`;
+      
+    const res = await fetch(apiUrl);
     if (!res.ok) return [];
     
     const data = await res.json();

@@ -115,35 +115,69 @@ export const FavoriteArtistsRow: React.FC<FavoriteArtistsRowProps> = ({ onSearch
 
       {/* Add Artist Modal */}
       {isAdding && (
-        <div className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-md flex flex-col pt-12 px-4 animate-in fade-in duration-200">
-          <div className="flex items-center gap-4 mb-6">
-            <button onClick={() => setIsAdding(false)} className="p-2 text-white hover:bg-white/10 rounded-full transition-colors">
-              <X className="w-6 h-6" />
-            </button>
-            <input
-              type="text"
-              autoFocus
-              value={newArtist}
-              onChange={e => setNewArtist(e.target.value)}
-              placeholder="Search for an artist..."
-              className="flex-1 bg-transparent border-b-2 border-zinc-700 focus:border-acid-lime text-2xl text-white font-bold placeholder-zinc-600 outline-none pb-2 transition-colors"
-            />
+        <div className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex flex-col animate-in fade-in zoom-in-95 duration-300">
+          {/* Header & Search */}
+          <div className="sticky top-0 w-full pt-12 pb-6 px-4 md:px-8 bg-gradient-to-b from-black/80 to-transparent z-10">
+            <div className="flex items-center gap-4 max-w-3xl mx-auto">
+              <button 
+                onClick={() => setIsAdding(false)} 
+                className="p-3 text-white hover:bg-white/10 hover:text-acid-lime rounded-full transition-all group"
+              >
+                <X className="w-6 h-6 group-hover:scale-110 transition-transform" />
+              </button>
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  autoFocus
+                  value={newArtist}
+                  onChange={e => setNewArtist(e.target.value)}
+                  placeholder="Search for any artist..."
+                  className="w-full bg-white/5 border border-white/10 hover:border-white/20 focus:border-acid-lime/50 focus:bg-white/10 text-xl text-white font-bold placeholder-zinc-500 outline-none py-4 px-6 rounded-2xl transition-all shadow-inner"
+                />
+              </div>
+            </div>
           </div>
           
-          <div className="flex-1 overflow-y-auto space-y-2 pb-20 custom-scrollbar">
-            {searchResults.map((artist) => (
-              <div
-                key={artist.id}
-                onClick={() => handleSelectArtist(artist.name)}
-                className="flex items-center gap-4 p-3 hover:bg-white/5 rounded-xl cursor-pointer transition-colors"
-              >
-                <img src={artist.image} alt={artist.name} className="w-14 h-14 rounded-full object-cover shadow-lg" />
-                <span className="text-white font-bold text-lg">{artist.name}</span>
-              </div>
-            ))}
-            {searchResults.length === 0 && newArtist.length > 1 && (
-              <div className="text-center text-zinc-500 mt-10">Searching artists...</div>
-            )}
+          {/* Results Grid */}
+          <div className="flex-1 overflow-y-auto px-4 md:px-8 pb-32 custom-scrollbar">
+            <div className="max-w-5xl mx-auto mt-4">
+              {searchResults.length > 0 && (
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4 md:gap-6">
+                  {searchResults.map((artist) => (
+                    <div
+                      key={artist.id}
+                      onClick={() => handleSelectArtist(artist.name)}
+                      className="group flex flex-col items-center gap-3 cursor-pointer"
+                    >
+                      <div className="w-full aspect-square rounded-full overflow-hidden bg-white/5 border-2 border-transparent group-hover:border-acid-lime transition-all shadow-lg group-hover:shadow-[0_0_20px_rgba(163,230,53,0.3)]">
+                        <img 
+                          src={artist.image} 
+                          alt={artist.name} 
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                        />
+                      </div>
+                      <span className="text-white font-bold text-sm text-center line-clamp-2 px-1 group-hover:text-acid-lime transition-colors">
+                        {artist.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {searchResults.length === 0 && newArtist.length > 1 && (
+                <div className="flex flex-col items-center justify-center mt-20 text-zinc-500 animate-pulse">
+                  <div className="w-12 h-12 border-4 border-acid-lime border-t-transparent rounded-full animate-spin mb-4"></div>
+                  <p className="font-bold">Searching the global catalog...</p>
+                </div>
+              )}
+
+              {searchResults.length === 0 && newArtist.length <= 1 && (
+                <div className="flex flex-col items-center justify-center mt-32 text-zinc-600">
+                  <User className="w-20 h-20 mb-4 opacity-50" />
+                  <p className="text-lg font-medium text-center">Type an artist name<br/>to start exploring.</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
