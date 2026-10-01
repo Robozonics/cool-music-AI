@@ -296,17 +296,17 @@ We want to create a manual-style, YouTube-quality mashup of these specific songs
 1 (ANCHOR): ${anchorTrack.title} by ${anchorTrack.artist}
 ${secondaryTracks.map((t, i) => `${i + 2}: ${t.title} by ${t.artist}`).join('\n')}
 
-Think deeply about these specific songs. How would you mashup THESE exact songs? 
-Where should we cut? Where should we pause? Where should we play both? 
-Where should we play the vocals of one song exactly over the beat of the other? 
-Set the logic just like a professional YouTuber does manually. Make it highly emotional, perfectly intertwined, and intense.
+Think deeply about these specific songs. YOU HAVE FULL CREATIVE CONTROL.
+Act as a world-class professional DJ putting together a masterpiece. 
+You decide exactly where to cut, where to pause for dramatic effect, where to drop the beat, and where to play one song's vocals over the other's instrumental. 
+Set the logic just like a professional YouTuber does manually. Make it highly emotional, perfectly intertwined, and intense. Break any structural rules if it makes the musical arrangement sound better.
 
 CRITICAL MASHUP RULES:
 1. **Theme/Style**: The user selected "${selectedStyle}" as the mashup style. Adhere strongly to the vibe of this style.
-2. **Length**: The mashup MUST be exactly 96 bars long.
-3. **Aggressive Intertwining**: Put your manual mashup logic to work. Swap vocals back and forth every 8 to 16 bars. Layer Track 2's vocals over Track 1's instrumental, then immediately swap. DO NOT OVERLAP VOCALS. When Track 1 vocals are playing, Track 2 MUST be instrumental/drums, and vice versa. Use strategic pauses or cuts (e.g. drop the volume to 0 for a bar before a beat drop).
-4. **Effects & Tempo**: You MUST estimate the BPM for each specific track based on its title and artist. If you don't know, guess a standard EDM/Pop tempo (e.g. 120-130). Then, calculate a final_bpm that works well for both. Include these in the \`track_bpms\` object! Use transition effects heavily between blocks (high_pass_sweep, low_pass_sweep, cut, crossfade) to build tension. 
-5. **Harden the Voice**: Use \`pitch_shift_semitones\` on vocal stems (e.g., +1, -1, or -2) to "harden" or shift the voice for a unique effect. Increase volume_db (e.g. +2) for vocals during the climax.
+2. **Length & Structure**: You have full control over the length. Usually 64 to 128 bars is ideal, but pick what serves the songs best.
+3. **Full Creative Control (Arrangement)**: You dictate the flow. Use strategic cuts, sudden pauses before beat drops, and creative layering. You can swap vocals, layer them, or isolate them completely. Just ensure vocals don't clash (do NOT play both tracks' vocals simultaneously unless it's a harmonies effect).
+4. **Effects & Tempo**: You MUST estimate the BPM for each specific track based on its title and artist. If you don't know, guess a standard EDM/Pop tempo (e.g. 120-130). Then, calculate a final_bpm that works well for both. Include these in the \`track_bpms\` object! Use transition effects creatively (high_pass_sweep, low_pass_sweep, cut, crossfade, none).
+5. **Pitch & Hype**: Use \`pitch_shift_semitones\` on vocal stems (+1, -1, or -2) to fit the key or to "harden" the voice for a unique effect. Use volume boosts during the climax.
 
 CRITICAL AUDIO ENGINEERING RULES:
 1. **Key Clashing:** If keys are incompatible, apply small pitch_shift_semitones (+1 or -1) to match them.
@@ -319,7 +319,7 @@ CRITICAL AUDIO ENGINEERING RULES:
 5. **Mastering:** Use stem isolation properly for a sidechain effect.
 
 CRITICAL PERFORMANCE RULE (PREVENT TIMEOUTS):
-To keep the JSON efficient, you MUST cover the 96 bars using exactly 6 to 8 \`timeline_blocks\`. Group the arrangement into 16-bar chunks (e.g., 1-16, 17-32, 33-48). DO NOT create a new block for every single bar. 
+To keep the JSON efficient, use 6 to 12 \`timeline_blocks\`. Group your arrangement into logical chunks (e.g., Intro, Build, Drop, Swap, Outro). DO NOT create a new block for every single bar. 
 
 Now, output your precise logic for these specific songs into the following JSON SCHEMA:
 {
