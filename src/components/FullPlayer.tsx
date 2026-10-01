@@ -113,19 +113,18 @@ export const FullPlayer: React.FC = () => {
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center relative z-10 w-full max-w-sm mx-auto min-h-0 pt-16 pb-4 px-6 sm:px-0">
-        {/* Dynamic Background Blur */}
-        <div className="absolute inset-[-100%] -z-10 pointer-events-none opacity-40">
-          <img src={currentTrack.thumbnail} className="w-full h-full object-cover blur-[100px] saturate-200" alt="" />
-        </div>
+        {/* Background blur handled at root level */}
 
         {isVideoMode ? (
           <div className="w-full aspect-square max-h-[40vh] md:max-h-none rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] mb-6 relative bg-obsidian flex items-center justify-center">
             <iframe
+              key={currentTrack.id}
               src={`https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(videoSearchQuery)}&autoplay=1&mute=1`}
               title="YouTube video player"
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
+              loading="lazy"
               className="w-full h-full object-cover"
             />
           </div>
