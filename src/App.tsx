@@ -1,10 +1,5 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { HomeView } from './components/HomeView';
-import { SearchView } from './components/SearchView';
-import { MoodView } from './components/MoodView';
-import { OfflineVault } from './components/OfflineVault';
-import { PlaylistView } from './components/PlaylistView';
-import { ArtistView } from './components/ArtistView';
 import { BottomNav } from './components/BottomNav';
 import type { TabType } from './components/BottomNav';
 import { MiniPlayer } from './components/MiniPlayer';
@@ -16,17 +11,23 @@ import { ShareSnippetModal } from './components/ShareSnippetModal';
 import { VisualCanvasEngine } from './components/VisualCanvasEngine';
 import { AddToPlaylistModal } from './components/AddToPlaylistModal';
 import { ConnectDeviceModal } from './components/ConnectDeviceModal';
-import { SamplesFeed } from './components/SamplesFeed';
 import { QueuePanel } from './components/QueuePanel';
 import { MobileAICommandBox } from './components/MobileAICommandBox';
 import { AuthModal } from './components/AuthModal';
 import { SpotifyAccountButton } from './components/SpotifyAccountButton';
+
+const SearchView = React.lazy(() => import('./components/SearchView').then(module => ({ default: module.SearchView })));
+const MoodView = React.lazy(() => import('./components/MoodView').then(module => ({ default: module.MoodView })));
+const OfflineVault = React.lazy(() => import('./components/OfflineVault').then(module => ({ default: module.OfflineVault })));
+const PlaylistView = React.lazy(() => import('./components/PlaylistView').then(module => ({ default: module.PlaylistView })));
+const ArtistView = React.lazy(() => import('./components/ArtistView').then(module => ({ default: module.ArtistView })));
+const SamplesFeed = React.lazy(() => import('./components/SamplesFeed').then(module => ({ default: module.SamplesFeed })));
+const SoundFusionLayout = React.lazy(() => import('./features/soundfusion/layout/SoundFusionLayout').then(module => ({ default: module.SoundFusionLayout })));
 import { ToastContainer } from './components/ToastNotification';
 import { SleepTimer } from './components/SleepTimer';
 import { usePlayerStore } from './store/usePlayerStore';
 import { WifiOff, AlertTriangle, Settings, Sparkles, Mic, Layers, Moon } from 'lucide-react';
 import { useAudioAnalyzer } from './store/useAudioAnalyzer';
-import { SoundFusionLayout } from './features/soundfusion/layout/SoundFusionLayout';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useWakeWord } from './hooks/useWakeWord';
 import { useAICommandProcessor } from './hooks/useAICommandProcessor';
@@ -90,27 +91,37 @@ function App() {
   }, []);
 
   const renderContent = () => {
-    if (activeTab.startsWith('playlist:')) {
-      return <PlaylistView playlistId={activeTab.split(':')[1]} setActiveTab={setActiveTab} />;
-    }
-    if (activeTab.startsWith('artist:')) {
-      return <ArtistView artistName={activeTab.split(':')[1]} setActiveTab={setActiveTab} />;
-    }
-    
-    switch (activeTab) {
-      case 'home':
-        return <HomeView setActiveTab={setActiveTab} />;
-      case 'mood':
-        return <MoodView />;
-      case 'search':
-        return <SearchView />;
-      case 'samples':
-        return <SamplesFeed />;
-      case 'vault':
-        return <OfflineVault setActiveTab={setActiveTab} />;
-      default:
-        return <HomeView setActiveTab={setActiveTab} />;
-    }
+    return (
+      <Suspense fallback={
+        <div className="w-full h-full flex flex-col items-center justify-center bg-black">
+          <div className="w-10 h-10 border-4 border-acid-lime border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      }>
+        {(() => {
+          if (activeTab.startsWith('playlist:')) {
+            return <PlaylistView playlistId={activeTab.split(':')[1]} setActiveTab={setActiveTab} />;
+          }
+          if (activeTab.startsWith('artist:')) {
+            return <ArtistView artistName={activeTab.split(':')[1]} setActiveTab={setActiveTab} />;
+          }
+          
+          switch (activeTab) {
+            case 'home':
+              return <HomeView setActiveTab={setActiveTab} />;
+            case 'mood':
+              return <MoodView />;
+            case 'search':
+              return <SearchView />;
+            case 'samples':
+              return <SamplesFeed />;
+            case 'vault':
+              return <OfflineVault setActiveTab={setActiveTab} />;
+            default:
+              return <HomeView setActiveTab={setActiveTab} />;
+          }
+        })()}
+      </Suspense>
+    );
   };
 
   return (
