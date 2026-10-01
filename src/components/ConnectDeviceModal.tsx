@@ -497,7 +497,16 @@ export const ConnectDeviceModal: React.FC = () => {
     // 2. Robust WebRTC sync using PeerJS
     try {
       const peerId = isHost ? `msy-host-${code}` : `msy-peer-${code}-${Math.floor(Math.random()*10000)}`;
-      const peer = new Peer(peerId, { pingInterval: 10000 });
+      const peer = new Peer(peerId, { 
+        pingInterval: 10000,
+        config: {
+          iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' },
+            { urls: 'stun:global.stun.twilio.com:3478' }
+          ]
+        }
+      });
       peerRef.current = peer;
 
       const broadcastToPeers = (data: any) => {

@@ -6,6 +6,12 @@ import { fetchFreshSaavnUrl } from '../services/unblockedMusicService';
 // Global native audio instance for Direct CDNs
 export const nativeAudio = new Audio();
 nativeAudio.crossOrigin = "anonymous";
+// Attach to DOM for Remote Playback API (Cast) to work on mobile browsers
+if (typeof document !== 'undefined') {
+  nativeAudio.style.display = 'none';
+  document.body.appendChild(nativeAudio);
+}
+
 if ('preservesPitch' in nativeAudio) {
   (nativeAudio as any).preservesPitch = true;
 } else if ('webkitPreservesPitch' in nativeAudio) {
@@ -17,6 +23,11 @@ if ('preservesPitch' in nativeAudio) {
 // Secondary audio instance for crossfade — lives here at module scope so it persists
 export const crossfadeAudio = new Audio();
 crossfadeAudio.crossOrigin = "anonymous";
+if (typeof document !== 'undefined') {
+  crossfadeAudio.style.display = 'none';
+  document.body.appendChild(crossfadeAudio);
+}
+
 if ('preservesPitch' in crossfadeAudio) {
   (crossfadeAudio as any).preservesPitch = true;
 } else if ('webkitPreservesPitch' in crossfadeAudio) {
