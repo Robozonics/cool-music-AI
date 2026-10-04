@@ -902,11 +902,22 @@ export const usePlayerStore = create<PlayerState>()(
       
       // Update theme immediately if playing
       const currentTrack = state.currentTrack;
-      if (newMode && currentTrack?.year && currentTrack.year >= 1930 && currentTrack.year <= 1999) {
-        const decade = Math.floor(currentTrack.year / 10) * 10;
-        set({ activeEraTheme: `theme-era-${decade}s` });
+      if (newMode) {
+        if (currentTrack?.year && currentTrack.year >= 1930 && currentTrack.year <= 1999) {
+          const decade = Math.floor(currentTrack.year / 10) * 10;
+          set({ activeEraTheme: `theme-era-${decade}s` });
+          (window as any).showToast?.('success', `Time Machine: Transported to the ${decade}s!`);
+        } else {
+          set({ activeEraTheme: null });
+          if (currentTrack?.year) {
+             (window as any).showToast?.('info', `Time Machine: ON (Song is from ${currentTrack.year}, waiting for classic)`);
+          } else {
+             (window as any).showToast?.('warning', `Time Machine: ON (This track is missing year metadata)`);
+          }
+        }
       } else {
         set({ activeEraTheme: null });
+        (window as any).showToast?.('info', 'Time Machine: OFF (Returned to present)');
       }
     },
 
@@ -971,7 +982,11 @@ export const usePlayerStore = create<PlayerState>()(
         eraTheme = `theme-era-${decade}s`;
       }
       
-      set({ currentTrack: track, currentTime: 0, duration: track.duration || 0, isAutoplayBlocked: false, isBuffering: false, isCrossfading: false, activeEraTheme: eraTheme });
+      const currentQueue = get().queue;
+      const existsInQueue = currentQueue.some(t => t.id === track.id);
+      const newQueue = existsInQueue ? currentQueue : [track];
+
+      set({ currentTrack: track, queue: newQueue, currentTime: 0, duration: track.duration || 0, isAutoplayBlocked: false, isBuffering: false, isCrossfading: false, activeEraTheme: eraTheme });
 
       // Track recently played
       import('./useAuthStore').then(({ useAuthStore }) => {

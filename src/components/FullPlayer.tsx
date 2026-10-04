@@ -91,6 +91,28 @@ export const FullPlayer: React.FC = () => {
         </span>
         
         <div className="flex items-center space-x-2 shrink-0 pointer-events-auto">
+          <button
+            onClick={async () => {
+              try {
+                if (typeof (window as any).nativeAudio?.webkitShowPlaybackTargetPicker === 'function') {
+                  (window as any).nativeAudio.webkitShowPlaybackTargetPicker();
+                } else if ((window as any).nativeAudio?.remote?.prompt) {
+                  const promptPromise = (window as any).nativeAudio.remote.prompt();
+                  const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000));
+                  await Promise.race([promptPromise, timeoutPromise]);
+                } else {
+                  usePlayerStore.getState().setConnectModalOpen(true);
+                }
+              } catch (e: any) {
+                console.error(e);
+                usePlayerStore.getState().setConnectModalOpen(true);
+              }
+            }}
+            className="p-2 rounded-full text-emerald-400 hover:text-white hover:bg-white/10 transition pointer-events-auto"
+            title="Cast to Device"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-cast"><path d="M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"/><path d="M2 12a9 9 0 0 1 8 8"/><path d="M2 16a5 5 0 0 1 4 4"/><line x1="2" x2="2.01" y1="20" y2="20"/></svg>
+          </button>
           <button 
             onClick={toggleVideoMode}
             className={`px-4 py-2 rounded-full font-bold text-xs uppercase tracking-widest transition-all ${

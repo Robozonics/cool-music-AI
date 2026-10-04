@@ -419,11 +419,16 @@ export const ConnectDeviceModal: React.FC = () => {
     const bc = new BroadcastChannel(`musify-sync-${code}`);
     bcRef.current = bc;
 
+    const notifiedPeers = new Set<string>();
+
     bc.onmessage = (e) => {
       if (e.data.type === 'peer_joined') {
         setSessionPeers(prev => Array.from(new Set([...prev, e.data.peerId])));
         if (isHost) {
-          showToast('info', `${e.data.peerId} joined locally!`);
+          if (!notifiedPeers.has(e.data.peerId)) {
+            notifiedPeers.add(e.data.peerId);
+            showToast('info', `${e.data.peerId} joined locally!`);
+          }
           const state = usePlayerStore.getState();
           if (state.currentTrack) {
              bc.postMessage({ type: 'play_track', track: state.currentTrack, time: nativeAudio.currentTime, isPlaying: !nativeAudio.paused });
@@ -519,7 +524,10 @@ export const ConnectDeviceModal: React.FC = () => {
         if (data.type === 'peer_joined') {
           setSessionPeers(prev => Array.from(new Set([...prev, data.peerId])));
           if (isHost) {
-            showToast('info', `${data.peerId} joined!`);
+            if (!notifiedPeers.has(data.peerId)) {
+              notifiedPeers.add(data.peerId);
+              showToast('info', `${data.peerId} joined!`);
+            }
             const state = usePlayerStore.getState();
             if (state.currentTrack && conn && conn.open) {
                conn.send({ type: 'play_track', track: state.currentTrack, time: nativeAudio.currentTime, isPlaying: !nativeAudio.paused });
@@ -556,10 +564,14 @@ export const ConnectDeviceModal: React.FC = () => {
       };
 
       if (isHost) {
+        let sessionStartedNotified = false;
         peer.on('open', () => {
           setIsSessionActive(true);
           setJoiningSession(false);
-          showToast('success', 'Session started! Share the code.');
+          if (!sessionStartedNotified) {
+            sessionStartedNotified = true;
+            showToast('success', 'Session started! Share the code.');
+          }
         });
         peer.on('connection', (conn) => {
           connectionsRef.current.push(conn);
