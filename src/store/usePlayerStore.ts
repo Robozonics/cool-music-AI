@@ -716,6 +716,16 @@ export const usePlayerStore = create<PlayerState>()(
     const track = state.currentTrack;
 
     if (track && track.source === 'saavn' && !track.isOffline && track.id.startsWith('saavn-')) {
+      const currentSrc = nativeAudio.src;
+      const stateSrc = normalizeStreamUrl(track.streamUrl);
+      
+      // If we already fetched a fresh URL in the background, swap it synchronously!
+      if (stateSrc && currentSrc && !currentSrc.endsWith(stateSrc)) {
+         nativeAudio.src = stateSrc;
+         attemptPlay();
+         return;
+      }
+
       if (!(nativeAudio as any)._isRecovering) {
         (nativeAudio as any)._isRecovering = true;
         fetchFreshSaavnUrl(track.id).then(freshUrl => {
@@ -1125,11 +1135,12 @@ export const usePlayerStore = create<PlayerState>()(
                 tracks: p.tracks.map(q => q.id === track.id ? { ...q, streamUrl: safeFresh } : q)
               }))
             }));
-            // Only swap immediately if initial URL was completely missing or failed
-            if (!finalStreamUrl || nativeAudio.error) {
-              nativeAudio.src = safeFresh;
-              attemptPlay();
-            }
+              // Only swap immediately if initial URL was completely missing or failed, or hasn't started playing well
+              const isPlayingWell = nativeAudio.currentTime > 0 && !nativeAudio.paused && !nativeAudio.error;
+              if (!isPlayingWell) {
+                nativeAudio.src = safeFresh;
+                attemptPlay();
+              }
           }
         }).catch(() => {});
       }
