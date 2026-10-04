@@ -1099,6 +1099,9 @@ export const usePlayerStore = create<PlayerState>()(
           nativeAudio.src = finalStreamUrl;
         }
         attemptPlay();
+      } else {
+        // Unlock audio element synchronously on mobile even without URL
+        nativeAudio.play().catch(() => {});
       }
 
       // If it is a Saavn track and not offline, verify/refresh URL in background

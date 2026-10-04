@@ -7,8 +7,8 @@ const OFFLINE_KEY = 'offline_vault_tracks';
 
 export const downloadTrack = async (track: Track): Promise<boolean> => {
   try {
-    if (!track.streamUrl || track.source !== 'saavn') {
-      console.warn('Track cannot be downloaded.');
+    if (!track.streamUrl) {
+      console.warn('Track cannot be downloaded: No stream URL.');
       return false;
     }
 

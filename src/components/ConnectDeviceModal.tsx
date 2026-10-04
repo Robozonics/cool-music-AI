@@ -570,7 +570,6 @@ export const ConnectDeviceModal: React.FC = () => {
           setJoiningSession(false);
           if (!sessionStartedNotified) {
             sessionStartedNotified = true;
-            showToast('success', 'Session started! Share the code.');
           }
         });
         peer.on('connection', (conn) => {
