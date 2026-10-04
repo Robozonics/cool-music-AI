@@ -8,7 +8,14 @@ export const nativeAudio = new Audio();
 nativeAudio.crossOrigin = "anonymous";
 // Attach to DOM for Remote Playback API (Cast) to work on mobile browsers
 if (typeof document !== 'undefined') {
-  nativeAudio.style.display = 'none';
+  nativeAudio.style.position = 'absolute';
+  nativeAudio.style.width = '1px';
+  nativeAudio.style.height = '1px';
+  nativeAudio.style.opacity = '0';
+  nativeAudio.style.pointerEvents = 'none';
+  if ('disableRemotePlayback' in nativeAudio) {
+    (nativeAudio as any).disableRemotePlayback = false;
+  }
   document.body.appendChild(nativeAudio);
 }
 

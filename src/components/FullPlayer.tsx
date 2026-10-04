@@ -94,10 +94,15 @@ export const FullPlayer: React.FC = () => {
           <button
             onClick={async () => {
               try {
-                if (typeof (window as any).nativeAudio?.webkitShowPlaybackTargetPicker === 'function') {
-                  (window as any).nativeAudio.webkitShowPlaybackTargetPicker();
-                } else if ((window as any).nativeAudio?.remote?.prompt) {
-                  const promptPromise = (window as any).nativeAudio.remote.prompt();
+                const navAudio = (window as any).nativeAudio;
+                if (!navAudio?.src || navAudio.src.endsWith('undefined') || navAudio.src === window.location.href) {
+                   usePlayerStore.getState().setConnectModalOpen(true);
+                   return;
+                }
+                if (typeof navAudio?.webkitShowPlaybackTargetPicker === 'function') {
+                  navAudio.webkitShowPlaybackTargetPicker();
+                } else if (navAudio?.remote?.prompt) {
+                  const promptPromise = navAudio.remote.prompt();
                   const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000));
                   await Promise.race([promptPromise, timeoutPromise]);
                 } else {

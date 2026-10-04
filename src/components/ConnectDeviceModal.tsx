@@ -829,6 +829,10 @@ export const ConnectDeviceModal: React.FC = () => {
                         onClick={async () => {
                           try {
                             // Check for iOS Safari AirPlay support first
+                            if (!nativeAudio.src || nativeAudio.src.endsWith('undefined') || nativeAudio.src === window.location.href) {
+                              showToast('error', 'Please play a song first before casting.');
+                              return;
+                            }
                             if (typeof (nativeAudio as any).webkitShowPlaybackTargetPicker === 'function') {
                               (nativeAudio as any).webkitShowPlaybackTargetPicker();
                             } 
@@ -849,7 +853,7 @@ export const ConnectDeviceModal: React.FC = () => {
                             } else if (e.message === 'timeout') {
                               showToast('error', 'Cast dialog timed out. Your device may not support native casting.');
                             } else if (e.name !== 'NotAllowedError') {
-                              showToast('error', 'Failed to connect to cast device. Try Sync Code instead.');
+                              showToast('error', `Cast failed (${e.name || 'Unknown Error'}). Please use Sync Code.`);
                             }
                           }
                         }}
