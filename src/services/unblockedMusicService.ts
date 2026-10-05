@@ -39,6 +39,42 @@ const decodeHtml = (html: string): string => {
 
 const artworkCache = new Map<string, string>();
 
+// ─── Audio URL Validation & Normalization ───────────────────────
+const isPlayableAudioUrl = (url?: string) => {
+  if (!url) return false;
+  const trimmed = url.trim();
+  if (!trimmed) return false;
+
+  if (trimmed.startsWith('blob:') || trimmed.startsWith('data:')) return true;
+
+  try {
+    const parsed = new URL(trimmed, typeof window !== 'undefined' ? window.location.origin : '');
+    const path = parsed.pathname.toLowerCase();
+    return /\.(mp3|m4a|aac|wav|ogg|webm|mp4)(\?.*)?$/i.test(path);
+  } catch {
+    return /\.(mp3|m4a|aac|wav|ogg|webm|mp4)(\?.*)?$/i.test(trimmed);
+  }
+};
+
+const normalizePlayableStreamUrl = (url?: string): string => {
+  if (!url) return '';
+  let resolved = url.trim();
+
+  if (!resolved) return '';
+  if (resolved.startsWith('blob:') || resolved.startsWith('data:')) return resolved;
+
+  try {
+    if (!Capacitor.isNativePlatform() && /^https?:\/\//i.test(resolved)) {
+      const parsed = new URL(resolved);
+      resolved = '/api/saavncdn' + parsed.pathname + parsed.search;
+    }
+  } catch {
+    return '';
+  }
+
+  return isPlayableAudioUrl(resolved) ? resolved : '';
+};
+
 export const fetchAccurateArtwork = async (title: string, artist: string): Promise<string | null> => {
   const cleanTitle = title.replace(/\(.*?\)|\[.*?\]/g, '').trim();
   const cleanArtist = artist.split(',')[0].replace(/feat\..*/i, '').trim();
@@ -119,22 +155,15 @@ export const fetchFreshSaavnUrl = async (trackId: string): Promise<string> => {
     const song = data[rawId] || (data[Object.keys(data)[0]]?.id === rawId ? data[Object.keys(data)[0]] : null);
     if (!song) return '';
     
-    let streamUrl = song.media_preview_url || '';
-    if (song.encrypted_media_url) {
-      streamUrl = decryptSaavnUrl(song.encrypted_media_url);
+    let streamUrl = '';
+    if (song.media_preview_url) {
+      streamUrl = normalizePlayableStreamUrl(song.media_preview_url);
+    }
+    if (!streamUrl && song.encrypted_media_url) {
+      const decoded = decryptSaavnUrl(song.encrypted_media_url);
+      streamUrl = normalizePlayableStreamUrl(decoded);
     }
     
-    // Proxy ALL streamUrls to bypass CORS for Web Audio API
-    if (streamUrl && streamUrl.startsWith('http')) {
-      try {
-         if (Capacitor.isNativePlatform()) {
-             // Do nothing for native, use direct URL
-         } else {
-             const urlObj = new URL(streamUrl);
-             streamUrl = '/api/saavncdn' + urlObj.pathname + urlObj.search;
-         }
-      } catch (e) {}
-    }
     return streamUrl;
   } catch (e) {
     console.error('Error refreshing Saavn URL:', e);
@@ -156,19 +185,13 @@ export const searchSaavn = async (query: string): Promise<Track[]> => {
         for (const song of rawResults) {
           if (!song || typeof song !== 'object') continue;
           
-          let streamUrl = song.media_preview_url || '';
-          if (song.encrypted_media_url) {
-            streamUrl = decryptSaavnUrl(song.encrypted_media_url);
+          let streamUrl = normalizePlayableStreamUrl(song.media_preview_url);
+          if (!streamUrl && song.encrypted_media_url) {
+            const decoded = decryptSaavnUrl(song.encrypted_media_url);
+            streamUrl = normalizePlayableStreamUrl(decoded);
           }
           
-          if (streamUrl && streamUrl.startsWith('http')) {
-            try {
-              if (!Capacitor.isNativePlatform()) {
-                const urlObj = new URL(streamUrl);
-                streamUrl = '/api/saavncdn' + urlObj.pathname + urlObj.search;
-              }
-            } catch (e) {}
-          }
+          if (!streamUrl) continue;
           
           const trackId = song.id;
           if (!trackId) continue;
@@ -233,19 +256,13 @@ export const searchSaavn = async (query: string): Promise<Track[]> => {
       const song = detailsData[item.id] || detailsData[item.id?.toString()];
       if (!song || typeof song !== 'object' || !song.song) continue;
       
-      let streamUrl = song.media_preview_url || '';
-      if (song.encrypted_media_url) {
-        streamUrl = decryptSaavnUrl(song.encrypted_media_url);
+      let streamUrl = normalizePlayableStreamUrl(song.media_preview_url);
+      if (!streamUrl && song.encrypted_media_url) {
+        const decoded = decryptSaavnUrl(song.encrypted_media_url);
+        streamUrl = normalizePlayableStreamUrl(decoded);
       }
       
-      if (streamUrl && streamUrl.startsWith('http')) {
-        try {
-          if (!Capacitor.isNativePlatform()) {
-            const urlObj = new URL(streamUrl);
-            streamUrl = '/api/saavncdn' + urlObj.pathname + urlObj.search;
-          }
-        } catch (e) {}
-      }
+      if (!streamUrl) continue;
       
       const trackId = song.id || item.id;
       if (!trackId) continue;
@@ -332,7 +349,7 @@ export const searchArtists = async (query: string): Promise<SaavnArtist[]> => {
     const apiUrl = import.meta.env.DEV 
       ? `https://robozonics-music.vercel.app/api/artist-search?q=${encodeURIComponent(query)}`
       : `/api/artist-search?q=${encodeURIComponent(query)}`;
-      
+       
     const res = await fetch(apiUrl);
     if (!res.ok) return [];
     
